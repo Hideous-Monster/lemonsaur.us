@@ -5,14 +5,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { NAV_LINKS, SOCIAL_LINKS } from "@/lib/constants";
-import { DECORATIVE_LEMOJIS, lemojiPath } from "@/lib/lemoji";
+import { ALL_LEMOJIS, lemojiPath } from "@/lib/lemoji";
 
 export function Navbar() {
 	const [mobileOpen, setMobileOpen] = useState(false);
-	const [navLemoji, setNavLemoji] = useState<string>(DECORATIVE_LEMOJIS[0]!);
+	const [navLemoji, setNavLemoji] = useState<string | null>(null);
 
 	useEffect(() => {
-		setNavLemoji(DECORATIVE_LEMOJIS[Math.floor(Math.random() * DECORATIVE_LEMOJIS.length)]!);
+		setNavLemoji(ALL_LEMOJIS[Math.floor(Math.random() * ALL_LEMOJIS.length)]!);
 	}, []);
 
 	return (
@@ -23,13 +23,17 @@ export function Navbar() {
 			<div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
 				{/* Brand */}
 				<Link href="/" className="flex items-center gap-2" aria-label="Home">
-					<Image
-						src={lemojiPath(navLemoji)}
-						alt="lemonsaur.us"
-						width={36}
-						height={36}
-						className="transition-transform hover:scale-110"
-					/>
+					{navLemoji ? (
+						<Image
+							src={lemojiPath(navLemoji)}
+							alt="lemonsaur.us"
+							width={36}
+							height={36}
+							className="transition-transform hover:scale-110"
+						/>
+					) : (
+						<span className="inline-block h-9 w-9" />
+					)}
 					<span className="text-lg font-bold text-lemon-300">lemonsaur.us</span>
 				</Link>
 

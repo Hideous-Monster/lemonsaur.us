@@ -24,7 +24,11 @@ function CustomImage(props: ComponentPropsWithoutRef<"img">) {
 	if (isLemoji) {
 		return (
 			// biome-ignore lint/performance/noImgElement: 24px inline emoji, next/image optimisation not needed
-			<img src={src} alt={props.alt ?? ""} className="inline-block h-6 w-6 align-text-bottom" />
+			<img
+				src={src}
+				alt={props.alt ?? ""}
+				className="not-prose inline-block h-6 w-6 align-text-bottom"
+			/>
 		);
 	}
 

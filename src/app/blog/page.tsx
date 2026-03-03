@@ -11,7 +11,7 @@ export default function BlogPage() {
 	const posts = getAllPosts();
 
 	return (
-		<div className="mx-auto max-w-3xl px-4 py-12">
+		<div>
 			<h1 className="mb-8 text-4xl font-bold text-lemon-300">Blog</h1>
 
 			{posts.length === 0 ? (

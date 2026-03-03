@@ -48,7 +48,7 @@ export default async function BlogPostPage({ params }: PageProps) {
 	});
 
 	return (
-		<article className="mx-auto max-w-3xl px-4 py-12">
+		<article>
 			<header className="mb-8">
 				<h1 className="mb-4 text-4xl font-bold text-lemon-300">{post.title}</h1>
 				<div className="flex items-center gap-4 text-sm text-surface-400">

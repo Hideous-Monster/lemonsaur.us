@@ -14,6 +14,8 @@ export function Scene({ config }: SceneProps) {
 	return (
 		<Canvas
 			camera={{ position: [0, 0.5, 4], fov: 45 }}
+			gl={{ alpha: true }}
+			style={{ background: "transparent" }}
 			aria-label="3D lemon character creator — use the controls below to customize your lemon"
 			role="img"
 		>
@@ -25,7 +27,7 @@ export function Scene({ config }: SceneProps) {
 				<LemonCharacter config={config} />
 
 				<ContactShadows position={[0, -1.5, 0]} opacity={0.4} scale={6} blur={2.5} />
-				<Environment preset="sunset" />
+				<Environment preset="sunset" background={false} />
 				<OrbitControls
 					enablePan={false}
 					enableZoom={false}
