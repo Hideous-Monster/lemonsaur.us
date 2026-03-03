@@ -3,7 +3,6 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import type { ReactNode } from "react";
 import { Footer } from "@/components/layout/footer";
 import { Navbar } from "@/components/layout/navbar";
-import { LemojiScatter } from "@/components/lemoji-scatter";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/constants";
 import "./globals.css";
 
@@ -51,9 +50,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 	return (
 		<html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
 			<body className="flex min-h-screen flex-col font-sans antialiased">
-				<LemojiScatter count={10} />
 				<Navbar />
-				<main className="relative z-10 flex-1 pt-16">{children}</main>
+				<main className="flex-1 pt-16">{children}</main>
 				<Footer />
 			</body>
 		</html>

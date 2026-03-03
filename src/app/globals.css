@@ -49,7 +49,7 @@ html {
 }
 
 body {
-	background: var(--color-leaf-800);
+	background: var(--color-leaf-800) url("/images/bg_lemons_blurred.png") repeat;
 	color: var(--color-surface-100);
 }
 
