@@ -1,0 +1,74 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+	/* Lemon palette */
+	--color-lemon-50: #fffce6;
+	--color-lemon-100: #fff9bf;
+	--color-lemon-200: #fff280;
+	--color-lemon-300: #ffe033;
+	--color-lemon-400: #ffd700;
+	--color-lemon-500: #e6c200;
+	--color-lemon-600: #b39700;
+	--color-lemon-700: #806c00;
+	--color-lemon-800: #4d4100;
+	--color-lemon-900: #1a1600;
+
+	/* Leaf palette */
+	--color-leaf-50: #f0f9e8;
+	--color-leaf-100: #d4efc0;
+	--color-leaf-200: #a8d948;
+	--color-leaf-300: #7bc142;
+	--color-leaf-400: #4caf50;
+	--color-leaf-500: #2e7d32;
+	--color-leaf-600: #1b5e20;
+	--color-leaf-700: #1a2e0a;
+	--color-leaf-800: #0e1509;
+	--color-leaf-900: #060a04;
+
+	/* Surface palette */
+	--color-surface-50: #fafaf5;
+	--color-surface-100: #f5f5e8;
+	--color-surface-200: #e8e8d0;
+	--color-surface-300: #d4d4b8;
+	--color-surface-400: #a3a38a;
+	--color-surface-500: #72725c;
+	--color-surface-600: #41412e;
+	--color-surface-700: #2a2a1e;
+	--color-surface-800: #1a1a12;
+	--color-surface-900: #0d0d09;
+
+	--font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+	--font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+html {
+	scroll-behavior: smooth;
+}
+
+body {
+	background: var(--color-leaf-800);
+	color: var(--color-surface-100);
+}
+
+/* Custom prose styling for blog */
+.prose-lemon {
+	--tw-prose-body: var(--color-surface-200);
+	--tw-prose-headings: var(--color-lemon-300);
+	--tw-prose-lead: var(--color-surface-300);
+	--tw-prose-links: var(--color-lemon-400);
+	--tw-prose-bold: var(--color-surface-100);
+	--tw-prose-counters: var(--color-lemon-500);
+	--tw-prose-bullets: var(--color-leaf-400);
+	--tw-prose-hr: var(--color-surface-600);
+	--tw-prose-quotes: var(--color-lemon-300);
+	--tw-prose-quote-borders: var(--color-leaf-500);
+	--tw-prose-captions: var(--color-surface-400);
+	--tw-prose-code: var(--color-lemon-300);
+	--tw-prose-pre-code: var(--color-surface-200);
+	--tw-prose-pre-bg: var(--color-leaf-900);
+	--tw-prose-th-borders: var(--color-surface-600);
+	--tw-prose-td-borders: var(--color-surface-700);
+}
