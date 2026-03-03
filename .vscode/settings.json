@@ -1,0 +1,17 @@
+{
+  "workbench.colorTheme": "Default Dark+",
+  "workbench.colorCustomizations": {
+    "titleBar.activeBackground": "#2E7D32",
+    "titleBar.activeForeground": "#FFEB3B",
+    "activityBar.background": "#1a2e0a",
+    "activityBar.foreground": "#FFE033",
+    "sideBar.background": "#0e1509",
+    "sideBar.foreground": "#e4e4d0",
+    "sideBarSectionHeader.background": "#1c2a0e",
+    "statusBar.background": "#FFE033",
+    "statusBar.foreground": "#1a1800",
+    "editor.background": "#0d120a",
+    "panel.background": "#0e1509",
+    "tab.activeBorder": "#FFE033"
+  }
+}
