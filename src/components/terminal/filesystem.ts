@@ -48,36 +48,18 @@ const FILESYSTEM: FsDir = {
 				"STATUS:   QUIET CONFIDENCE",
 			].join("\n"),
 		},
-		TRACKS: {
-			type: "dir",
-			date: "2025-11-20",
-			children: {
-				"WIP.TXT": {
-					type: "file",
-					size: "0.3K",
-					date: "2026-02-28",
-					content: [
-						"UPCOMING SHIT:",
-						"",
-						"- GAME: HAMMERBOUND (STEAM RELEASE Q3 2026)",
-						"- ALBUM: BLACKSTAR OST",
-						"- WEB: TINYDOOM.COM",
-					].join("\n"),
-				},
-			},
-		},
 		PROJECTS: {
 			type: "dir",
 			date: "2026-03-01",
 			children: {
-				"BLACKBOX.PRG": {
+				"BLACKBOX.GIT": {
 					type: "file",
 					size: "3.2K",
 					date: "2025-04-18",
 					content: [
 						"PROJECT: BLACKBOX",
 						"LANG: PYTHON",
-						"REPO: GITHUB.COM/LEMONSAURUS/BLACKBOX",
+						"REPO: HTTPS://GITHUB.COM/LEMONSAURUS/BLACKBOX",
 						"",
 						"AUTOMATED DATABASE BACKUP SERVICE.",
 						"CRON-SCHEDULED, DOCKER-READY.",
@@ -87,14 +69,14 @@ const FILESYSTEM: FsDir = {
 						"ALERTS: DISCORD, SLACK, TELEGRAM",
 					].join("\n"),
 				},
-				"AGENCY.PRG": {
+				"AGENCY.GIT": {
 					type: "file",
 					size: "2.8K",
 					date: "2026-02-10",
 					content: [
 						"PROJECT: AGENCY",
 						"LANG: GO",
-						"REPO: GITHUB.COM/LEMONSAURUS/AGENCY",
+						"REPO: HTTPS://GITHUB.COM/LEMONSAURUS/AGENCY",
 						"",
 						"TERMINAL MULTIPLEXER FOR AI AGENT SESSIONS.",
 						"BLOOMBERG-STYLE GRID LAYOUT FOR ULTRAWIDES.",
@@ -103,14 +85,14 @@ const FILESYSTEM: FsDir = {
 						"OPTIONAL FIREJAIL SANDBOXING.",
 					].join("\n"),
 				},
-				"MIRADOR.PRG": {
+				"MIRADOR.GIT": {
 					type: "file",
 					size: "4.1K",
 					date: "2026-01-22",
 					content: [
 						"PROJECT: MIRADOR",
 						"LANG: RUST",
-						"REPO: GITHUB.COM/LEMONSAURUS/MIRADOR",
+						"REPO: HTTPS://GITHUB.COM/LEMONSAURUS/MIRADOR",
 						"",
 						"TUI DASHBOARD FOR DOCKER COMPOSE.",
 						"REPLACES 'DOCKER COMPOSE LOGS -F'.",
@@ -160,7 +142,7 @@ const FILESYSTEM: FsDir = {
 						"NOT QUITE READY YET. SOON.",
 					].join("\n"),
 				},
-				"PYDIS.PRG": {
+				"PYDIS.GIT": {
 					type: "file",
 					size: "2.6K",
 					date: "2026-03-01",
@@ -211,7 +193,7 @@ function getNode(path: string[]): FsNode | null {
 	let node: FsNode = FILESYSTEM;
 	for (const part of path) {
 		if (node.type !== "dir") return null;
-		const child = node.children[part];
+		const child: FsNode | undefined = node.children[part];
 		if (!child) return null;
 		node = child;
 	}

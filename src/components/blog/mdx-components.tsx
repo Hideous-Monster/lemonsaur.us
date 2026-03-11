@@ -32,22 +32,19 @@ function CustomImage(props: ComponentPropsWithoutRef<"img">) {
 		);
 	}
 
-	return <Image src={src} alt={props.alt ?? ""} width={800} height={450} className="rounded-lg" />;
+	return <Image src={src} alt={props.alt ?? ""} width={800} height={450} />;
 }
 
 export const mdxComponents: MDXComponents = {
 	a: CustomLink as MDXComponents["a"],
 	img: CustomImage as MDXComponents["img"],
-	h1: (props) => <h1 className="mt-8 mb-4 text-3xl font-bold text-lemon-300" {...props} />,
-	h2: (props) => <h2 className="mt-6 mb-3 text-2xl font-bold text-lemon-300" {...props} />,
-	h3: (props) => <h3 className="mt-4 mb-2 text-xl font-semibold text-lemon-400" {...props} />,
+	h1: (props) => <h1 className="mt-8 mb-4 text-2xl font-bold text-c64-white" {...props} />,
+	h2: (props) => <h2 className="mt-6 mb-3 text-xl font-bold text-c64-white" {...props} />,
+	h3: (props) => <h3 className="mt-4 mb-2 text-lg font-semibold text-c64-text" {...props} />,
 	blockquote: (props) => (
-		<blockquote className="border-l-4 border-leaf-500 pl-4 italic text-surface-300" {...props} />
+		<blockquote className="border-l-4 border-c64-green pl-4 italic text-c64-text" {...props} />
 	),
 	code: (props) => (
-		<code
-			className="rounded bg-leaf-900 px-1.5 py-0.5 text-sm font-mono text-lemon-300"
-			{...props}
-		/>
+		<code className="bg-c64-black px-1.5 py-0.5 text-sm text-c64-lgreen" {...props} />
 	),
 };

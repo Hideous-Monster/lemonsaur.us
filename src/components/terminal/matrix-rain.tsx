@@ -53,7 +53,7 @@ export function MatrixRain({ onExit }: MatrixRainProps) {
 			drops = Array.from({ length: cols }, (_, i) => ({
 				x: i,
 				y: (Math.random() * -(canvas?.height ?? 600)) / FONT_SIZE,
-				speed: 0.2 + Math.random() * 0.5,
+				speed: 0.08 + Math.random() * 0.2,
 				length: 8 + Math.floor(Math.random() * 20),
 				chars: Array.from({ length: 30 }, randomChar),
 			}));

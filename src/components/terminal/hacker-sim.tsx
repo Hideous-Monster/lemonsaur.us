@@ -343,7 +343,7 @@ export function HackerSim({ onExit }: HackerSimProps) {
 	const phaseRef = useRef(phase);
 	const promptWordsRef = useRef<string[]>(nextPromptCommand());
 	const promptIndexRef = useRef(0);
-	const progressIntervalRef = useRef<ReturnType<typeof setInterval>>();
+	const progressIntervalRef = useRef<ReturnType<typeof setInterval>>(undefined);
 	onExitRef.current = onExit;
 	phaseRef.current = phase;
 

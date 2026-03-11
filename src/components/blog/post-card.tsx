@@ -15,27 +15,27 @@ export function PostCard({ post }: PostCardProps) {
 
 	return (
 		<Link href={`/blog/${post.slug}`} className="group block">
-			<article className="rounded-xl border border-leaf-700/50 bg-leaf-800/50 p-6 transition-all duration-300 hover:border-lemon-500/50 hover:bg-leaf-800/80 hover:shadow-lg hover:shadow-lemon-500/5">
-				<h2 className="mb-2 text-xl font-bold text-surface-100 transition-colors group-hover:text-lemon-300">
+			<article className="border-2 border-c64-dim p-6 transition-all duration-300 hover:border-c64-text">
+				<h2 className="mb-2 font-pixel text-sm uppercase text-c64-white transition-colors group-hover:text-c64-yellow">
 					{post.title}
 				</h2>
 
 				{post.description && (
-					<p className="mb-4 text-sm text-surface-400 line-clamp-2">{post.description}</p>
+					<p className="mb-4 text-sm text-c64-text line-clamp-2">{post.description}</p>
 				)}
 
 				<div className="mb-3 flex flex-wrap gap-2">
 					{post.tags.map((tag) => (
 						<span
 							key={tag}
-							className="rounded-full bg-leaf-700/50 px-2.5 py-0.5 text-xs font-medium text-leaf-200"
+							className="border border-c64-green px-2.5 py-0.5 text-xs text-c64-green"
 						>
 							{tag}
 						</span>
 					))}
 				</div>
 
-				<div className="flex items-center gap-4 text-xs text-surface-500">
+				<div className="flex items-center gap-4 text-xs text-c64-muted">
 					<span className="flex items-center gap-1">
 						<Calendar size={12} />
 						{formattedDate}

@@ -1,8 +1,7 @@
 import { Github, Linkedin, type LucideIcon, Music2, Youtube } from "lucide-react";
 
 export const SITE_NAME = "lemonsaur.us";
-export const SITE_DESCRIPTION =
-	"A lemon dinosaur's corner of the internet — 3D character creator and blog.";
+export const SITE_DESCRIPTION = "87K RAM SYSTEM. SOUND / CODE / STATIC.";
 export const SITE_URL = "https://lemonsaur.us";
 
 export interface SocialLink {

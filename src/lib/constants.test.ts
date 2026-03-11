@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { BRAND_IMAGES, NAV_LINKS, SITE_NAME, SITE_URL, SOCIAL_LINKS } from "./constants";
+import {
+	BRAND_IMAGES,
+	NAV_LINKS,
+	SITE_DESCRIPTION,
+	SITE_NAME,
+	SITE_URL,
+	SOCIAL_LINKS,
+} from "./constants";
 
 describe("constants", () => {
 	it("exports a valid site name", () => {
@@ -8,6 +15,11 @@ describe("constants", () => {
 
 	it("exports a valid site URL", () => {
 		expect(SITE_URL).toMatch(/^https:\/\//);
+	});
+
+	it("exports a site description", () => {
+		expect(SITE_DESCRIPTION).toBeTruthy();
+		expect(typeof SITE_DESCRIPTION).toBe("string");
 	});
 
 	it("exports social links with required fields", () => {

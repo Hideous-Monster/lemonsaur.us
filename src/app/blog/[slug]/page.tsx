@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import rehypePrettyCode from "rehype-pretty-code";
@@ -50,26 +51,27 @@ export default async function BlogPostPage({ params }: PageProps) {
 	return (
 		<article>
 			<header className="mb-8">
-				<h1 className="mb-4 text-4xl font-bold text-lemon-300">{post.title}</h1>
-				<div className="flex items-center gap-4 text-sm text-surface-400">
+				<h1 className="mb-4 text-2xl font-bold text-c64-white">{post.title}</h1>
+				<div className="flex items-center gap-4 text-sm text-c64-muted">
 					<time dateTime={post.date}>{formattedDate}</time>
 					<span>{post.readingTime}</span>
 				</div>
 				{post.tags.length > 0 && (
 					<div className="mt-3 flex flex-wrap gap-2">
 						{post.tags.map((tag) => (
-							<span
+							<Link
 								key={tag}
-								className="rounded-full bg-leaf-700/50 px-2.5 py-0.5 text-xs font-medium text-leaf-200"
+								href={`/blog?tag=${encodeURIComponent(tag)}`}
+								className="border border-c64-green px-2.5 py-0.5 text-xs text-c64-green transition-colors hover:bg-c64-green hover:text-c64-bg"
 							>
 								{tag}
-							</span>
+							</Link>
 						))}
 					</div>
 				)}
 			</header>
 
-			<div className="prose prose-lg prose-lemon max-w-none">
+			<div className="prose prose-lg prose-c64 max-w-none">
 				<MDXRemote
 					source={post.content}
 					components={mdxComponents}

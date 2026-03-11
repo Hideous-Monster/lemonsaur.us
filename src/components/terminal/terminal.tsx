@@ -47,7 +47,7 @@ function rainbowChar(index: number, total: number): string {
 	return `rgb(${r},${g},${b})`;
 }
 
-type TerminalMode = "terminal" | "snake" | "matrix" | "hack";
+type TerminalMode = "terminal" | "snake" | "matrix" | "hack" | "destroyed";
 
 export function Terminal() {
 	const [lines, setLines] = useState<TerminalLine[]>([]);
@@ -135,6 +135,12 @@ export function Terminal() {
 				return;
 			}
 
+			if (result.action === "destroy") {
+				setLines((prev) => [...prev, ...result.lines]);
+				setTimeout(() => setMode("destroyed"), 800);
+				return;
+			}
+
 			if (result.action === "navigate" && result.href) {
 				setLines((prev) => [...prev, ...result.lines]);
 				setTimeout(() => router.push(result.href!), 400);
@@ -203,6 +209,17 @@ export function Terminal() {
 		setTimeout(() => inputRef.current?.focus(), 50);
 	}, []);
 
+	if (mode === "destroyed") {
+		return (
+			<div className="flex flex-1 flex-col items-center justify-center bg-black font-pixel">
+				<div className="text-6xl font-bold text-red-500 sm:text-8xl">404</div>
+				<div className="mt-4 text-sm text-red-400 sm:text-base">SYSTEM DESTROYED</div>
+				<div className="mt-1 text-xs text-red-900">NO FILES REMAIN. EVERYTHING IS GONE.</div>
+				<div className="mt-8 text-xs text-red-900/50">THANKS A LOT.</div>
+			</div>
+		);
+	}
+
 	if (mode === "hack") {
 		return (
 			<div className="flex flex-1 overflow-hidden">
@@ -250,7 +267,7 @@ export function Terminal() {
 						<span dangerouslySetInnerHTML={{ __html: rainbowLine(line.text) }} />
 					) : line.type === "rich" ? (
 						// biome-ignore lint/security/noDangerouslySetInnerHtml: static pre-built colored HTML
-						<span dangerouslySetInnerHTML={{ __html: line.text }} />
+						<div dangerouslySetInnerHTML={{ __html: line.text }} />
 					) : line.lemojiSrc ? (
 						// biome-ignore lint/performance/noImgElement: inline 32px lemoji, next/image not needed
 						<img src={line.lemojiSrc} alt="lemoji" className="inline-block h-8 w-8" />
@@ -281,7 +298,10 @@ export function Terminal() {
 
 			{/* Input line with blinking cursor */}
 			{!booting && (
-				<form onSubmit={handleSubmit} className="relative flex items-center text-sm leading-relaxed">
+				<form
+					onSubmit={handleSubmit}
+					className="relative flex items-center text-sm leading-relaxed"
+				>
 					<span className="text-c64-yellow">&gt;&nbsp;</span>
 					<span className="text-c64-yellow">{input.toUpperCase()}</span>
 					<span className="cursor-blink inline-block h-[1em] w-[0.6em] translate-y-[0.15em] bg-c64-yellow" />

@@ -12,10 +12,10 @@ export default function BlogPage() {
 
 	return (
 		<div>
-			<h1 className="mb-8 text-4xl font-bold text-lemon-300">Blog</h1>
+			<h1 className="mb-8 font-pixel text-2xl text-c64-white">BLOG</h1>
 
 			{posts.length === 0 ? (
-				<p className="text-surface-400">No posts yet. Check back soon!</p>
+				<p className="font-pixel text-xs text-c64-muted">NO POSTS YET. CHECK BACK SOON!</p>
 			) : (
 				<div className="flex flex-col gap-6">
 					{posts.map((post) => (

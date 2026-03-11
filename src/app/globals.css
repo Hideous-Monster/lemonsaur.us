@@ -4,43 +4,24 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-	/* Lemon palette */
-	--color-lemon-50: #fffce6;
-	--color-lemon-100: #fff9bf;
-	--color-lemon-200: #fff280;
-	--color-lemon-300: #ffe033;
-	--color-lemon-400: #ffd700;
-	--color-lemon-500: #e6c200;
-	--color-lemon-600: #b39700;
-	--color-lemon-700: #806c00;
-	--color-lemon-800: #4d4100;
-	--color-lemon-900: #1a1600;
+	/* Lemon C64 palette */
+	--color-c64-bg: #1a2e1a;
+	--color-c64-body: #223a22;
+	--color-c64-text: #b8d850;
+	--color-c64-white: #f0f0d0;
+	--color-c64-black: #0a140a;
+	--color-c64-yellow: #e8e040;
+	--color-c64-green: #40b848;
+	--color-c64-lgreen: #70e070;
+	--color-c64-dgreen: #284028;
+	--color-c64-lime: #d0f050;
+	--color-c64-amber: #d0a030;
+	--color-c64-red: #c05040;
+	--color-c64-cyan: #70d0b0;
+	--color-c64-muted: #688850;
+	--color-c64-dim: #405030;
 
-	/* Leaf palette */
-	--color-leaf-50: #f0f9e8;
-	--color-leaf-100: #d4efc0;
-	--color-leaf-200: #a8d948;
-	--color-leaf-300: #7bc142;
-	--color-leaf-400: #4caf50;
-	--color-leaf-500: #2e7d32;
-	--color-leaf-600: #1b5e20;
-	--color-leaf-700: #1a2e0a;
-	--color-leaf-800: #0e1509;
-	--color-leaf-900: #060a04;
-
-	/* Surface palette */
-	--color-surface-50: #fafaf5;
-	--color-surface-100: #f5f5e8;
-	--color-surface-200: #e8e8d0;
-	--color-surface-300: #d4d4b8;
-	--color-surface-400: #a3a38a;
-	--color-surface-500: #72725c;
-	--color-surface-600: #41412e;
-	--color-surface-700: #2a2a1e;
-	--color-surface-800: #1a1a12;
-	--color-surface-900: #0d0d09;
-
-	--font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+	--font-pixel: var(--font-press-start);
 	--font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
@@ -49,29 +30,83 @@ html {
 }
 
 body {
-	background-color: var(--color-leaf-800);
-	background-image: url("/images/bg_lemons_blurred.png");
-	background-repeat: repeat;
-	background-size: 128px 128px;
-	color: var(--color-surface-100);
+	background-color: var(--color-c64-body);
+	color: var(--color-c64-text);
+	font-size: 14px;
 }
 
-/* Custom prose styling for blog */
-.prose-lemon {
-	--tw-prose-body: var(--color-surface-200);
-	--tw-prose-headings: var(--color-lemon-300);
-	--tw-prose-lead: var(--color-surface-300);
-	--tw-prose-links: var(--color-lemon-400);
-	--tw-prose-bold: var(--color-surface-100);
-	--tw-prose-counters: var(--color-lemon-500);
-	--tw-prose-bullets: var(--color-leaf-400);
-	--tw-prose-hr: var(--color-surface-600);
-	--tw-prose-quotes: var(--color-lemon-300);
-	--tw-prose-quote-borders: var(--color-leaf-500);
-	--tw-prose-captions: var(--color-surface-400);
-	--tw-prose-code: var(--color-lemon-300);
-	--tw-prose-pre-code: var(--color-surface-200);
-	--tw-prose-pre-bg: var(--color-leaf-900);
-	--tw-prose-th-borders: var(--color-surface-600);
-	--tw-prose-td-borders: var(--color-surface-700);
+/* CRT scanlines + glow */
+.crt {
+	position: relative;
+}
+
+.crt::after {
+	content: "";
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+	z-index: 100;
+	background:
+		repeating-linear-gradient(
+			0deg,
+			rgba(0, 0, 0, 0.3) 0px,
+			rgba(0, 0, 0, 0.3) 1px,
+			transparent 1px,
+			transparent 2px
+		),
+		radial-gradient(ellipse at center, transparent 50%, rgba(0, 0, 0, 0.4));
+}
+
+.crt * {
+	text-shadow: 0 0 4px rgba(184, 216, 80, 0.25);
+}
+
+/* Blinking block cursor */
+@keyframes cursor-blink {
+	0%, 50% {
+		opacity: 1;
+	}
+	51%, 100% {
+		opacity: 0;
+	}
+}
+
+.cursor-blink {
+	animation: cursor-blink 1s step-end infinite;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+	width: 6px;
+}
+
+::-webkit-scrollbar-track {
+	background: var(--color-c64-bg);
+}
+
+::-webkit-scrollbar-thumb {
+	background: var(--color-c64-dim);
+}
+
+/* Blog prose — lemon palette */
+.prose-c64 {
+	--tw-prose-body: var(--color-c64-text);
+	--tw-prose-headings: var(--color-c64-white);
+	--tw-prose-lead: var(--color-c64-text);
+	--tw-prose-links: var(--color-c64-yellow);
+	--tw-prose-bold: var(--color-c64-white);
+	--tw-prose-counters: var(--color-c64-text);
+	--tw-prose-bullets: var(--color-c64-text);
+	--tw-prose-hr: var(--color-c64-dim);
+	--tw-prose-quotes: var(--color-c64-text);
+	--tw-prose-quote-borders: var(--color-c64-green);
+	--tw-prose-captions: var(--color-c64-muted);
+	--tw-prose-code: var(--color-c64-lgreen);
+	--tw-prose-pre-code: var(--color-c64-lgreen);
+	--tw-prose-pre-bg: var(--color-c64-black);
+	--tw-prose-th-borders: var(--color-c64-text);
+	--tw-prose-td-borders: var(--color-c64-dim);
 }
