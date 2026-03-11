@@ -22,7 +22,7 @@ function ln(
 
 export interface CommandResult {
 	lines: TerminalLine[];
-	action?: "navigate" | "clear" | "snake" | "matrix";
+	action?: "navigate" | "clear" | "snake" | "matrix" | "hack";
 	href?: string;
 }
 
@@ -38,6 +38,7 @@ const COMMANDS: Record<string, () => CommandResult> = {
 			ln("  MUSIC   - LISTEN TO MUSIC", "output"),
 			ln("  SNAKE   - PLAY LEMON SNAKE", "output"),
 			ln("  MATRIX  - DIGITAL RAIN", "output"),
+			ln("  HACK    - HACKER MODE", "output"),
 			ln("  NEOFETCH - SYSTEM INFO", "output"),
 			ln("  LS      - LIST FILES", "output"),
 			ln("  CD      - CHANGE DIRECTORY", "output"),
@@ -52,7 +53,7 @@ const COMMANDS: Record<string, () => CommandResult> = {
 		lines: [
 			ln("LEMONSAURUS", "system"),
 			ln("", "output"),
-			ln("SOFTWARE ENGINEER / MUSIC PRODUCER", "output"),
+			ln("SOFTWARE ENGINEER", "output"),
 			ln("", "output"),
 			ln("BUILDING THINGS WITH CODE AND SOUND.", "output"),
 			ln("CURRENTLY VIBING IN OSLO, NORWAY.", "output"),
@@ -85,6 +86,11 @@ const COMMANDS: Record<string, () => CommandResult> = {
 	matrix: () => ({
 		lines: [ln("ENTERING THE MATRIX...", "system")],
 		action: "matrix",
+	}),
+
+	hack: () => ({
+		lines: [ln("INITIALIZING HACK SEQUENCE...", "system")],
+		action: "hack",
 	}),
 
 	music: () => ({
@@ -140,7 +146,7 @@ const COMMANDS: Record<string, () => CommandResult> = {
 		const info: [string, string, string, string][] = [
 			["", "LEMONSAURUS", "", "#e8e040"],
 			["", "───────────────────────────────", "", "#405030"],
-			["OS", "LEMON/OS 64 JUICY", "#b8d850", "#f0f0d0"],
+			["OS", "LEMON 87 JUICY", "#b8d850", "#f0f0d0"],
 			["HOST", "OSLO, NORWAY", "#b8d850", "#f0f0d0"],
 			["KERNEL", "6.502-SID-PETSCII", "#b8d850", "#f0f0d0"],
 			["UPTIME", "SINCE 1987", "#b8d850", "#f0f0d0"],
@@ -150,8 +156,7 @@ const COMMANDS: Record<string, () => CommandResult> = {
 			["RAM", "87K (38911 BASIC BYTES FREE)", "#b8d850", "#f0f0d0"],
 			["DISK", "1541 FLOPPY (170K)", "#b8d850", "#f0f0d0"],
 			["SOUND", "SID 6581 3-VOICE SYNTH", "#b8d850", "#f0f0d0"],
-			["CLASS", "SOFTWARE ENGINEER / MUSIC PRODUCER", "#b8d850", "#f0f0d0"],
-			["THEME", "LEMONS ALL THE WAY DOWN", "#b8d850", "#f0f0d0"],
+			["THEME", "ALGEBRAIC", "#b8d850", "#f0f0d0"],
 			["", "", "", ""],
 		];
 
@@ -232,6 +237,14 @@ const ARG_COMMANDS: Record<string, (args: string) => CommandResult> = {
 
 	cat: (args) => ({
 		lines: cat(args).map((line) => ln(line, "output")),
+	}),
+
+	nano: (args) => ({
+		lines: cat(args).map((line) => ln(line, "output")),
+	}),
+
+	dir: (args) => ({
+		lines: ls(args).map((line) => ln(line, "output")),
 	}),
 
 	pwd: () => ({

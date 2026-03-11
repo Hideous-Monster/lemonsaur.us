@@ -2,16 +2,28 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import { SOCIAL_LINKS } from "@/lib/constants";
 import { ALL_LEMOJIS, lemojiPath } from "@/lib/lemoji";
 
 export function Navbar() {
 	const [lemoji, setLemoji] = useState<string | null>(null);
+	const pathname = usePathname();
 
 	useEffect(() => {
 		setLemoji(ALL_LEMOJIS[Math.floor(Math.random() * ALL_LEMOJIS.length)]!);
 	}, []);
+
+	const handleHomeClick = useCallback(
+		(e: React.MouseEvent) => {
+			if (pathname === "/") {
+				e.preventDefault();
+				window.location.href = "/";
+			}
+		},
+		[pathname],
+	);
 
 	return (
 		<nav
@@ -19,7 +31,12 @@ export function Navbar() {
 			aria-label="Main navigation"
 		>
 			<div className="mx-auto flex h-12 max-w-7xl items-center justify-between px-4">
-				<Link href="/" className="flex items-center gap-2" aria-label="Home">
+				<Link
+					href="/"
+					className="flex items-center gap-2"
+					aria-label="Home"
+					onClick={handleHomeClick}
+				>
 					{lemoji ? (
 						<Image
 							src={lemojiPath(lemoji)}

@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import type { ReactNode } from "react";
 import { Footer } from "@/components/layout/footer";
 import { Navbar } from "@/components/layout/navbar";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/constants";
 import "./globals.css";
 
-const inter = Inter({
-	subsets: ["latin"],
-	variable: "--font-sans",
+const commodore = localFont({
+	src: "../fonts/CommodoreServer.ttf",
+	variable: "--font-press-start",
 	display: "swap",
 });
 
@@ -48,10 +49,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
 	return (
-		<html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
-			<body className="flex min-h-screen flex-col font-sans antialiased">
+		<html lang="en" className={`${commodore.variable} ${jetbrainsMono.variable}`}>
+			<body className="crt flex h-screen flex-col overflow-hidden bg-c64-body font-pixel text-c64-text antialiased">
 				<Navbar />
-				<main className="flex-1 pt-16">{children}</main>
+				<main className="min-h-0 flex-1 overflow-auto pt-12 pb-14">{children}</main>
 				<Footer />
 			</body>
 		</html>

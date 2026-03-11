@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SnakeGame } from "@/components/snake/snake-game";
+import { HackerSim } from "@/components/terminal/hacker-sim";
 import { MatrixRain } from "@/components/terminal/matrix-rain";
 import {
 	BOOT_LINES,
@@ -11,6 +12,7 @@ import {
 	makeBootLine,
 	type TerminalLine,
 } from "./commands";
+import { tabComplete } from "./filesystem";
 
 // ROYGBIV
 const RAINBOW = [
@@ -45,7 +47,7 @@ function rainbowChar(index: number, total: number): string {
 	return `rgb(${r},${g},${b})`;
 }
 
-type TerminalMode = "terminal" | "snake" | "matrix";
+type TerminalMode = "terminal" | "snake" | "matrix" | "hack";
 
 export function Terminal() {
 	const [lines, setLines] = useState<TerminalLine[]>([]);
@@ -127,6 +129,12 @@ export function Terminal() {
 				return;
 			}
 
+			if (result.action === "hack") {
+				setLines((prev) => [...prev, ...result.lines]);
+				setTimeout(() => setMode("hack"), 300);
+				return;
+			}
+
 			if (result.action === "navigate" && result.href) {
 				setLines((prev) => [...prev, ...result.lines]);
 				setTimeout(() => router.push(result.href!), 400);
@@ -140,7 +148,18 @@ export function Terminal() {
 
 	const handleKeyDown = useCallback(
 		(e: React.KeyboardEvent<HTMLInputElement>) => {
-			if (e.key === "ArrowUp") {
+			if (e.key === "Tab") {
+				e.preventDefault();
+				const trimmed = input.trimStart();
+				const spaceIdx = trimmed.indexOf(" ");
+				if (spaceIdx === -1) return;
+				const cmd = trimmed.slice(0, spaceIdx);
+				const arg = trimmed.slice(spaceIdx + 1);
+				const completed = tabComplete(arg);
+				if (completed !== arg) {
+					setInput(`${cmd} ${completed}`);
+				}
+			} else if (e.key === "ArrowUp") {
 				e.preventDefault();
 				if (history.length === 0) return;
 				const newIndex = historyIndex === -1 ? history.length - 1 : Math.max(0, historyIndex - 1);
@@ -159,7 +178,7 @@ export function Terminal() {
 				}
 			}
 		},
-		[history, historyIndex],
+		[history, historyIndex, input],
 	);
 
 	const handleSnakeExit = useCallback(() => {
@@ -173,6 +192,24 @@ export function Terminal() {
 		setLines((prev) => [...prev, makeBootLine("READY.", "system")]);
 		setTimeout(() => inputRef.current?.focus(), 50);
 	}, []);
+
+	const handleHackExit = useCallback(() => {
+		setMode("terminal");
+		setLines((prev) => [
+			...prev,
+			makeBootLine("CONNECTION TERMINATED.", "system"),
+			makeBootLine("READY.", "system"),
+		]);
+		setTimeout(() => inputRef.current?.focus(), 50);
+	}, []);
+
+	if (mode === "hack") {
+		return (
+			<div className="flex flex-1 overflow-hidden">
+				<HackerSim onExit={handleHackExit} />
+			</div>
+		);
+	}
 
 	if (mode === "matrix") {
 		return (
@@ -195,7 +232,7 @@ export function Terminal() {
 		// biome-ignore lint/a11y/noStaticElementInteractions: terminal container acts as click target
 		<div
 			ref={scrollRef}
-			className="flex-1 overflow-y-auto p-4 font-pixel text-[10px] sm:text-xs"
+			className="min-h-0 flex-1 overflow-y-auto p-4 font-pixel text-[10px] sm:text-xs"
 			onClick={focusInput}
 		>
 			{/* Rendered lines */}
@@ -244,7 +281,7 @@ export function Terminal() {
 
 			{/* Input line with blinking cursor */}
 			{!booting && (
-				<form onSubmit={handleSubmit} className="flex items-center text-sm leading-relaxed">
+				<form onSubmit={handleSubmit} className="relative flex items-center text-sm leading-relaxed">
 					<span className="text-c64-yellow">&gt;&nbsp;</span>
 					<span className="text-c64-yellow">{input.toUpperCase()}</span>
 					<span className="cursor-blink inline-block h-[1em] w-[0.6em] translate-y-[0.15em] bg-c64-yellow" />
@@ -254,7 +291,7 @@ export function Terminal() {
 						value={input}
 						onChange={(e) => setInput(e.target.value)}
 						onKeyDown={handleKeyDown}
-						className="absolute opacity-0"
+						className="absolute left-0 top-0 h-full w-0 opacity-0"
 						// biome-ignore lint/a11y/noAutofocus: terminal input must auto-focus
 						autoFocus
 						autoCapitalize="none"

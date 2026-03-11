@@ -2,8 +2,8 @@ import { SOCIAL_LINKS } from "@/lib/constants";
 
 export function Footer() {
 	return (
-		<footer className="border-t border-leaf-700/50 bg-leaf-900/50 px-4 py-8">
-			<div className="mx-auto flex max-w-7xl flex-col items-center gap-4">
+		<footer className="fixed bottom-0 z-50 w-full border-t-2 border-c64-dim bg-c64-bg px-4 py-3">
+			<div className="mx-auto flex max-w-7xl flex-col items-center gap-3">
 				<div className="flex gap-4">
 					{SOCIAL_LINKS.map((social) => (
 						<a
@@ -12,13 +12,13 @@ export function Footer() {
 							target="_blank"
 							rel="noopener noreferrer"
 							aria-label={social.name}
-							className="text-surface-400 transition-colors hover:text-lemon-400"
+							className="text-c64-text transition-colors hover:text-c64-white"
 						>
-							<social.icon size={20} />
+							<social.icon size={16} />
 						</a>
 					))}
 				</div>
-				<p className="text-sm text-surface-500">lemonsaur.us</p>
+				<p className="font-pixel text-xs text-c64-muted">MADE WITH 🍋 AND ☕. NO RIGHTS RESERVED.</p>
 			</div>
 		</footer>
 	);
