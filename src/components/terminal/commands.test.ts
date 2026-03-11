@@ -53,10 +53,27 @@ describe("executeCommand", () => {
 		expect(linkLines[0]!.href).toContain("soundcloud.com");
 	});
 
+	it("snake returns snake action", () => {
+		const result = executeCommand("snake");
+		expect(result.action).toBe("snake");
+		expect(result.lines.length).toBeGreaterThan(0);
+	});
+
+	it("matrix returns matrix action", () => {
+		const result = executeCommand("matrix");
+		expect(result.action).toBe("matrix");
+		expect(result.lines.length).toBeGreaterThan(0);
+	});
+
 	it("clear returns clear action", () => {
 		const result = executeCommand("clear");
 		expect(result.action).toBe("clear");
 		expect(result.lines).toEqual([]);
+	});
+
+	it("help includes MATRIX in command list", () => {
+		const result = executeCommand("help");
+		expect(result.lines.some((l) => l.text.includes("MATRIX"))).toBe(true);
 	});
 
 	it("lemon returns a lemoji with image src", () => {

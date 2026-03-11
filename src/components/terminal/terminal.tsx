@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SnakeGame } from "@/components/snake/snake-game";
+import { MatrixRain } from "@/components/terminal/matrix-rain";
 import {
 	BOOT_LINES,
 	executeCommand,
@@ -44,7 +45,7 @@ function rainbowChar(index: number, total: number): string {
 	return `rgb(${r},${g},${b})`;
 }
 
-type TerminalMode = "terminal" | "snake";
+type TerminalMode = "terminal" | "snake" | "matrix";
 
 export function Terminal() {
 	const [lines, setLines] = useState<TerminalLine[]>([]);
@@ -120,6 +121,12 @@ export function Terminal() {
 				return;
 			}
 
+			if (result.action === "matrix") {
+				setLines((prev) => [...prev, ...result.lines]);
+				setTimeout(() => setMode("matrix"), 300);
+				return;
+			}
+
 			if (result.action === "navigate" && result.href) {
 				setLines((prev) => [...prev, ...result.lines]);
 				setTimeout(() => router.push(result.href!), 400);
@@ -161,6 +168,20 @@ export function Terminal() {
 		setTimeout(() => inputRef.current?.focus(), 50);
 	}, []);
 
+	const handleMatrixExit = useCallback(() => {
+		setMode("terminal");
+		setLines((prev) => [...prev, makeBootLine("READY.", "system")]);
+		setTimeout(() => inputRef.current?.focus(), 50);
+	}, []);
+
+	if (mode === "matrix") {
+		return (
+			<div className="flex flex-1 overflow-hidden">
+				<MatrixRain onExit={handleMatrixExit} />
+			</div>
+		);
+	}
+
 	if (mode === "snake") {
 		return (
 			<div className="flex flex-1 items-center justify-center overflow-y-auto">
@@ -182,12 +203,17 @@ export function Terminal() {
 				<div
 					key={line.id}
 					className={`min-h-[1.5em] whitespace-pre-wrap leading-relaxed ${
-						line.type === "logo" ? "font-mono text-xs leading-none" : "break-all"
+						line.type === "logo" || line.type === "rich"
+							? "font-mono text-xs leading-none"
+							: "break-all"
 					}`}
 				>
 					{line.type === "logo" ? (
 						// biome-ignore lint/security/noDangerouslySetInnerHtml: static pre-built rainbow HTML
 						<span dangerouslySetInnerHTML={{ __html: rainbowLine(line.text) }} />
+					) : line.type === "rich" ? (
+						// biome-ignore lint/security/noDangerouslySetInnerHtml: static pre-built colored HTML
+						<span dangerouslySetInnerHTML={{ __html: line.text }} />
 					) : line.lemojiSrc ? (
 						// biome-ignore lint/performance/noImgElement: inline 32px lemoji, next/image not needed
 						<img src={line.lemojiSrc} alt="lemoji" className="inline-block h-8 w-8" />
