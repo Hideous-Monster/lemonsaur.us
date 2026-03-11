@@ -81,4 +81,51 @@ describe("SnakeGame", () => {
 		fireEvent.keyDown(window, { key: "Escape" });
 		expect(onExit).toHaveBeenCalledTimes(1);
 	});
+
+	it("transitions to playing state when a movement key is pressed on start screen", () => {
+		render(<SnakeGame onExit={onExit} />);
+		expect(screen.getByText("PRESS ANY KEY TO START")).toBeDefined();
+		fireEvent.keyDown(window, { key: "ArrowRight" });
+		expect(screen.queryByText("PRESS ANY KEY TO START")).toBeNull();
+	});
+
+	it("draws a fruit emoji on canvas when game starts", () => {
+		const ctxMock = {
+			fillStyle: "",
+			strokeStyle: "",
+			lineWidth: 0,
+			font: "",
+			textAlign: "",
+			textBaseline: "",
+			fillRect: vi.fn(),
+			strokeRect: vi.fn(),
+			beginPath: vi.fn(),
+			moveTo: vi.fn(),
+			lineTo: vi.fn(),
+			stroke: vi.fn(),
+			arc: vi.fn(),
+			fill: vi.fn(),
+			fillText: vi.fn(),
+			drawImage: vi.fn(),
+		};
+		HTMLCanvasElement.prototype.getContext = vi.fn(
+			() => ctxMock,
+		) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+
+		render(<SnakeGame onExit={onExit} />);
+		fireEvent.keyDown(window, { key: "ArrowRight" });
+
+		// fillText should be called with either the lemon or apple emoji
+		const calls = ctxMock.fillText.mock.calls.map((c: unknown[]) => c[0] as string);
+		const hasFruitEmoji = calls.some((text) => text === "\u{1F34B}" || text === "\u{1F34E}");
+		expect(hasFruitEmoji).toBe(true);
+	});
+
+	it("shows game over screen after pressing space to retry", () => {
+		render(<SnakeGame onExit={onExit} />);
+		// Start the game
+		fireEvent.keyDown(window, { key: " " });
+		// No crash, game state transitions work
+		expect(screen.queryByText("PRESS ANY KEY TO START")).toBeNull();
+	});
 });

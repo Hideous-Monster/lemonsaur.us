@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 type Direction = "UP" | "DOWN" | "LEFT" | "RIGHT";
 type Position = { x: number; y: number };
+type FruitType = "lemon" | "apple";
 
 const GRID_COLS = 30;
 const GRID_ROWS = 18;
@@ -11,6 +12,9 @@ const CELL_SIZE = 24;
 const INITIAL_SPEED = 150;
 const SPEED_INCREMENT = 3;
 const MIN_SPEED = 60;
+const POWERUP_DURATION_MS = 10_000;
+const POWERUP_BLINK_INTERVAL_MS = 150;
+const APPLE_SPAWN_CHANCE = 0.2;
 
 type GameState = "waiting" | "playing" | "gameover";
 
@@ -23,6 +27,10 @@ function randomPosition(exclude: Position[]): Position {
 		};
 	} while (exclude.some((p) => p.x === pos.x && p.y === pos.y));
 	return pos;
+}
+
+function randomFruitType(): FruitType {
+	return Math.random() < APPLE_SPAWN_CHANCE ? "apple" : "lemon";
 }
 
 interface SnakeGameProps {
@@ -39,13 +47,23 @@ export function SnakeGame({ onExit }: SnakeGameProps) {
 	const directionRef = useRef<Direction>("RIGHT");
 	const nextDirectionRef = useRef<Direction>("RIGHT");
 	const lemonRef = useRef<Position>({ x: 20, y: 9 });
+	const fruitTypeRef = useRef<FruitType>("lemon");
 	const scoreRef = useRef(0);
 	const gameStateRef = useRef<GameState>("waiting");
 	const speedRef = useRef(INITIAL_SPEED);
+	const isPowerupActiveRef = useRef(false);
+	const powerupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	useEffect(() => {
 		const saved = localStorage.getItem("snake-highscore");
 		if (saved) setHighScore(Number.parseInt(saved, 10));
+	}, []);
+
+	// Clear powerup on unmount
+	useEffect(() => {
+		return () => {
+			if (powerupTimerRef.current) clearTimeout(powerupTimerRef.current);
+		};
 	}, []);
 
 	const resetGame = useCallback(() => {
@@ -54,8 +72,17 @@ export function SnakeGame({ onExit }: SnakeGameProps) {
 		directionRef.current = "RIGHT";
 		nextDirectionRef.current = "RIGHT";
 		lemonRef.current = randomPosition(start);
+		fruitTypeRef.current = randomFruitType();
 		scoreRef.current = 0;
 		speedRef.current = INITIAL_SPEED;
+
+		// Cancel any active powerup
+		if (powerupTimerRef.current) {
+			clearTimeout(powerupTimerRef.current);
+			powerupTimerRef.current = null;
+		}
+		isPowerupActiveRef.current = false;
+
 		setScore(0);
 		setGameState("playing");
 		gameStateRef.current = "playing";
@@ -90,28 +117,37 @@ export function SnakeGame({ onExit }: SnakeGameProps) {
 			ctx.stroke();
 		}
 
-		// Snake
+		// Snake - blink purple during powerup
 		const snake = snakeRef.current;
+		const isPowerup = isPowerupActiveRef.current;
+		const blinkPhase = Math.floor(Date.now() / POWERUP_BLINK_INTERVAL_MS) % 2 === 0;
+		const usePurple = isPowerup && blinkPhase;
+
 		for (let i = 0; i < snake.length; i++) {
 			const seg = snake[i]!;
 			const isHead = i === 0;
-			ctx.fillStyle = isHead ? "#e8e040" : "#40b848";
+			if (usePurple) {
+				ctx.fillStyle = isHead ? "#d070f0" : "#a050d0";
+			} else {
+				ctx.fillStyle = isHead ? "#e8e040" : "#40b848";
+			}
 			ctx.fillRect(seg.x * CELL_SIZE + 1, seg.y * CELL_SIZE + 1, CELL_SIZE - 2, CELL_SIZE - 2);
 			if (isHead) {
-				ctx.fillStyle = "#f0f0d0";
+				ctx.fillStyle = usePurple ? "#f0d0ff" : "#f0f0d0";
 				ctx.fillRect(seg.x * CELL_SIZE + 3, seg.y * CELL_SIZE + 3, 4, 4);
 			}
 		}
 
-		// Lemon emoji
-		const lemon = lemonRef.current;
+		// Fruit emoji (lemon or apple)
+		const fruit = lemonRef.current;
+		const emoji = fruitTypeRef.current === "apple" ? "\u{1F34E}" : "\u{1F34B}";
 		ctx.font = `${CELL_SIZE - 2}px serif`;
 		ctx.textAlign = "center";
 		ctx.textBaseline = "middle";
 		ctx.fillText(
-			"\u{1F34B}",
-			lemon.x * CELL_SIZE + CELL_SIZE / 2,
-			lemon.y * CELL_SIZE + CELL_SIZE / 2 + 1,
+			emoji,
+			fruit.x * CELL_SIZE + CELL_SIZE / 2,
+			fruit.y * CELL_SIZE + CELL_SIZE / 2 + 1,
 		);
 	}, []);
 
@@ -153,11 +189,22 @@ export function SnakeGame({ onExit }: SnakeGameProps) {
 
 			const newSnake = [newHead, ...snake];
 
-			// Eat lemon?
+			// Eat fruit?
 			if (newHead.x === lemonRef.current.x && newHead.y === lemonRef.current.y) {
-				scoreRef.current += 10;
+				const isApple = fruitTypeRef.current === "apple";
+				const isPowerup = isPowerupActiveRef.current;
+
+				// Scoring: 50pts during powerup, 10pts normally
+				scoreRef.current += isPowerup ? 50 : 10;
 				setScore(scoreRef.current);
-				speedRef.current = Math.max(MIN_SPEED, speedRef.current - SPEED_INCREMENT);
+
+				// Speed only increases from lemons, not from apple (which sets powerup speed)
+				if (!isApple && !isPowerup) {
+					speedRef.current = Math.max(MIN_SPEED, speedRef.current - SPEED_INCREMENT);
+				} else if (!isApple && isPowerup) {
+					// Still increment base speed but keep powerup speed active
+					speedRef.current = Math.max(MIN_SPEED, speedRef.current - SPEED_INCREMENT);
+				}
 
 				if (
 					scoreRef.current > Number.parseInt(localStorage.getItem("snake-highscore") || "0", 10)
@@ -166,7 +213,32 @@ export function SnakeGame({ onExit }: SnakeGameProps) {
 					setHighScore(scoreRef.current);
 				}
 
+				// Grow extra segments during powerup (3 total = keep 2 extra after normal keep-head)
+				if (isPowerup) {
+					// Push 2 extra tail copies to grow by 3 total
+					const tail = newSnake[newSnake.length - 1]!;
+					newSnake.push({ ...tail }, { ...tail });
+				}
+
+				// Apple activates powerup
+				if (isApple) {
+					// Cancel any existing powerup timer
+					if (powerupTimerRef.current) clearTimeout(powerupTimerRef.current);
+					isPowerupActiveRef.current = true;
+					// Store current normal speed so we can restore it
+					const normalSpeed = speedRef.current;
+					speedRef.current = Math.max(MIN_SPEED, Math.floor(normalSpeed / 2));
+
+					powerupTimerRef.current = setTimeout(() => {
+						isPowerupActiveRef.current = false;
+						// Restore normal speed
+						speedRef.current = normalSpeed;
+						powerupTimerRef.current = null;
+					}, POWERUP_DURATION_MS);
+				}
+
 				lemonRef.current = randomPosition(newSnake);
+				fruitTypeRef.current = randomFruitType();
 			} else {
 				newSnake.pop();
 			}
