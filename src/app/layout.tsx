@@ -31,7 +31,7 @@ export const metadata: Metadata = {
 		description: SITE_DESCRIPTION,
 		url: SITE_URL,
 		siteName: SITE_NAME,
-		images: [{ url: "/images/og-image.png", width: 1200, height: 630 }],
+		images: [{ url: "/images/lemon_87.png", width: 1200, height: 630 }],
 		locale: "en_US",
 		type: "website",
 	},
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
 		card: "summary_large_image",
 		title: SITE_NAME,
 		description: SITE_DESCRIPTION,
-		images: ["/images/og-image.png"],
+		images: ["/images/lemon_87.png"],
 	},
 	icons: {
 		icon: "/favicon.ico",
