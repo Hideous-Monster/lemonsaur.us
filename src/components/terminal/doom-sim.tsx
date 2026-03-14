@@ -159,30 +159,10 @@ export function DoomSim({ onExit }: DoomSimProps) {
 		};
 	}, [phase]);
 
-	// Ctrl+Q exits back to terminal, killing the WASM runtime
+	// Ctrl+Q exits back to terminal, killing the WASM runtime.
+	// Emscripten doesn't support clean shutdown, so we reload the page.
 	const killDoom = useCallback(() => {
-		// Close all AudioContexts spawned by Emscripten/SDL
-		const win = window as unknown as Record<string, unknown>;
-		const mod = win.Module as Record<string, unknown> | undefined;
-		if (mod) {
-			// Emscripten stores the SDL audio context here
-			const ctx = (mod as { audioCtx?: AudioContext }).audioCtx;
-			if (ctx) ctx.close().catch(() => {});
-			delete win.Module;
-		}
-		// Shotgun approach: close any AudioContext that's running
-		// (Emscripten creates them on globalThis)
-		for (const key of Object.keys(win)) {
-			const val = win[key];
-			if (val instanceof AudioContext && val.state !== "closed") {
-				val.close().catch(() => {});
-			}
-		}
-		// Remove the injected script
-		const script = document.querySelector('script[src="/doom/crispy-doom.js"]');
-		if (script) script.remove();
-
-		onExitRef.current();
+		window.location.reload();
 	}, []);
 
 	const handleKey = useCallback(
