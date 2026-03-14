@@ -30,7 +30,7 @@ export function Navbar() {
 			className="fixed top-0 z-50 w-full border-b-2 border-c64-dim bg-c64-bg px-4"
 			aria-label="Main navigation"
 		>
-			<div className="mx-auto flex h-12 max-w-7xl items-center justify-between px-4">
+			<div className="flex h-12 items-center justify-between">
 				<Link
 					href="/"
 					className="flex items-center gap-2"

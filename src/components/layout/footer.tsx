@@ -33,7 +33,7 @@ export function Footer() {
 
 	return (
 		<footer className="fixed bottom-0 z-50 w-full border-t-2 border-c64-dim bg-c64-bg px-4 py-3">
-			<div className="mx-auto flex max-w-7xl items-center justify-center">
+			<div className="flex items-center justify-center">
 				<p className="font-pixel text-xs text-c64-muted">{message}</p>
 			</div>
 		</footer>
