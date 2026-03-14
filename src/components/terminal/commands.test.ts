@@ -131,6 +131,19 @@ describe("executeCommand", () => {
 		expect(text).toContain("README.TXT");
 	});
 
+	it("sudo returns sudoers warning", () => {
+		const result = executeCommand("sudo rm -rf /");
+		const text = result.lines.map((l) => l.text).join("\n");
+		expect(text).toContain("NOT IN THE SUDOERS FILE");
+		expect(text).toContain("REPORTED");
+	});
+
+	it("sudo with no args still returns warning", () => {
+		const result = executeCommand("sudo");
+		const text = result.lines.map((l) => l.text).join("\n");
+		expect(text).toContain("NOT IN THE SUDOERS FILE");
+	});
+
 	it("is case insensitive", () => {
 		const result = executeCommand("HELP");
 		expect(result.lines[0]!.text).toBe("AVAILABLE COMMANDS:");

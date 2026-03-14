@@ -283,6 +283,15 @@ const ARG_COMMANDS: Record<string, (args: string) => CommandResult> = {
 	pwd: () => ({
 		lines: [ln(pwd(), "output")],
 	}),
+
+	sudo: () => ({
+		lines: [
+			ln("", "output"),
+			ln("VISITOR IS NOT IN THE SUDOERS FILE.", "system"),
+			ln("THIS INCIDENT WILL BE REPORTED.", "system"),
+			ln("", "output"),
+		],
+	}),
 };
 
 export function executeCommand(input: string): CommandResult {
