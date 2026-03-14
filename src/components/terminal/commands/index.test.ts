@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BOOT_LINES, executeCommand, makeBootLine } from "./commands";
+import { BOOT_LINES, executeCommand, makeBootLine } from ".";
 
 describe("executeCommand", () => {
 	it("returns empty lines for empty input", () => {
@@ -66,6 +66,28 @@ describe("executeCommand", () => {
 		const result = executeCommand("hack");
 		expect(result.action).toBe("hack");
 		expect(result.lines.length).toBeGreaterThan(0);
+	});
+
+	it("fortune returns a random quote", () => {
+		const result = executeCommand("fortune");
+		expect(result.lines.length).toBe(3);
+		expect(result.lines[1]!.text.length).toBeGreaterThan(0);
+		expect(result.lines[1]!.type).toBe("output");
+	});
+
+	it("fortune returns different results (not always the same)", () => {
+		const results = new Set<string>();
+		for (let i = 0; i < 20; i++) {
+			const result = executeCommand("fortune");
+			results.add(result.lines[1]!.text);
+		}
+		expect(results.size).toBeGreaterThan(1);
+	});
+
+	it("help includes FORTUNE in command list", () => {
+		const result = executeCommand("help");
+		const text = result.lines.map((l) => l.text).join("\n");
+		expect(text).toContain("FORTUNE");
 	});
 
 	it("neofetch returns system info with lemon art", () => {
