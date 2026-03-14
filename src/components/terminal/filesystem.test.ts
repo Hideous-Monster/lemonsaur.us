@@ -148,6 +148,17 @@ describe("filesystem", () => {
 			const lines = cat(".hidden");
 			expect(lines[0]).toContain("HIDDEN FILE");
 		});
+
+		it("reads .secrets file with Konami hint", () => {
+			const lines = cat(".secrets");
+			expect(lines.some((l) => l.includes("KONAMI"))).toBe(true);
+		});
+
+		it("reads .commands cheat sheet", () => {
+			const lines = cat(".commands");
+			expect(lines.some((l) => l.includes("CHEAT SHEET"))).toBe(true);
+			expect(lines.some((l) => l.includes("DOOM"))).toBe(true);
+		});
 	});
 
 	describe("tabComplete", () => {

@@ -198,6 +198,38 @@ describe("executeCommand", () => {
 		const ids = result.lines.map((l) => l.id);
 		expect(new Set(ids).size).toBe(ids.length);
 	});
+
+	it("echo returns the argument in uppercase", () => {
+		const result = executeCommand("echo hello world");
+		expect(result.lines[0]!.text).toBe("HELLO WORLD");
+	});
+
+	it("echo with no args returns empty line", () => {
+		const result = executeCommand("echo");
+		expect(result.lines[0]!.text).toBe("");
+	});
+
+	it("returns snarky roast for grep", () => {
+		const result = executeCommand("grep foo");
+		expect(result.lines[0]!.type).toBe("system");
+		expect(result.lines[0]!.text).toContain("GREP");
+	});
+
+	it("returns snarky roast for python", () => {
+		const result = executeCommand("python");
+		expect(result.lines[0]!.type).toBe("system");
+		expect(result.lines[0]!.text).toContain("INTERPRETER");
+	});
+
+	it("returns snarky roast for vim", () => {
+		const result = executeCommand("vim");
+		expect(result.lines[0]!.text).toContain("VIM");
+	});
+
+	it("roasts still return syntax error for truly unknown commands", () => {
+		const result = executeCommand("xyzzy123");
+		expect(result.lines[0]!.text).toContain("?SYNTAX ERROR");
+	});
 });
 
 describe("COMMAND_NAMES", () => {
