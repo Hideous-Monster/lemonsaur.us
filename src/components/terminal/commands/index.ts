@@ -25,7 +25,7 @@ const COMMANDS: Record<string, () => CommandResult> = {
 			ln("  ABOUT    - WHO IS LEMONSAURUS?", "output"),
 			ln("  LINKS    - SOCIAL LINKS", "output"),
 			ln("  SNAKE    - PLAY LEMON SNAKE", "output"),
-			ln("  MATRIX   - DIGITAL RAIN", "output"),
+			ln("  MATRIX   - THE ZEN OF DIGITAL RAIN", "output"),
 			ln("  HACK     - HACKER MODE", "output"),
 			ln("  DOOM     - RUN DOOM", "output"),
 			ln("  FORTUNE  - WORDS OF WISDOM", "output"),
