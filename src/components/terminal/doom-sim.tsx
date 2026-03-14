@@ -99,7 +99,7 @@ export function DoomSim({ onExit }: DoomSimProps) {
 			if (cancelled) return;
 
 			// Set up the Emscripten Module BEFORE loading the script.
-			const win = window as Record<string, unknown>;
+			const win = window as unknown as Record<string, unknown>;
 			win.Module = {
 				canvas,
 				noInitialRun: true,
@@ -162,7 +162,7 @@ export function DoomSim({ onExit }: DoomSimProps) {
 	// Ctrl+Q exits back to terminal, killing the WASM runtime
 	const killDoom = useCallback(() => {
 		// Close all AudioContexts spawned by Emscripten/SDL
-		const win = window as Record<string, unknown>;
+		const win = window as unknown as Record<string, unknown>;
 		const mod = win.Module as Record<string, unknown> | undefined;
 		if (mod) {
 			// Emscripten stores the SDL audio context here
