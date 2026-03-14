@@ -62,6 +62,11 @@ describe("executeCommand", () => {
 		expect(result.lines.length).toBeGreaterThan(0);
 	});
 
+	it("cmatrix is an alias for matrix", () => {
+		const result = executeCommand("cmatrix");
+		expect(result.action).toBe("matrix");
+	});
+
 	it("hack returns hack action", () => {
 		const result = executeCommand("hack");
 		expect(result.action).toBe("hack");

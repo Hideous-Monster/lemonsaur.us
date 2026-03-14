@@ -108,6 +108,11 @@ const COMMANDS: Record<string, () => CommandResult> = {
 		action: "matrix",
 	}),
 
+	cmatrix: () => ({
+		lines: [ln("ENTERING THE MATRIX...", "system")],
+		action: "matrix",
+	}),
+
 	hack: () => ({
 		lines: [ln("INITIALIZING HACK SEQUENCE...", "system")],
 		action: "hack",
