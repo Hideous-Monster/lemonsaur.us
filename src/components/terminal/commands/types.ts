@@ -8,6 +8,6 @@ export interface TerminalLine {
 
 export interface CommandResult {
 	lines: TerminalLine[];
-	action?: "navigate" | "clear" | "snake" | "matrix" | "hack" | "destroy";
+	action?: "navigate" | "clear" | "snake" | "matrix" | "hack" | "doom" | "destroy";
 	href?: string;
 }

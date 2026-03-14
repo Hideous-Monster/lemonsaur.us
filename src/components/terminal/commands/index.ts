@@ -27,6 +27,7 @@ const COMMANDS: Record<string, () => CommandResult> = {
 			ln("  SNAKE    - PLAY LEMON SNAKE", "output"),
 			ln("  MATRIX   - DIGITAL RAIN", "output"),
 			ln("  HACK     - HACKER MODE", "output"),
+			ln("  DOOM     - RUN DOOM", "output"),
 			ln("  FORTUNE  - WORDS OF WISDOM", "output"),
 			ln("  NEOFETCH - SYSTEM INFO", "output"),
 			ln("  CLEAR    - CLEAR SCREEN", "output"),
@@ -110,6 +111,11 @@ const COMMANDS: Record<string, () => CommandResult> = {
 	hack: () => ({
 		lines: [ln("INITIALIZING HACK SEQUENCE...", "system")],
 		action: "hack",
+	}),
+
+	doom: () => ({
+		lines: [ln("LOADING DOOM.EXE...", "system")],
+		action: "doom",
 	}),
 
 	fortune: () => ({

@@ -90,6 +90,18 @@ describe("executeCommand", () => {
 		expect(text).toContain("FORTUNE");
 	});
 
+	it("doom returns doom action", () => {
+		const result = executeCommand("doom");
+		expect(result.action).toBe("doom");
+		expect(result.lines.length).toBeGreaterThan(0);
+	});
+
+	it("help includes DOOM in command list", () => {
+		const result = executeCommand("help");
+		const text = result.lines.map((l) => l.text).join("\n");
+		expect(text).toContain("DOOM");
+	});
+
 	it("neofetch returns system info with lemon art", () => {
 		const result = executeCommand("neofetch");
 		expect(result.lines.length).toBeGreaterThan(5);

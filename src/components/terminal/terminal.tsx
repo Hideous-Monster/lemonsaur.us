@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SnakeGame } from "@/components/snake/snake-game";
+import { DoomSim } from "@/components/terminal/doom-sim";
 import { HackerSim } from "@/components/terminal/hacker-sim";
 import { MatrixRain } from "@/components/terminal/matrix-rain";
 import {
@@ -47,7 +48,7 @@ function rainbowChar(index: number, total: number): string {
 	return `rgb(${r},${g},${b})`;
 }
 
-type TerminalMode = "terminal" | "snake" | "matrix" | "hack" | "destroyed";
+type TerminalMode = "terminal" | "snake" | "matrix" | "hack" | "doom" | "destroyed";
 
 export function Terminal() {
 	const [lines, setLines] = useState<TerminalLine[]>([]);
@@ -135,6 +136,12 @@ export function Terminal() {
 				return;
 			}
 
+			if (result.action === "doom") {
+				setLines((prev) => [...prev, ...result.lines]);
+				setTimeout(() => setMode("doom"), 300);
+				return;
+			}
+
 			if (result.action === "destroy") {
 				setLines((prev) => [...prev, ...result.lines]);
 				setTimeout(() => setMode("destroyed"), 800);
@@ -209,6 +216,16 @@ export function Terminal() {
 		setTimeout(() => inputRef.current?.focus(), 50);
 	}, []);
 
+	const handleDoomExit = useCallback(() => {
+		setMode("terminal");
+		setLines((prev) => [
+			...prev,
+			makeBootLine("PROGRAM TERMINATED.", "system"),
+			makeBootLine("READY.", "system"),
+		]);
+		setTimeout(() => inputRef.current?.focus(), 50);
+	}, []);
+
 	if (mode === "destroyed") {
 		return (
 			<div className="flex flex-1 flex-col items-center justify-center bg-black font-pixel">
@@ -224,6 +241,14 @@ export function Terminal() {
 		return (
 			<div className="flex flex-1 overflow-hidden">
 				<HackerSim onExit={handleHackExit} />
+			</div>
+		);
+	}
+
+	if (mode === "doom") {
+		return (
+			<div className="flex flex-1 overflow-hidden">
+				<DoomSim onExit={handleDoomExit} />
 			</div>
 		);
 	}
