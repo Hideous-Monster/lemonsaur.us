@@ -179,7 +179,7 @@ export function DoomSim({ onExit }: DoomSimProps) {
 			}
 		}
 		// Remove the injected script
-		const script = document.querySelector('script[src="/doom/websockets-doom.js"]');
+		const script = document.querySelector('script[src="/doom/crispy-doom.js"]');
 		if (script) script.remove();
 
 		onExitRef.current();
