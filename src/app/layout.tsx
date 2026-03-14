@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { JetBrains_Mono } from "next/font/google";
 import localFont from "next/font/local";
 import type { ReactNode } from "react";
+import { ConsoleGreeting } from "@/components/layout/console-greeting";
 import { Footer } from "@/components/layout/footer";
 import { Navbar } from "@/components/layout/navbar";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/constants";
@@ -54,6 +55,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 				<Navbar />
 				<main className="min-h-0 flex-1 overflow-auto pt-12 pb-14">{children}</main>
 				<Footer />
+				<ConsoleGreeting />
 			</body>
 		</html>
 	);
