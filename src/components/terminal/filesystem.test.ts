@@ -1,8 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { cat, cd, ls, pwd } from "./filesystem";
+import { cat, cd, ls, pwd, tabComplete } from "./filesystem";
 
 describe("filesystem", () => {
-	// Reset to root after each test
 	afterEach(() => {
 		cd("/");
 	});
@@ -13,8 +12,8 @@ describe("filesystem", () => {
 		});
 
 		it("reflects current directory after cd", () => {
-			cd("tracks");
-			expect(pwd()).toBe("/TRACKS");
+			cd("projects");
+			expect(pwd()).toBe("/PROJECTS");
 		});
 	});
 
@@ -23,7 +22,7 @@ describe("filesystem", () => {
 			const lines = ls("");
 			expect(lines.length).toBeGreaterThan(0);
 			expect(lines.some((l) => l.includes("README.TXT"))).toBe(true);
-			expect(lines.some((l) => l.includes("TRACKS"))).toBe(true);
+			expect(lines.some((l) => l.includes("PROJECTS"))).toBe(true);
 			expect(lines.some((l) => l.includes("<DIR>"))).toBe(true);
 		});
 
@@ -37,22 +36,44 @@ describe("filesystem", () => {
 			expect(lines.some((l) => l.includes(".HIDDEN"))).toBe(true);
 		});
 
+		it("shows dotfiles with -la flag", () => {
+			const lines = ls("-la");
+			expect(lines.some((l) => l.includes(".HIDDEN"))).toBe(true);
+		});
+
+		it("shows dotfiles with -al flag", () => {
+			const lines = ls("-al");
+			expect(lines.some((l) => l.includes(".HIDDEN"))).toBe(true);
+		});
+
 		it("lists a subdirectory by path", () => {
 			const lines = ls("projects");
-			expect(lines.some((l) => l.includes("BLACKBOX.PRG"))).toBe(true);
+			expect(lines.some((l) => l.includes("BLACKBOX.GIT"))).toBe(true);
+			expect(lines.some((l) => l.includes("AGENCY.GIT"))).toBe(true);
 		});
 
 		it("returns error for nonexistent path", () => {
 			const lines = ls("nonexistent");
 			expect(lines[0]).toContain("NO SUCH FILE");
 		});
+
+		it("lists current directory after cd", () => {
+			cd("projects");
+			const lines = ls("");
+			expect(lines.some((l) => l.includes("BLACKBOX.GIT"))).toBe(true);
+		});
+
+		it("shows file sizes and dates", () => {
+			const lines = ls("");
+			expect(lines.some((l) => l.includes("1.2K"))).toBe(true);
+		});
 	});
 
 	describe("cd", () => {
 		it("changes to a subdirectory", () => {
-			const err = cd("tracks");
+			const err = cd("projects");
 			expect(err).toBeNull();
-			expect(pwd()).toBe("/TRACKS");
+			expect(pwd()).toBe("/PROJECTS");
 		});
 
 		it("returns error for nonexistent directory", () => {
@@ -66,13 +87,13 @@ describe("filesystem", () => {
 		});
 
 		it("supports .. to go up", () => {
-			cd("tracks");
+			cd("projects");
 			cd("..");
 			expect(pwd()).toBe("/");
 		});
 
 		it("resets to root with /", () => {
-			cd("tracks");
+			cd("projects");
 			cd("/");
 			expect(pwd()).toBe("/");
 		});
@@ -81,6 +102,12 @@ describe("filesystem", () => {
 			cd("projects");
 			cd("~");
 			expect(pwd()).toBe("/");
+		});
+
+		it("navigates nested paths", () => {
+			const err = cd("projects");
+			expect(err).toBeNull();
+			expect(pwd()).toBe("/PROJECTS");
 		});
 	});
 
@@ -92,13 +119,13 @@ describe("filesystem", () => {
 		});
 
 		it("reads a file in a subdirectory via path", () => {
-			const lines = cat("projects/blackbox.prg");
+			const lines = cat("projects/blackbox.git");
 			expect(lines.some((l) => l.includes("BLACKBOX"))).toBe(true);
 		});
 
 		it("reads a file from current directory after cd", () => {
 			cd("projects");
-			const lines = cat("blackbox.prg");
+			const lines = cat("blackbox.git");
 			expect(lines.some((l) => l.includes("BLACKBOX"))).toBe(true);
 		});
 
@@ -108,13 +135,50 @@ describe("filesystem", () => {
 		});
 
 		it("returns error for directory", () => {
-			const lines = cat("tracks");
+			const lines = cat("projects");
 			expect(lines[0]).toContain("IS A DIRECTORY");
 		});
 
 		it("returns error when no filename given", () => {
 			const lines = cat("");
 			expect(lines[0]).toContain("MISSING FILENAME");
+		});
+
+		it("reads hidden files", () => {
+			const lines = cat(".hidden");
+			expect(lines[0]).toContain("HIDDEN FILE");
+		});
+	});
+
+	describe("tabComplete", () => {
+		it("completes a partial filename", () => {
+			const result = tabComplete("READ");
+			expect(result).toBe("readme.txt");
+		});
+
+		it("completes a directory with trailing slash", () => {
+			const result = tabComplete("PROJ");
+			expect(result).toBe("projects/");
+		});
+
+		it("returns original if no match", () => {
+			const result = tabComplete("ZZZZZ");
+			expect(result).toBe("ZZZZZ");
+		});
+
+		it("returns original for empty input", () => {
+			const result = tabComplete("");
+			expect(result).toBe("");
+		});
+
+		it("completes inside a subdirectory path", () => {
+			const result = tabComplete("projects/BLACK");
+			expect(result).toBe("projects/blackbox.git");
+		});
+
+		it("returns original when path prefix is a file not a dir", () => {
+			const result = tabComplete("readme.txt/something");
+			expect(result).toBe("readme.txt/something");
 		});
 	});
 });

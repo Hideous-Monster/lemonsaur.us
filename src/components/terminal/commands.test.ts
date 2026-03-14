@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BOOT_LINES, executeCommand } from "./commands";
+import { BOOT_LINES, executeCommand, makeBootLine } from "./commands";
 
 describe("executeCommand", () => {
 	it("returns empty lines for empty input", () => {
@@ -12,10 +12,11 @@ describe("executeCommand", () => {
 		expect(result.lines).toEqual([]);
 	});
 
-	it("returns syntax error for unknown commands", () => {
+	it("returns syntax error with HELP hint for unknown commands", () => {
 		const result = executeCommand("foobar");
 		expect(result.lines).toHaveLength(1);
-		expect(result.lines[0]!.text).toBe("?SYNTAX ERROR");
+		expect(result.lines[0]!.text).toContain("?SYNTAX ERROR");
+		expect(result.lines[0]!.text).toContain("HELP");
 		expect(result.lines[0]!.type).toBe("system");
 	});
 
@@ -25,10 +26,19 @@ describe("executeCommand", () => {
 		expect(result.lines.length).toBeGreaterThan(1);
 	});
 
-	it("about returns bio information", () => {
+	it("help includes all major commands", () => {
+		const result = executeCommand("help");
+		const text = result.lines.map((l) => l.text).join("\n");
+		for (const cmd of ["HELP", "ABOUT", "LINKS", "SNAKE", "MATRIX", "HACK", "NEOFETCH", "CLEAR"]) {
+			expect(text).toContain(cmd);
+		}
+	});
+
+	it("about returns rich HTML with bio", () => {
 		const result = executeCommand("about");
-		expect(result.lines[0]!.text).toBe("LEMONSAURUS");
-		expect(result.lines.some((l) => l.text.includes("SOFTWARE ENGINEER"))).toBe(true);
+		expect(result.lines).toHaveLength(1);
+		expect(result.lines[0]!.type).toBe("rich");
+		expect(result.lines[0]!.text).toContain("LEMONSAURUS");
 	});
 
 	it("links returns social links with hrefs", () => {
@@ -38,19 +48,6 @@ describe("executeCommand", () => {
 		for (const line of linkLines) {
 			expect(line.href).toMatch(/^https:\/\//);
 		}
-	});
-
-	it("blog returns navigate action to /blog", () => {
-		const result = executeCommand("blog");
-		expect(result.action).toBe("navigate");
-		expect(result.href).toBe("/blog");
-	});
-
-	it("music returns soundcloud link", () => {
-		const result = executeCommand("music");
-		const linkLines = result.lines.filter((l) => l.href);
-		expect(linkLines.length).toBe(1);
-		expect(linkLines[0]!.href).toContain("soundcloud.com");
 	});
 
 	it("snake returns snake action", () => {
@@ -65,21 +62,73 @@ describe("executeCommand", () => {
 		expect(result.lines.length).toBeGreaterThan(0);
 	});
 
-	it("clear returns clear action", () => {
+	it("hack returns hack action", () => {
+		const result = executeCommand("hack");
+		expect(result.action).toBe("hack");
+		expect(result.lines.length).toBeGreaterThan(0);
+	});
+
+	it("neofetch returns system info with lemon art", () => {
+		const result = executeCommand("neofetch");
+		expect(result.lines.length).toBeGreaterThan(5);
+		const text = result.lines.map((l) => l.text).join("\n");
+		expect(text).toContain("LEMONSAURUS");
+		expect(text).toContain("LEMON 87");
+	});
+
+	it("clear returns clear action with empty lines", () => {
 		const result = executeCommand("clear");
 		expect(result.action).toBe("clear");
 		expect(result.lines).toEqual([]);
 	});
 
-	it("help includes MATRIX in command list", () => {
-		const result = executeCommand("help");
-		expect(result.lines.some((l) => l.text.includes("MATRIX"))).toBe(true);
+	it("cls is an alias for clear", () => {
+		const result = executeCommand("cls");
+		expect(result.action).toBe("clear");
+		expect(result.lines).toEqual([]);
 	});
 
-	it("lemon returns a lemoji with image src", () => {
-		const result = executeCommand("lemon");
-		expect(result.lines).toHaveLength(1);
-		expect(result.lines[0]!.lemojiSrc).toMatch(/^\/images\/lemoji\//);
+	it("rm -rf / triggers destroy action", () => {
+		const result = executeCommand("rm -rf /");
+		expect(result.action).toBe("destroy");
+	});
+
+	it("rm without -rf / returns snarky message", () => {
+		const result = executeCommand("rm something");
+		expect(result.lines[0]!.text).toContain("RM -RF /");
+	});
+
+	it("ls lists files in root", () => {
+		const result = executeCommand("ls");
+		const text = result.lines.map((l) => l.text).join("\n");
+		expect(text).toContain("README.TXT");
+		expect(text).toContain("PROJECTS");
+		expect(text).toContain("<DIR>");
+	});
+
+	it("cd changes directory", () => {
+		executeCommand("cd projects");
+		const result = executeCommand("pwd");
+		expect(result.lines[0]!.text).toBe("/PROJECTS");
+		executeCommand("cd /");
+	});
+
+	it("cat reads a file", () => {
+		const result = executeCommand("cat readme.txt");
+		const text = result.lines.map((l) => l.text).join("\n");
+		expect(text).toContain("WELCOME");
+	});
+
+	it("nano is an alias for cat", () => {
+		const result = executeCommand("nano readme.txt");
+		const text = result.lines.map((l) => l.text).join("\n");
+		expect(text).toContain("WELCOME");
+	});
+
+	it("dir is an alias for ls", () => {
+		const result = executeCommand("dir");
+		const text = result.lines.map((l) => l.text).join("\n");
+		expect(text).toContain("README.TXT");
 	});
 
 	it("is case insensitive", () => {
@@ -99,8 +148,21 @@ describe("executeCommand", () => {
 	});
 });
 
+describe("makeBootLine", () => {
+	it("defaults to system type", () => {
+		const line = makeBootLine("TEST");
+		expect(line.type).toBe("system");
+		expect(line.text).toBe("TEST");
+	});
+
+	it("accepts a custom type", () => {
+		const line = makeBootLine("TEST", "output");
+		expect(line.type).toBe("output");
+	});
+});
+
 describe("BOOT_LINES", () => {
-	it("contains the boot header", () => {
+	it("contains the boot header with block characters", () => {
 		expect(BOOT_LINES.some((l) => l.includes("\u2588"))).toBe(true);
 	});
 

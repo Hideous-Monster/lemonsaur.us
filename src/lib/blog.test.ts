@@ -100,6 +100,58 @@ Content two.`;
 		});
 	});
 
+	describe("getPostBySlug edge cases", () => {
+		it("falls back to slug for missing title", async () => {
+			mockExistsSync.mockReturnValue(true);
+			mockReadFileSync.mockReturnValue(`---
+description: "No title"
+date: "2026-01-15"
+---
+Content.`);
+
+			const { getPostBySlug } = await import("./blog");
+			const post = getPostBySlug("fallback-slug");
+			expect(post!.title).toBe("fallback-slug");
+		});
+
+		it("falls back to current date when date is missing", async () => {
+			mockExistsSync.mockReturnValue(true);
+			mockReadFileSync.mockReturnValue(`---
+title: "No date"
+---
+Content.`);
+
+			const { getPostBySlug } = await import("./blog");
+			const post = getPostBySlug("no-date");
+			expect(post!.date).toBeTruthy();
+		});
+
+		it("defaults tags to empty array when not an array", async () => {
+			mockExistsSync.mockReturnValue(true);
+			mockReadFileSync.mockReturnValue(`---
+title: "Bad tags"
+tags: "not-an-array"
+---
+Content.`);
+
+			const { getPostBySlug } = await import("./blog");
+			const post = getPostBySlug("bad-tags");
+			expect(post!.tags).toEqual([]);
+		});
+
+		it("defaults description to empty string when missing", async () => {
+			mockExistsSync.mockReturnValue(true);
+			mockReadFileSync.mockReturnValue(`---
+title: "No desc"
+---
+Content.`);
+
+			const { getPostBySlug } = await import("./blog");
+			const post = getPostBySlug("no-desc");
+			expect(post!.description).toBe("");
+		});
+	});
+
 	describe("getAllSlugs", () => {
 		it("returns empty array when no content directory", async () => {
 			mockExistsSync.mockReturnValue(false);

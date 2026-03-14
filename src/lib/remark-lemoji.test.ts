@@ -44,6 +44,17 @@ describe("remarkLemoji", () => {
 		expect(result).not.toContain("lemon_smile.png");
 	});
 
+	it("handles text that is only a shortcode with no surrounding text", async () => {
+		const result = await processMarkdown(":smile:");
+		expect(result).toContain("lemon_smile.png");
+		expect(result).not.toContain(":smile:");
+	});
+
+	it("handles text emoticon alt text", async () => {
+		const result = await processMarkdown("Hi :)");
+		expect(result).toContain('alt=":)"');
+	});
+
 	it("preserves surrounding text", async () => {
 		const result = await processMarkdown("before :happy: after");
 		expect(result).toContain("before");

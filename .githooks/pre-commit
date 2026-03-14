@@ -1,0 +1,10 @@
+#!/bin/sh
+echo "Running pre-commit checks..."
+
+echo "→ Linting..."
+bun run lint || { echo "Lint failed. Fix errors before committing."; exit 1; }
+
+echo "→ Running tests with coverage..."
+bun run test:coverage || { echo "Tests or coverage threshold failed. Fix before committing."; exit 1; }
+
+echo "Pre-commit checks passed."

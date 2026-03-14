@@ -309,7 +309,7 @@ export function executeCommand(input: string): CommandResult {
 	}
 
 	return {
-		lines: [ln("?SYNTAX ERROR", "system")],
+		lines: [ln("?SYNTAX ERROR  TYPE 'HELP' FOR AVAILABLE COMMANDS.", "system")],
 	};
 }
 
