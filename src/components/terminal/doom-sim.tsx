@@ -40,7 +40,7 @@ const LOADING_SEQUENCE: { lines: Line[]; delay: number }[] = [
 	{ delay: 50, lines: [{ text: "P_Init: Init Playloop state.", color: "text-gray-500" }] },
 	{
 		delay: 80,
-		lines: [{ text: "Loading Chocolate Doom WASM...", color: "text-green-500" }],
+		lines: [{ text: "Loading Crispy Doom WASM...", color: "text-green-500" }],
 	},
 ];
 
@@ -90,46 +90,63 @@ export function DoomSim({ onExit }: DoomSimProps) {
 
 		async function launch() {
 			// Pre-fetch patched WAD and config
-			const [wadData, cfgData] = await Promise.all([
+			const [wadData, cfgData, crispyCfgData] = await Promise.all([
 				fetchFile("/doom/doom1-lemon.wad"),
 				fetchFile("/doom/default.cfg"),
+				fetchFile("/doom/tesla-doom.cfg"),
 			]);
 
 			if (cancelled) return;
 
 			// Set up the Emscripten Module BEFORE loading the script.
-			// Emscripten reads window.Module on load and merges our config.
 			const win = window as Record<string, unknown>;
 			win.Module = {
 				canvas,
-				arguments: [
-					"-iwad",
-					"doom1.wad",
-					"-window",
-					"-nogui",
-					"-nomusic",
-					"-config",
-					"default.cfg",
-				],
-				preRun: [
-					function preRun() {
-						console.log("[DOOM] preRun: writing files to virtual FS");
-						const mod = win.Module as Record<string, unknown>;
-						const FS = mod.FS as {
+				noInitialRun: true,
+				preRun: () => {
+					console.log("[DOOM] preRun: writing files to virtual FS");
+					const mod = win.Module as {
+						FS: {
 							writeFile: (path: string, data: Uint8Array) => void;
 						};
-						FS.writeFile("doom1.wad", wadData);
-						FS.writeFile("default.cfg", cfgData);
-					},
-				],
+					};
+					mod.FS.writeFile("doom1.wad", wadData);
+					mod.FS.writeFile("default.cfg", cfgData);
+					mod.FS.writeFile("tesla-doom.cfg", crispyCfgData);
+					// Crispy Doom loads configs from SDL_GetPrefPath
+					const mkdirSafe = (p: string) => {
+						try {
+							(mod.FS as unknown as { mkdir: (d: string) => void }).mkdir(p);
+						} catch {
+							/* exists */
+						}
+					};
+					mkdirSafe("/libsdl");
+					mkdirSafe("/libsdl/tesla-doom");
+					mod.FS.writeFile("/libsdl/tesla-doom/default.cfg", cfgData);
+					mod.FS.writeFile("/libsdl/tesla-doom/tesla-doom.cfg", crispyCfgData);
+				},
+				onRuntimeInitialized: () => {
+					console.log("[DOOM] Runtime initialized, calling main");
+					const callMain = (win as { callMain: (args: string[]) => void }).callMain;
+					callMain([
+						"-iwad",
+						"doom1.wad",
+						"-window",
+						"-nogui",
+						"-nomusic",
+						"-config",
+						"default.cfg",
+					]);
+				},
 				print: (text: string) => console.log(`[DOOM] ${text}`),
 				printErr: (text: string) => console.error(`[DOOM] ${text}`),
 				locateFile: (path: string) => `/doom/${path}`,
 			};
 
-			console.log("[DOOM] Loading websockets-doom.js...");
+			console.log("[DOOM] Loading crispy-doom.js...");
 			const script = document.createElement("script");
-			script.src = "/doom/websockets-doom.js";
+			script.src = "/doom/crispy-doom.js";
 			script.async = true;
 			script.onerror = (e) => console.error("[DOOM] Script load failed:", e);
 			document.body.appendChild(script);
@@ -142,16 +159,42 @@ export function DoomSim({ onExit }: DoomSimProps) {
 		};
 	}, [phase]);
 
-	// ESC exits back to terminal
-	const handleKey = useCallback((e: KeyboardEvent) => {
-		if (e.key === "Escape") {
-			e.preventDefault();
-			e.stopPropagation();
-			// Reload the page to cleanly kill the WASM runtime
-			// (Emscripten doesn't support clean shutdown)
-			onExitRef.current();
+	// Ctrl+Q exits back to terminal, killing the WASM runtime
+	const killDoom = useCallback(() => {
+		// Close all AudioContexts spawned by Emscripten/SDL
+		const win = window as Record<string, unknown>;
+		const mod = win.Module as Record<string, unknown> | undefined;
+		if (mod) {
+			// Emscripten stores the SDL audio context here
+			const ctx = (mod as { audioCtx?: AudioContext }).audioCtx;
+			if (ctx) ctx.close().catch(() => {});
+			delete win.Module;
 		}
+		// Shotgun approach: close any AudioContext that's running
+		// (Emscripten creates them on globalThis)
+		for (const key of Object.keys(win)) {
+			const val = win[key];
+			if (val instanceof AudioContext && val.state !== "closed") {
+				val.close().catch(() => {});
+			}
+		}
+		// Remove the injected script
+		const script = document.querySelector('script[src="/doom/websockets-doom.js"]');
+		if (script) script.remove();
+
+		onExitRef.current();
 	}, []);
+
+	const handleKey = useCallback(
+		(e: KeyboardEvent) => {
+			if (e.key === "q" && (e.ctrlKey || e.metaKey)) {
+				e.preventDefault();
+				e.stopPropagation();
+				killDoom();
+			}
+		},
+		[killDoom],
+	);
 
 	useEffect(() => {
 		window.addEventListener("keydown", handleKey, true);
@@ -160,20 +203,28 @@ export function DoomSim({ onExit }: DoomSimProps) {
 
 	if (phase === "playing") {
 		return (
-			<div className="flex flex-1 flex-col items-center justify-center bg-black">
+			<div className="flex flex-1 flex-col bg-black">
 				<div className="flex w-full items-center justify-between border-b border-yellow-900/50 px-4 py-1 font-mono text-[10px] text-yellow-600">
-					<span>LEMOON v1.9 — SHAREWARE — CHOCOLATE DOOM WASM</span>
-					<span>[ESC] exit</span>
+					<span>LEMOON v1.9 — SHAREWARE — CRISPY DOOM WASM</span>
+					<span>[Ctrl+Q] exit</span>
 				</div>
-				<canvas
-					ref={canvasRef}
-					id="canvas"
-					className="flex-1"
-					width={640}
-					height={400}
-					tabIndex={-1}
-					onContextMenu={(e) => e.preventDefault()}
-				/>
+				<div className="flex flex-1 items-center justify-center overflow-hidden">
+					{/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
+					<canvas
+						ref={canvasRef}
+						id="canvas"
+						className="h-full max-h-full max-w-full cursor-none"
+						style={{ imageRendering: "pixelated", aspectRatio: "8 / 5" }}
+						width={640}
+						height={400}
+						tabIndex={-1}
+						onContextMenu={(e) => e.preventDefault()}
+						onClick={(e) => {
+							e.currentTarget.focus();
+							e.currentTarget.requestPointerLock();
+						}}
+					/>
+				</div>
 			</div>
 		);
 	}
