@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BOOT_LINES, executeCommand, makeBootLine } from ".";
+import { BOOT_LINES, COMMAND_NAMES, executeCommand, makeBootLine } from ".";
 
 describe("executeCommand", () => {
 	it("returns empty lines for empty input", () => {
@@ -197,6 +197,19 @@ describe("executeCommand", () => {
 		const result = executeCommand("help");
 		const ids = result.lines.map((l) => l.id);
 		expect(new Set(ids).size).toBe(ids.length);
+	});
+});
+
+describe("COMMAND_NAMES", () => {
+	it("includes both simple and argument-based commands", () => {
+		expect(COMMAND_NAMES).toContain("help");
+		expect(COMMAND_NAMES).toContain("ls");
+		expect(COMMAND_NAMES).toContain("cat");
+		expect(COMMAND_NAMES).toContain("cd");
+	});
+
+	it("has no duplicates", () => {
+		expect(new Set(COMMAND_NAMES).size).toBe(COMMAND_NAMES.length);
 	});
 });
 

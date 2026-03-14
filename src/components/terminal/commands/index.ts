@@ -226,6 +226,8 @@ export function executeCommand(input: string): CommandResult {
 	};
 }
 
+export const COMMAND_NAMES = [...Object.keys(COMMANDS), ...Object.keys(ARG_COMMANDS)];
+
 export function makeBootLine(text: string, type: TerminalLine["type"] = "system"): TerminalLine {
 	return ln(text, type);
 }

@@ -8,6 +8,7 @@ import { HackerSim } from "@/components/terminal/hacker-sim";
 import { MatrixRain } from "@/components/terminal/matrix-rain";
 import {
 	BOOT_LINES,
+	COMMAND_NAMES,
 	executeCommand,
 	LOGO_LINES,
 	makeBootLine,
@@ -165,7 +166,16 @@ export function Terminal() {
 				e.preventDefault();
 				const trimmed = input.trimStart();
 				const spaceIdx = trimmed.indexOf(" ");
-				if (spaceIdx === -1) return;
+				if (spaceIdx === -1) {
+					// Complete command names
+					if (trimmed.length === 0) return;
+					const prefix = trimmed.toLowerCase();
+					const matches = COMMAND_NAMES.filter((c) => c.startsWith(prefix));
+					if (matches.length === 1) {
+						setInput(matches[0]!);
+					}
+					return;
+				}
 				const cmd = trimmed.slice(0, spaceIdx);
 				const arg = trimmed.slice(spaceIdx + 1);
 				const completed = tabComplete(arg);
