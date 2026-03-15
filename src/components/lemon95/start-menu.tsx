@@ -52,8 +52,8 @@ export function StartMenu({ apps, onOpenApp, onShutDown, onClose }: StartMenuPro
 				zIndex: 9100,
 				display: "flex",
 				fontFamily: "monospace",
-				fontSize: 15,
-				minWidth: 300,
+				fontSize: 16,
+				minWidth: 340,
 				userSelect: "none",
 			}}
 		>
@@ -142,7 +142,7 @@ function StartMenuItem({ icon, label, onClick }: StartMenuItemProps) {
 				background: "transparent",
 				color: "#b8d850",
 				fontFamily: "monospace",
-				fontSize: 15,
+				fontSize: 16,
 				cursor: "pointer",
 				textAlign: "left",
 				border: "none",
@@ -157,7 +157,7 @@ function StartMenuItem({ icon, label, onClick }: StartMenuItemProps) {
 				(e.currentTarget as HTMLButtonElement).style.color = "#b8d850";
 			}}
 		>
-			<span style={{ fontSize: 18, width: 24, textAlign: "center", flexShrink: 0 }}>{icon}</span>
+			<span style={{ fontSize: 22, width: 28, textAlign: "center", flexShrink: 0 }}>{icon}</span>
 			<span>{label}</span>
 		</button>
 	);
