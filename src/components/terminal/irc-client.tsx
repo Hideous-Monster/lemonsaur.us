@@ -13,34 +13,7 @@ interface IrcClientProps {
 	onExit: () => void;
 }
 
-type ConnectionStage = "intro" | "nick-prompt" | "joining" | "chat";
-
-const MOTD_LINES = [
-	"* Looking up irc.lemonnet.org...",
-	"* Connecting to irc.lemonnet.org (174.87.42.1) port 6667...",
-	"* Connected! Logging in...",
-	"-",
-	"- ██╗     ███████╗███╗   ███╗ ██████╗ ███╗   ██╗",
-	"- ██║     ██╔════╝████╗ ████║██╔═══██╗████╗  ██║",
-	"- ██║     █████╗  ██╔████╔██║██║   ██║██╔██╗ ██║",
-	"- ██║     ██╔══╝  ██║╚██╔╝██║██║   ██║██║╚██╗██║",
-	"- ███████╗███████╗██║ ╚═╝ ██║╚██████╔╝██║ ╚████║",
-	"- ╚══════╝╚══════╝╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═══╝",
-	"-                    N E T",
-	"-",
-	"- Welcome to LemonNET IRC — the juiciest network on the internet.",
-	"- This server was established in 1987 by Lemon Microsystems.",
-	"- Current users: 1  |  Channels: 1  |  Operators: 1",
-	"-",
-	"- RULES:",
-	"- 1. Be excellent to each other",
-	"- 2. No flooding",
-	"- 3. lemonsaurus is always right",
-	"-",
-	"- End of MOTD",
-	"-",
-	"* Please enter your nickname: ",
-];
+type ConnectionStage = "nick-select" | "intro" | "joining" | "chat";
 
 const RAINBOW_NICK_STYLE = {
 	backgroundImage: "linear-gradient(90deg, #ff5050, #ff9040, #e8e040, #40b848, #5090ff, #b860d0)",
@@ -50,25 +23,228 @@ const RAINBOW_NICK_STYLE = {
 	fontWeight: "bold" as const,
 };
 
+const FONT_SIZE = "16px";
+
 function formatTime(date: Date): string {
 	return `[${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}]`;
 }
 
-function isLemonsaurus(nick: string | undefined): boolean {
-	return nick === "@lemonsaurus";
-}
-
 function NickSpan({ nick }: { nick: string }) {
-	if (isLemonsaurus(nick)) {
+	if (nick === "@lemonsaurus") {
 		return <span style={RAINBOW_NICK_STYLE}>&lt;{nick}&gt;</span>;
 	}
-	return <span style={{ color: "#e8e040" }}>&lt;{nick}&gt;</span>;
+	return <span style={{ color: "#70d0b0" }}>&lt;{nick}&gt;</span>;
 }
+
+// ── Nick selection TUI ──────────────────────────────────────────────────────
+
+function NickSelectScreen({
+	onChoose,
+	onCancel,
+}: {
+	onChoose: (nick: string) => void;
+	onCancel: () => void;
+}) {
+	const savedNick = typeof window !== "undefined" ? (localStorage.getItem("irc-nick") ?? "") : "";
+	const [value, setValue] = useState(savedNick);
+	const [error, setError] = useState("");
+	const inputRef = useRef<HTMLInputElement>(null);
+
+	useEffect(() => {
+		setTimeout(() => inputRef.current?.focus(), 50);
+	}, []);
+
+	function handleSubmit(e: React.FormEvent) {
+		e.preventDefault();
+		const trimmed = value.trim();
+		if (!trimmed) {
+			setError("You need a nickname to connect.");
+			return;
+		}
+		if (!/^[a-zA-Z0-9_]{1,16}$/.test(trimmed)) {
+			setError("1-16 characters, letters/numbers/underscores only.");
+			return;
+		}
+		localStorage.setItem("irc-nick", trimmed);
+		onChoose(trimmed);
+	}
+
+	return (
+		<div
+			style={{
+				display: "flex",
+				flexDirection: "column",
+				alignItems: "center",
+				justifyContent: "center",
+				height: "100%",
+				width: "100%",
+				backgroundColor: "#0a140a",
+				fontFamily: "monospace",
+				padding: 24,
+			}}
+		>
+			{/* Box */}
+			<div
+				style={{
+					border: "2px solid #e8e040",
+					borderRadius: 0,
+					padding: "28px 36px",
+					maxWidth: 440,
+					width: "100%",
+					background: "#0f1e0f",
+					boxShadow: "0 0 30px rgba(232, 224, 64, 0.08)",
+				}}
+			>
+				{/* Title */}
+				<div
+					style={{
+						textAlign: "center",
+						marginBottom: 20,
+					}}
+				>
+					<div style={{ color: "#e8e040", fontSize: 20, fontWeight: "bold", marginBottom: 6 }}>
+						LemonNET IRC
+					</div>
+					<div style={{ color: "#688850", fontSize: 13 }}>Connect to #lemonsaurus</div>
+				</div>
+
+				{/* Divider */}
+				<div style={{ borderTop: "1px solid #2a3a2a", marginBottom: 20 }} />
+
+				{/* Label */}
+				<div style={{ color: "#b8d850", fontSize: 15, marginBottom: 10 }}>Choose a nickname:</div>
+
+				{/* Input */}
+				<form onSubmit={handleSubmit}>
+					<input
+						ref={inputRef}
+						type="text"
+						value={value}
+						onChange={(e) => {
+							setValue(e.target.value);
+							setError("");
+						}}
+						onKeyDown={(e) => {
+							if (e.key === "Escape") onCancel();
+						}}
+						maxLength={16}
+						style={{
+							width: "100%",
+							background: "#060e06",
+							border: "1px solid #405030",
+							color: "#e8e040",
+							fontFamily: "monospace",
+							fontSize: 18,
+							fontWeight: "bold",
+							padding: "10px 14px",
+							outline: "none",
+							caretColor: "#e8e040",
+							boxSizing: "border-box",
+						}}
+						autoComplete="off"
+						autoCorrect="off"
+						autoCapitalize="off"
+						spellCheck={false}
+						// biome-ignore lint/a11y/noAutofocus: nick input must auto-focus
+						autoFocus
+						placeholder="coolperson87"
+						aria-label="Nickname"
+					/>
+
+					{/* Error */}
+					{error && <div style={{ color: "#ff5050", fontSize: 13, marginTop: 8 }}>{error}</div>}
+
+					{/* Buttons */}
+					<div
+						style={{
+							display: "flex",
+							gap: 12,
+							marginTop: 16,
+							justifyContent: "flex-end",
+						}}
+					>
+						<button
+							type="button"
+							onClick={onCancel}
+							style={{
+								background: "transparent",
+								border: "1px solid #405030",
+								color: "#688850",
+								fontFamily: "monospace",
+								fontSize: 14,
+								padding: "6px 16px",
+								cursor: "pointer",
+							}}
+						>
+							ESC Cancel
+						</button>
+						<button
+							type="submit"
+							style={{
+								background: "#2a3a2a",
+								border: "1px solid #e8e040",
+								color: "#e8e040",
+								fontFamily: "monospace",
+								fontSize: 14,
+								fontWeight: "bold",
+								padding: "6px 20px",
+								cursor: "pointer",
+							}}
+						>
+							Connect →
+						</button>
+					</div>
+				</form>
+
+				{/* Hint */}
+				<div style={{ color: "#405030", fontSize: 11, marginTop: 16, textAlign: "center" }}>
+					This connects you to a live chat with lemonsaurus via Discord.
+				</div>
+			</div>
+		</div>
+	);
+}
+
+// ── MOTD rendering ──────────────────────────────────────────────────────────
+
+interface MotdLine {
+	text: string;
+	color?: string;
+	bold?: boolean;
+}
+
+const MOTD: MotdLine[] = [
+	{ text: "* Looking up irc.lemonnet.org...", color: "#688850" },
+	{ text: "* Connecting to irc.lemonnet.org (174.87.42.1) port 6667...", color: "#688850" },
+	{ text: "* Connected! Logging in...", color: "#40b848" },
+	{ text: "" },
+	{ text: " ██╗     ███████╗███╗   ███╗ ██████╗ ███╗   ██╗", color: "#ff70b0" },
+	{ text: " ██║     ██╔════╝████╗ ████║██╔═══██╗████╗  ██║", color: "#ff70b0" },
+	{ text: " ██║     █████╗  ██╔████╔██║██║   ██║██╔██╗ ██║", color: "#ff80b8" },
+	{ text: " ██║     ██╔══╝  ██║╚██╔╝██║██║   ██║██║╚██╗██║", color: "#ff80b8" },
+	{ text: " ███████╗███████╗██║ ╚═╝ ██║╚██████╔╝██║ ╚████║", color: "#ff90c0" },
+	{ text: " ╚══════╝╚══════╝╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═══╝", color: "#ff90c0" },
+	{ text: "                    N E T", color: "#ffa0d0", bold: true },
+	{ text: "" },
+	{ text: " Welcome to LemonNET IRC — the juiciest network on the internet.", color: "#e8e040" },
+	{ text: " This server was established in 1987 by Lemon Microsystems.", color: "#b8a030" },
+	{ text: " Current users: 1  |  Channels: 1  |  Operators: 1", color: "#b8a030" },
+	{ text: "" },
+	{ text: " RULES:", color: "#ff5050", bold: true },
+	{ text: " 1. Be excellent to each other", color: "#ff9040" },
+	{ text: " 2. No flooding", color: "#ff9040" },
+	{ text: " 3. Absolutely NO RAIDS.", color: "#ff5050", bold: true },
+	{ text: "" },
+	{ text: " End of MOTD", color: "#688850" },
+	{ text: "" },
+];
+
+// ── Main IRC client ─────────────────────────────────────────────────────────
 
 export function IrcClient({ onExit }: IrcClientProps) {
 	const [messages, setMessages] = useState<IrcMessage[]>([]);
 	const [input, setInput] = useState("");
-	const [stage, setStage] = useState<ConnectionStage>("intro");
+	const [stage, setStage] = useState<ConnectionStage>("nick-select");
 	const [nick, setNick] = useState("");
 	const [threadId, setThreadId] = useState<string | null>(null);
 
@@ -92,7 +268,7 @@ export function IrcClient({ onExit }: IrcClientProps) {
 
 	// Focus input when ready
 	useEffect(() => {
-		if (stage === "nick-prompt" || stage === "chat") {
+		if (stage === "chat") {
 			setTimeout(() => inputRef.current?.focus(), 50);
 		}
 	}, [stage]);
@@ -103,19 +279,25 @@ export function IrcClient({ onExit }: IrcClientProps) {
 
 		function typeNextLine() {
 			const idx = motdIndexRef.current;
-			if (idx >= MOTD_LINES.length) return;
-
-			const line = MOTD_LINES[idx]!;
-			motdIndexRef.current = idx + 1;
-
-			if (idx === MOTD_LINES.length - 1) {
-				// Last line is the nick prompt — switch stage
-				setStage("nick-prompt");
-				addMessage({ type: "system", text: line });
+			if (idx >= MOTD.length) {
+				// MOTD done — immediately start joining
+				setStage("joining");
 				return;
 			}
 
-			addMessage({ type: "system", text: line });
+			const line = MOTD[idx]!;
+			motdIndexRef.current = idx + 1;
+
+			setMessages((prev) => [
+				...prev,
+				{
+					type: "system",
+					text: line.text,
+					timestamp: new Date(),
+					// stash color/bold in nick field as a hack to avoid changing the interface
+					nick: JSON.stringify({ color: line.color, bold: line.bold }),
+				},
+			]);
 			motdTimerRef.current = setTimeout(typeNextLine, 80);
 		}
 
@@ -124,9 +306,86 @@ export function IrcClient({ onExit }: IrcClientProps) {
 		return () => {
 			if (motdTimerRef.current) clearTimeout(motdTimerRef.current);
 		};
-	}, [stage, addMessage]);
+	}, [stage]);
 
-	// Start polling for replies once in chat — uses refs to avoid re-creating the interval
+	// Start joining sequence after MOTD
+	// biome-ignore lint/correctness/useExhaustiveDependencies: nick is set before stage transitions
+	useEffect(() => {
+		if (stage !== "joining" || !nick) return;
+
+		const joinLines: MotdLine[] = [
+			{ text: `* NICK ${nick} accepted`, color: "#40b848" },
+			{ text: "* Joining #lemonsaurus...", color: "#688850" },
+			{ text: "* Now talking in #lemonsaurus", color: "#40b848" },
+			{
+				text: `* Topic: "ask me whatever. stupid questions encouraged and embraced."`,
+				color: "#e8e040",
+			},
+			{ text: "* Set by lemonsaurus on Mar 15 1995", color: "#688850" },
+			{ text: "" },
+			{ text: "* lemonsaurus is here (@lemonsaurus) [operator]", color: "#b8a030" },
+			{ text: `* ${nick} has joined #lemonsaurus`, color: "#40b848" },
+			{ text: "" },
+		];
+
+		let i = 0;
+		function typeJoinLine() {
+			if (i >= joinLines.length) {
+				// Done — connect to Discord
+				connectToDiscord();
+				return;
+			}
+			const line = joinLines[i]!;
+			i++;
+			setMessages((prev) => [
+				...prev,
+				{
+					type: "system",
+					text: line.text,
+					timestamp: new Date(),
+					nick: JSON.stringify({ color: line.color, bold: line.bold }),
+				},
+			]);
+			motdTimerRef.current = setTimeout(typeJoinLine, 120);
+		}
+
+		async function connectToDiscord() {
+			try {
+				const res = await fetch("/api/irc/connect", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ nick }),
+				});
+
+				const data = await res.json();
+
+				if (!res.ok) {
+					addMessage({
+						type: "system",
+						text: `* Server notice: ${data.error ?? "Connection failed."}`,
+					});
+					return;
+				}
+
+				setThreadId(data.threadId);
+				lastPollTimeRef.current = new Date().toISOString();
+				setStage("chat");
+			} catch {
+				addMessage({
+					type: "system",
+					text: "* Server notice: Could not reach IRC server. Check your connection.",
+				});
+			}
+		}
+
+		motdTimerRef.current = setTimeout(typeJoinLine, 200);
+
+		return () => {
+			if (motdTimerRef.current) clearTimeout(motdTimerRef.current);
+		};
+	}, [stage, nick, addMessage]);
+
+	// Start polling for replies once in chat
 	useEffect(() => {
 		if (stage !== "chat" || !threadId) return;
 
@@ -168,7 +427,7 @@ export function IrcClient({ onExit }: IrcClientProps) {
 					}
 				}
 			} catch {
-				// Silent — network errors don't need to surface every poll
+				// Silent
 			}
 		}
 
@@ -187,63 +446,10 @@ export function IrcClient({ onExit }: IrcClientProps) {
 		};
 	}, []);
 
-	const doJoin = useCallback(
-		async (chosenNick: string) => {
-			setStage("joining");
-
-			const joinLines = [
-				"* Checking nickname...",
-				`* NICK ${chosenNick} accepted`,
-				"* Joining #lemonsaurus...",
-				"* Now talking in #lemonsaurus",
-				`* Topic for #lemonsaurus: "come chat with a lemon dinosaur 🍋"`,
-				"* Set by lemonsaurus on Jan 1 1987",
-				"-",
-				"* lemonsaurus is here (@lemonsaurus) [operator]",
-				`* ${chosenNick} has joined #lemonsaurus`,
-				"-",
-			];
-
-			// Type out join lines with delays
-			for (let i = 0; i < joinLines.length; i++) {
-				await new Promise<void>((resolve) => {
-					setTimeout(() => {
-						addMessage({ type: "system", text: joinLines[i]! });
-						resolve();
-					}, i * 120);
-				});
-			}
-
-			// Call connect API
-			try {
-				const res = await fetch("/api/irc/connect", {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ nick: chosenNick }),
-				});
-
-				const data = await res.json();
-
-				if (!res.ok) {
-					addMessage({
-						type: "system",
-						text: `* Server notice: ${data.error ?? "Connection failed."}`,
-					});
-					return;
-				}
-
-				setThreadId(data.threadId);
-				lastPollTimeRef.current = new Date().toISOString();
-				setStage("chat");
-			} catch {
-				addMessage({
-					type: "system",
-					text: "* Server notice: Could not reach IRC server. Check your connection.",
-				});
-			}
-		},
-		[addMessage],
-	);
+	const handleNickChosen = useCallback((chosenNick: string) => {
+		setNick(chosenNick);
+		setStage("intro");
+	}, []);
 
 	const handleSubmit = useCallback(
 		(e: React.FormEvent) => {
@@ -251,24 +457,7 @@ export function IrcClient({ onExit }: IrcClientProps) {
 			const trimmed = input.trim();
 			setInput("");
 
-			if (!trimmed) return;
-
-			if (stage === "nick-prompt") {
-				// Validate nick: alphanumeric + underscore, 1-16 chars
-				if (!/^[a-zA-Z0-9_]{1,16}$/.test(trimmed)) {
-					addMessage({
-						type: "system",
-						text: "* Error: Nickname must be 1-16 alphanumeric characters (underscores allowed).",
-					});
-					return;
-				}
-				setNick(trimmed);
-				addMessage({ type: "system", text: trimmed });
-				doJoin(trimmed);
-				return;
-			}
-
-			if (stage !== "chat") return;
+			if (!trimmed || stage !== "chat") return;
 
 			// IRC slash commands
 			if (trimmed.startsWith("/")) {
@@ -294,6 +483,7 @@ export function IrcClient({ onExit }: IrcClientProps) {
 					}
 					addMessage({ type: "system", text: `* ${nick} is now known as ${newNick}` });
 					setNick(newNick);
+					localStorage.setItem("irc-nick", newNick);
 					return;
 				}
 
@@ -333,12 +523,15 @@ export function IrcClient({ onExit }: IrcClientProps) {
 					});
 				});
 		},
-		[input, stage, nick, threadId, addMessage, doJoin, onExit],
+		[input, stage, nick, threadId, addMessage, onExit],
 	);
 
-	const prompt =
-		stage === "nick-prompt" ? "nickname: " : stage === "chat" ? "[#lemonsaurus] " : null;
+	// ── Nick selection screen ───────────────────────────────────────────────
+	if (stage === "nick-select") {
+		return <NickSelectScreen onChoose={handleNickChosen} onCancel={onExit} />;
+	}
 
+	// ── IRC view ────────────────────────────────────────────────────────────
 	return (
 		<div
 			style={{
@@ -347,9 +540,9 @@ export function IrcClient({ onExit }: IrcClientProps) {
 				height: "100%",
 				width: "100%",
 				backgroundColor: "#0a140a",
-				color: "#b8d850",
+				color: "#e8e040",
 				fontFamily: "monospace",
-				fontSize: "15px",
+				fontSize: FONT_SIZE,
 				overflow: "hidden",
 			}}
 		>
@@ -360,43 +553,66 @@ export function IrcClient({ onExit }: IrcClientProps) {
 					flex: 1,
 					overflowY: "auto",
 					overflowX: "hidden",
-					padding: "8px 12px",
-					lineHeight: "1.6",
+					padding: "10px 14px",
+					lineHeight: "1.7",
 				}}
 			>
-				{messages.map((msg, i) => (
-					// biome-ignore lint/suspicious/noArrayIndexKey: messages have no stable id; index is safe here
-					<div key={i} style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-						{msg.type === "message" ? (
-							<span>
-								<span style={{ color: "#688850" }}>{formatTime(msg.timestamp)} </span>
-								<NickSpan nick={msg.nick!} />
-								<span style={{ color: "#b8d850" }}> {msg.text}</span>
-							</span>
-						) : (
-							<span style={{ color: "#688850" }}>
-								{formatTime(msg.timestamp)} {msg.text}
-							</span>
-						)}
-					</div>
-				))}
+				{messages.map((msg, i) => {
+					// System messages with embedded color info
+					if (msg.type !== "message") {
+						let color = "#e8e040";
+						let bold = false;
+						if (msg.nick) {
+							try {
+								const meta = JSON.parse(msg.nick);
+								if (meta.color) color = meta.color;
+								if (meta.bold) bold = meta.bold;
+							} catch {
+								// ignore
+							}
+						}
+						return (
+							// biome-ignore lint/suspicious/noArrayIndexKey: messages have no stable id
+							<div key={i} style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+								<span style={{ color, fontWeight: bold ? "bold" : "normal" }}>{msg.text}</span>
+							</div>
+						);
+					}
+
+					// Chat messages
+					return (
+						// biome-ignore lint/suspicious/noArrayIndexKey: messages have no stable id
+						<div key={i} style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+							<span style={{ color: "#688850" }}>{formatTime(msg.timestamp)} </span>
+							<NickSpan nick={msg.nick!} />
+							<span style={{ color: "#e8e040" }}> {msg.text}</span>
+						</div>
+					);
+				})}
 			</div>
 
 			{/* Input area */}
-			{prompt && (
+			{stage === "chat" && (
 				<form
 					onSubmit={handleSubmit}
 					style={{
 						display: "flex",
 						alignItems: "center",
-						padding: "8px 12px",
-						borderTop: "1px solid #1a2a1a",
+						padding: "10px 14px",
+						borderTop: "1px solid #2a3a2a",
 						backgroundColor: "#060e06",
 						flexShrink: 0,
 					}}
 				>
-					<span style={{ color: "#688850", marginRight: "4px", whiteSpace: "nowrap" }}>
-						{prompt}
+					<span
+						style={{
+							color: "#688850",
+							marginRight: "6px",
+							whiteSpace: "nowrap",
+							fontSize: FONT_SIZE,
+						}}
+					>
+						[#lemonsaurus]{" "}
 					</span>
 					<input
 						ref={inputRef}
@@ -408,19 +624,18 @@ export function IrcClient({ onExit }: IrcClientProps) {
 							background: "transparent",
 							border: "none",
 							outline: "none",
-							color: "#b8d850",
+							color: "#e8e040",
 							fontFamily: "monospace",
-							fontSize: "15px",
-							caretColor: "#b8d850",
+							fontSize: FONT_SIZE,
+							caretColor: "#e8e040",
 						}}
 						autoComplete="off"
 						autoCorrect="off"
 						autoCapitalize="off"
 						spellCheck={false}
-						// biome-ignore lint/a11y/noAutofocus: IRC input must auto-focus on mount
+						// biome-ignore lint/a11y/noAutofocus: IRC input must auto-focus
 						autoFocus
-						aria-label="IRC input"
-						placeholder={stage === "nick-prompt" ? "Type a nickname and press Enter" : ""}
+						aria-label="IRC message input"
 					/>
 				</form>
 			)}
