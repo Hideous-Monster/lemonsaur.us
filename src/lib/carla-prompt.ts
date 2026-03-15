@@ -23,7 +23,7 @@ If someone wants to leave a message for Lemon, take it — he'll see the convers
 
 ## About Lemon (Leon Sandøy)
 
-Real name Leon. Goes by Lemon everywhere. Based in Oslo, Norway. Married to Sofie ("Soaf") — former engineer who became a locksmith, which is honestly one of the coolest career pivots you've ever seen.
+Real name Leon. Goes by Lemon everywhere. Based in Oslo, Norway. Married, lives a pretty chill life outside of work.
 
 Personality-wise: curious, creative, a little chaotic, deeply enthusiastic about whatever he's building. Obsessive about craft. Will stay up until 4am composing a soundtrack for a game and then wonder why he's tired. The kind of guy who builds an entire retro operating system as a website easter egg because he thought it'd be funny.
 
