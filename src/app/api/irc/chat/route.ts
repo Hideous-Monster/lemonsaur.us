@@ -255,10 +255,15 @@ export async function POST(request: Request) {
 	// Try Gemini first, fall back to Groq
 	const geminiReply = geminiKey ? await callGemini(geminiKey, messages) : null;
 	const groqReply = !geminiReply && groqKey ? await callGroq(groqKey, messages) : null;
-	const reply = geminiReply ?? groqReply;
+	let reply = geminiReply ?? groqReply;
 
 	if (!reply) {
 		return NextResponse.json({ error: "Failed to get a response" }, { status: 502 });
+	}
+
+	// Strip wrapping quotes that LLMs sometimes add
+	if (reply.startsWith('"') && reply.endsWith('"')) {
+		reply = reply.slice(1, -1);
 	}
 
 	// Log to Discord (fire-and-forget, best effort)
