@@ -198,7 +198,7 @@ function NickSelectScreen({
 
 				{/* Hint */}
 				<div style={{ color: "#405030", fontSize: 11, marginTop: 16, textAlign: "center" }}>
-					This connects you to a live chat with lemonsaurus via Discord.
+					Messages are delivered in real time. lemonsaurus may take a moment to respond.
 				</div>
 			</div>
 		</div>
