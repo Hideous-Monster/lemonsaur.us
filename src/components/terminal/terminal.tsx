@@ -11,6 +11,7 @@ import { TetrisGame } from "@/components/tetris/tetris-game";
 import {
 	BOOT_LINES,
 	COMMAND_NAMES,
+	type CommandResult,
 	executeCommand,
 	LOGO_LINES,
 	makeBootLine,

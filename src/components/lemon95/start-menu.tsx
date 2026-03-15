@@ -20,21 +20,29 @@ interface StartMenuProps {
 export function StartMenu({ apps, onOpenApp, onShutDown, onClose }: StartMenuProps) {
 	const menuRef = useRef<HTMLDivElement>(null);
 
-	// Close when clicking outside
+	// Close when clicking outside (delayed to avoid capturing the opening click)
 	useEffect(() => {
-		function handleClick(e: MouseEvent) {
-			if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-				onClose();
-			}
-		}
-		// Use capture so we hear it before the start button toggle
-		document.addEventListener("mousedown", handleClick, true);
-		return () => document.removeEventListener("mousedown", handleClick, true);
+		let handler: ((e: MouseEvent) => void) | null = null;
+		const timer = setTimeout(() => {
+			handler = (e: MouseEvent) => {
+				if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+					onClose();
+				}
+			};
+			document.addEventListener("mousedown", handler, true);
+		}, 100);
+		return () => {
+			clearTimeout(timer);
+			if (handler) document.removeEventListener("mousedown", handler, true);
+		};
 	}, [onClose]);
 
 	return (
+		// biome-ignore lint/a11y/noStaticElementInteractions: stop click from closing menu via desktop handler
+		// biome-ignore lint/a11y/useKeyWithClickEvents: menu items handle keyboard interaction individually
 		<div
 			ref={menuRef}
+			onClick={(e) => e.stopPropagation()}
 			style={{
 				...BEVEL_RAISED,
 				position: "fixed",
@@ -44,8 +52,8 @@ export function StartMenu({ apps, onOpenApp, onShutDown, onClose }: StartMenuPro
 				zIndex: 9100,
 				display: "flex",
 				fontFamily: "monospace",
-				fontSize: 12,
-				minWidth: 200,
+				fontSize: 13,
+				minWidth: 260,
 				userSelect: "none",
 			}}
 		>
@@ -103,7 +111,7 @@ export function StartMenu({ apps, onOpenApp, onShutDown, onClose }: StartMenuPro
 				{/* Shut Down */}
 				<StartMenuItem
 					icon="⏻"
-					label="Shut Down"
+					label="Exit to LEMON/87"
 					onClick={() => {
 						onShutDown();
 						onClose();
@@ -129,12 +137,12 @@ function StartMenuItem({ icon, label, onClick }: StartMenuItemProps) {
 				width: "100%",
 				display: "flex",
 				alignItems: "center",
-				gap: 8,
-				padding: "5px 12px",
+				gap: 10,
+				padding: "6px 14px",
 				background: "transparent",
 				color: "#b8d850",
 				fontFamily: "monospace",
-				fontSize: 12,
+				fontSize: 13,
 				cursor: "pointer",
 				textAlign: "left",
 				border: "none",
@@ -149,7 +157,7 @@ function StartMenuItem({ icon, label, onClick }: StartMenuItemProps) {
 				(e.currentTarget as HTMLButtonElement).style.color = "#b8d850";
 			}}
 		>
-			<span style={{ fontSize: 16, width: 20, textAlign: "center", flexShrink: 0 }}>{icon}</span>
+			<span style={{ fontSize: 18, width: 24, textAlign: "center", flexShrink: 0 }}>{icon}</span>
 			<span>{label}</span>
 		</button>
 	);

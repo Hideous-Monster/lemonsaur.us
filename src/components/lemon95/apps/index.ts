@@ -5,6 +5,7 @@ import { PongGame } from "@/components/pong/pong-game";
 import { SnakeGame } from "@/components/snake/snake-game";
 import { TetrisGame } from "@/components/tetris/tetris-game";
 import { AboutApp } from "./about-app";
+import { BlogApp } from "./blog-app";
 import { DoomApp } from "./doom-app";
 import { FortuneApp } from "./fortune-app";
 import { GameWrapper } from "./game-wrapper";
@@ -37,6 +38,7 @@ const APP_MAP: Record<string, React.ComponentType> = {
 	about: AboutApp,
 	links: LinksApp,
 	neofetch: NeofetchApp,
+	blog: BlogApp,
 };
 
 /**

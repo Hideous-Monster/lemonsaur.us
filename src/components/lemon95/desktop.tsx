@@ -47,7 +47,7 @@ export function Desktop({ onShutDown }: DesktopProps) {
 	const [showVitals] = useState(
 		() => typeof window !== "undefined" && localStorage.getItem("show-vitals") === "1",
 	);
-	const [vitals, setVitals] = useState({ bpm: 138, sys: 118, dia: 76 });
+	const [vitals, setVitals] = useState({ bpm: 89, sys: 112, dia: 72 });
 
 	useEffect(() => {
 		if (!showVitals) return;
