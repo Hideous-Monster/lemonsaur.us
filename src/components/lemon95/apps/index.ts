@@ -12,6 +12,7 @@ import { GameWrapper } from "./game-wrapper";
 import { HackApp } from "./hack-app";
 import { LinksApp } from "./links-app";
 import { MatrixApp } from "./matrix-app";
+import { MessengerApp } from "./messenger-app";
 import { NeofetchApp } from "./neofetch-app";
 import { WeatherApp } from "./weather-app";
 
@@ -39,6 +40,7 @@ const APP_MAP: Record<string, React.ComponentType> = {
 	links: LinksApp,
 	neofetch: NeofetchApp,
 	blog: BlogApp,
+	messenger: MessengerApp,
 };
 
 /**

@@ -23,6 +23,7 @@ const DESKTOP_APPS: DesktopApp[] = [
 	{ id: "hack", title: "Hack", icon: "💻", defaultWidth: 850, defaultHeight: 580 },
 	{ id: "neofetch", title: "Neofetch", icon: "🖥", defaultWidth: 550, defaultHeight: 450 },
 	{ id: "blog", title: "Blog", icon: "📰", defaultWidth: 900, defaultHeight: 650 },
+	{ id: "messenger", title: "Messenger", icon: "🦋", defaultWidth: 500, defaultHeight: 550 },
 ];
 
 interface DesktopProps {
