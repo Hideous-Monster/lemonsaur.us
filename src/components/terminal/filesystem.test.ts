@@ -154,9 +154,10 @@ describe("filesystem", () => {
 			expect(lines[0]).toContain("HIDDEN FILE");
 		});
 
-		it("reads .secrets file with Konami hint", () => {
-			const lines = cat(".secrets");
+		it("reads .egg-todos file with cryptic hints", () => {
+			const lines = cat(".egg-todos");
 			expect(lines.some((l) => l.includes("KONAMI"))).toBe(true);
+			expect(lines.some((l) => l.includes("UP UP DOWN"))).toBe(true);
 		});
 
 		it("reads .commands cheat sheet", () => {

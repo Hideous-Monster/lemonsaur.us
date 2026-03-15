@@ -165,17 +165,19 @@ const FILESYSTEM: FsDir = {
 			date: "1987-08-01",
 			content: "YOU FOUND THE HIDDEN FILE. HAVE A LEMON: 🍋",
 		},
-		".SECRETS": {
+		".EGG-TODOS": {
 			type: "file",
-			size: "0.3K",
-			date: "1993-12-10",
+			size: "0.4K",
+			date: "2025-12-03",
 			content: [
-				"CLASSIFIED LEMON INTELLIGENCE",
+				"EASTER EGG TODO LIST (DO NOT SHIP THIS FILE)",
 				"",
-				"TRY THE KONAMI CODE.",
-				"YOU KNOW THE ONE.",
-				"",
-				"UP UP DOWN DOWN LEFT RIGHT LEFT RIGHT B A",
+				"* HIDE SOMETHING COOL BEHIND THE KONAMI CODE..",
+				"  IF I COULD JUST REMEMBER WHAT IT WAS AGAIN?",
+				"  UP UP DOWN SOMETHING?",
+				"* MAKE THE SNAKE EAT ITSELF?? TOO DARK?",
+				"* MAYBE A SECRET GAME IF YOU TYPE THE RIGHT THING",
+				"* ASK CARL ABOUT THAT THING WITH THE LEMONS",
 			].join("\n"),
 		},
 		".COMMANDS": {
