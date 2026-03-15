@@ -584,22 +584,27 @@ export function KonamiEasterEgg() {
 						ctx.fillStyle = "#0a140a";
 						ctx.fillRect(0, 0, W, H);
 
-						// Draw boot image centered
+						// Draw boot image fullscreen (cover)
 						if (bootImg.complete && bootImg.naturalWidth > 0) {
-							const imgScale = Math.min(
-								(W * 0.4) / bootImg.naturalWidth,
-								(H * 0.4) / bootImg.naturalHeight,
-							);
-							const imgW = bootImg.naturalWidth * imgScale;
-							const imgH = bootImg.naturalHeight * imgScale;
-							ctx.drawImage(bootImg, (W - imgW) / 2, H * 0.25 - imgH / 2, imgW, imgH);
+							const imgRatio = bootImg.naturalWidth / bootImg.naturalHeight;
+							const canvasRatio = W / H;
+							let drawW: number;
+							let drawH: number;
+							if (canvasRatio > imgRatio) {
+								drawW = W;
+								drawH = W / imgRatio;
+							} else {
+								drawH = H;
+								drawW = H * imgRatio;
+							}
+							ctx.drawImage(bootImg, (W - drawW) / 2, (H - drawH) / 2, drawW, drawH);
 						}
 
-						// Loading bar
-						const barW = Math.min(400, W * 0.6);
-						const barH = 16;
+						// Loading bar near bottom
+						const barW = Math.min(500, W * 0.7);
+						const barH = 18;
 						const barX = (W - barW) / 2;
-						const barY = H * 0.65;
+						const barY = H * 0.85;
 						const loadT = Math.min(1, (e - 4000) / 3200);
 
 						// Bar outline
