@@ -54,7 +54,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 		<html lang="en" className={`${commodore.variable} ${jetbrainsMono.variable}`}>
 			<body className="crt flex h-screen flex-col overflow-hidden bg-c64-body font-pixel text-c64-text antialiased">
 				<Navbar />
-				<main className="min-h-0 flex-1 overflow-auto pt-12 pb-14">{children}</main>
+				<main className="min-h-0 flex-1 overflow-auto pt-12 pb-10">{children}</main>
 				<Footer />
 				<ConsoleGreeting />
 				<KonamiEasterEgg />
