@@ -64,7 +64,7 @@ export function Taskbar({
 				gap: 4,
 				padding: "0 4px",
 				fontFamily: "monospace",
-				fontSize: 11,
+				fontSize: 13,
 			}}
 		>
 			{/* Start button */}
@@ -79,7 +79,7 @@ export function Taskbar({
 					background: "#2a3a2a",
 					color: "#e8e040",
 					fontFamily: "monospace",
-					fontSize: 11,
+					fontSize: 13,
 					fontWeight: "bold",
 					padding: "2px 8px",
 					cursor: "pointer",
@@ -134,7 +134,7 @@ export function Taskbar({
 								background: isFocused ? "#1a2a1a" : "#2a3a2a",
 								color: "#e8e040",
 								fontFamily: "monospace",
-								fontSize: 11,
+								fontSize: 13,
 								padding: "2px 8px",
 								cursor: "pointer",
 								height: 22,
@@ -169,7 +169,7 @@ export function Taskbar({
 					...BEVEL_SUNKEN,
 					color: "#e8e040",
 					fontFamily: "monospace",
-					fontSize: 11,
+					fontSize: 13,
 					padding: "2px 6px",
 					height: 22,
 					display: "flex",

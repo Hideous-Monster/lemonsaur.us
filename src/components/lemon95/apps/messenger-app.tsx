@@ -195,7 +195,7 @@ function SignInScreen({
 						>
 							LMN Messenger
 						</div>
-						<div style={{ color: "#fff8c0", fontSize: 11 }}>Powered by LemonNet</div>
+						<div style={{ color: "#fff8c0", fontSize: 13 }}>Powered by LemonNet</div>
 					</div>
 				</div>
 
@@ -206,7 +206,7 @@ function SignInScreen({
 							background: "#fff0f0",
 							borderBottom: "1px solid #ffcccc",
 							padding: "8px 16px",
-							fontSize: 12,
+							fontSize: 13,
 							color: "#cc0000",
 							textAlign: "center",
 						}}
@@ -217,7 +217,7 @@ function SignInScreen({
 
 				{/* Form area */}
 				<div style={{ padding: "20px 20px 16px" }}>
-					<div style={{ fontSize: 12, color: "#333", marginBottom: 4 }}>
+					<div style={{ fontSize: 13, color: "#333", marginBottom: 4 }}>
 						<strong>Sign in</strong> to start chatting
 					</div>
 					<div style={{ borderTop: "1px solid #d0d0d0", marginBottom: 14, marginTop: 8 }} />
@@ -225,7 +225,7 @@ function SignInScreen({
 					<form onSubmit={handleSubmit}>
 						<label
 							htmlFor="lmn-nick"
-							style={{ display: "block", fontSize: 12, color: "#333", marginBottom: 4 }}
+							style={{ display: "block", fontSize: 13, color: "#333", marginBottom: 4 }}
 						>
 							Display name:
 						</label>
@@ -260,7 +260,7 @@ function SignInScreen({
 						/>
 
 						{error && (
-							<div style={{ color: "#cc0000", fontSize: 11, marginBottom: 8 }}>{error}</div>
+							<div style={{ color: "#cc0000", fontSize: 13, marginBottom: 8 }}>{error}</div>
 						)}
 
 						<div
@@ -277,7 +277,7 @@ function SignInScreen({
 									background: "linear-gradient(180deg, #f8e850 0%, #e0c820 100%)",
 									border: "1px solid #b0a020",
 									borderRadius: 3,
-									fontSize: 12,
+									fontSize: 13,
 									fontFamily: "Tahoma, 'Segoe UI', Arial, sans-serif",
 									fontWeight: "bold",
 									padding: "4px 20px",
@@ -298,7 +298,7 @@ function SignInScreen({
 						background: "#faf0c0",
 						borderTop: "1px solid #e0d080",
 						padding: "6px 12px",
-						fontSize: 10,
+						fontSize: 12,
 						color: "#777",
 						textAlign: "center",
 					}}
@@ -364,7 +364,7 @@ function SigningInScreen({ nick }: { nick: string }) {
 					}}
 				/>
 			</div>
-			<div style={{ fontSize: 11, color: "#777" }}>Connecting to LMN Messenger...</div>
+			<div style={{ fontSize: 13, color: "#777" }}>Connecting to LMN Messenger...</div>
 		</div>
 	);
 }
@@ -719,7 +719,7 @@ export function MessengerApp() {
 				width: "100%",
 				background: "#ffffff",
 				fontFamily: "Tahoma, 'Segoe UI', Arial, sans-serif",
-				fontSize: 13,
+				fontSize: 14,
 				overflow: "hidden",
 			}}
 		>
@@ -747,7 +747,7 @@ export function MessengerApp() {
 					>
 						LMN Messenger
 					</div>
-					<div style={{ color: "#fff8c0", fontSize: 11 }}>
+					<div style={{ color: "#fff8c0", fontSize: 13 }}>
 						Chatting with{" "}
 						<strong style={{ color: "#ffffff" }}>
 							{contactName} {contactEmoji}
@@ -778,7 +778,7 @@ export function MessengerApp() {
 						}}
 					/>
 					<span
-						style={{ color: "#ffffff", fontSize: 11, textShadow: "1px 1px 1px rgba(0,0,0,0.2)" }}
+						style={{ color: "#ffffff", fontSize: 13, textShadow: "1px 1px 1px rgba(0,0,0,0.2)" }}
 					>
 						{carlaMode ? "Available" : contactStatusLabel}
 					</span>
@@ -828,7 +828,7 @@ export function MessengerApp() {
 					>
 						{contactName} {contactEmoji}
 					</div>
-					<div style={{ fontSize: 11, color: "#888" }}>
+					<div style={{ fontSize: 13, color: "#888" }}>
 						<span
 							style={{
 								display: "inline-block",
@@ -866,7 +866,7 @@ export function MessengerApp() {
 									textAlign: "center",
 									color: "#888888",
 									fontStyle: "italic",
-									fontSize: 11,
+									fontSize: 13,
 									margin: "6px 0",
 								}}
 							>
@@ -887,7 +887,7 @@ export function MessengerApp() {
 								textAlign: isRemote ? "right" : "left",
 							}}
 						>
-							<div style={{ fontSize: 11, color: "#999", marginBottom: 1 }}>
+							<div style={{ fontSize: 13, color: "#999", marginBottom: 1 }}>
 								{isRemote ? (
 									<>
 										<span>{formatTime(msg.timestamp)} </span>
@@ -942,7 +942,7 @@ export function MessengerApp() {
 				})}
 
 				{isTyping && (
-					<div style={{ color: "#888888", fontStyle: "italic", fontSize: 11, margin: "4px 0 0" }}>
+					<div style={{ color: "#888888", fontStyle: "italic", fontSize: 13, margin: "4px 0 0" }}>
 						{carlaMode ? "Carla is typing..." : "lemonsaurus is typing..."}
 					</div>
 				)}
@@ -1042,7 +1042,7 @@ export function MessengerApp() {
 						inputRef.current?.focus();
 					}}
 					style={{
-						fontSize: 11,
+						fontSize: 13,
 						fontFamily: chatFont,
 						border: "1px solid #aaaaaa",
 						background: "#ffffff",
@@ -1109,7 +1109,7 @@ export function MessengerApp() {
 				>
 					<div
 						style={{
-							fontSize: 11,
+							fontSize: 13,
 							color: input.length >= MAX_MESSAGE_LENGTH ? "#cc0000" : "#aaa",
 							fontFamily: "Tahoma, 'Segoe UI', Arial, sans-serif",
 							visibility: input.length > CHAR_COUNTER_THRESHOLD ? "visible" : "hidden",
@@ -1127,7 +1127,7 @@ export function MessengerApp() {
 									: "linear-gradient(180deg, #f8e850 0%, #e0c820 100%)",
 							border: `1px solid ${cooldownSeconds > 0 ? "#cccccc" : "#b0a020"}`,
 							borderRadius: 3,
-							fontSize: 12,
+							fontSize: 13,
 							fontFamily: "Tahoma, 'Segoe UI', Arial, sans-serif",
 							fontWeight: "bold",
 							padding: "4px 20px",

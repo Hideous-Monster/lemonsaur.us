@@ -74,7 +74,7 @@ export function StartMenu({ apps, onOpenApp, onShutDown, onClose }: StartMenuPro
 					style={{
 						color: "#e8e040",
 						fontWeight: "bold",
-						fontSize: 11,
+						fontSize: 12,
 						writingMode: "vertical-rl",
 						transform: "rotate(180deg)",
 						letterSpacing: 2,

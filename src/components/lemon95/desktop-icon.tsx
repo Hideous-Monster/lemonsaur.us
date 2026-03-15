@@ -57,7 +57,7 @@ export function DesktopIcon({ app, onDoubleClick }: DesktopIconProps) {
 				style={{
 					color: "#e8e040",
 					fontFamily: "monospace",
-					fontSize: 11,
+					fontSize: 13,
 					fontWeight: "bold",
 					textAlign: "center",
 					lineHeight: 1.4,
