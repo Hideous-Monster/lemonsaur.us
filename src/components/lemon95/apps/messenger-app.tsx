@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 let msgCounter = 0;
 
-interface MsnMessage {
+interface LmnMessage {
 	id: number;
 	type: "system" | "message";
 	nick?: string;
@@ -20,7 +20,7 @@ function formatTime(date: Date): string {
 	return `${h}:${m}`;
 }
 
-// ── MSN-style Sign In Screen ─────────────────────────────────────────────────
+// ── LMN-style Sign In Screen ────────────────────────────────────────────────
 
 function SignInScreen({ onSignIn }: { onSignIn: (nick: string) => void }) {
 	const savedNick = typeof window !== "undefined" ? (localStorage.getItem("irc-nick") ?? "") : "";
@@ -56,32 +56,31 @@ function SignInScreen({ onSignIn }: { onSignIn: (nick: string) => void }) {
 				justifyContent: "center",
 				height: "100%",
 				width: "100%",
-				background: "linear-gradient(180deg, #c5d9f1 0%, #e8f0fb 40%, #ffffff 100%)",
+				background: "linear-gradient(180deg, #f5e870 0%, #faf4c0 40%, #ffffff 100%)",
 				fontFamily: "Tahoma, 'Segoe UI', Arial, sans-serif",
 			}}
 		>
-			{/* MSN-style card */}
 			<div
 				style={{
 					background: "#ffffff",
-					border: "1px solid #8faacc",
+					border: "1px solid #c8b040",
 					borderRadius: 4,
 					width: 340,
-					boxShadow: "2px 2px 8px rgba(0,0,0,0.2)",
+					boxShadow: "2px 2px 8px rgba(0,0,0,0.15)",
 					overflow: "hidden",
 				}}
 			>
-				{/* Blue header */}
+				{/* Yellow header */}
 				<div
 					style={{
-						background: "linear-gradient(180deg, #0055c4 0%, #1d5fb8 50%, #0047a8 100%)",
+						background: "linear-gradient(180deg, #e8d020 0%, #d4b810 50%, #c0a000 100%)",
 						padding: "16px 20px",
 						display: "flex",
 						alignItems: "center",
 						gap: 12,
 					}}
 				>
-					<span style={{ fontSize: 32 }}>🦋</span>
+					<span style={{ fontSize: 32 }}>🍋</span>
 					<div>
 						<div
 							style={{
@@ -89,11 +88,12 @@ function SignInScreen({ onSignIn }: { onSignIn: (nick: string) => void }) {
 								fontSize: 18,
 								fontWeight: "bold",
 								letterSpacing: "0.5px",
+								textShadow: "1px 1px 2px rgba(0,0,0,0.2)",
 							}}
 						>
-							Lemon Messenger
+							LMN Messenger
 						</div>
-						<div style={{ color: "#aad4ff", fontSize: 11 }}>Powered by LemonNet</div>
+						<div style={{ color: "#fff8c0", fontSize: 11 }}>Powered by LemonNet</div>
 					</div>
 				</div>
 
@@ -102,23 +102,17 @@ function SignInScreen({ onSignIn }: { onSignIn: (nick: string) => void }) {
 					<div style={{ fontSize: 12, color: "#333", marginBottom: 4 }}>
 						<strong>Sign in</strong> to start chatting
 					</div>
-					<div
-						style={{
-							borderTop: "1px solid #d0d0d0",
-							marginBottom: 14,
-							marginTop: 8,
-						}}
-					/>
+					<div style={{ borderTop: "1px solid #d0d0d0", marginBottom: 14, marginTop: 8 }} />
 
 					<form onSubmit={handleSubmit}>
 						<label
-							htmlFor="msn-nick"
+							htmlFor="lmn-nick"
 							style={{ display: "block", fontSize: 12, color: "#333", marginBottom: 4 }}
 						>
 							Display name:
 						</label>
 						<input
-							id="msn-nick"
+							id="lmn-nick"
 							ref={inputRef}
 							type="text"
 							value={value}
@@ -129,7 +123,7 @@ function SignInScreen({ onSignIn }: { onSignIn: (nick: string) => void }) {
 							maxLength={16}
 							style={{
 								width: "100%",
-								border: "1px solid #7f9db9",
+								border: "1px solid #c8b040",
 								padding: "4px 6px",
 								fontSize: 13,
 								fontFamily: "Tahoma, 'Segoe UI', Arial, sans-serif",
@@ -162,16 +156,16 @@ function SignInScreen({ onSignIn }: { onSignIn: (nick: string) => void }) {
 							<button
 								type="submit"
 								style={{
-									background: "linear-gradient(180deg, #f0f0f0 0%, #dcdcdc 100%)",
-									border: "1px solid #aaaaaa",
+									background: "linear-gradient(180deg, #f8e850 0%, #e0c820 100%)",
+									border: "1px solid #b0a020",
 									borderRadius: 3,
 									fontSize: 12,
 									fontFamily: "Tahoma, 'Segoe UI', Arial, sans-serif",
 									fontWeight: "bold",
 									padding: "4px 20px",
 									cursor: "pointer",
-									color: "#000000",
-									boxShadow: "inset 0 1px 0 rgba(255,255,255,0.8)",
+									color: "#333",
+									boxShadow: "inset 0 1px 0 rgba(255,255,255,0.6)",
 								}}
 							>
 								Sign In
@@ -183,11 +177,11 @@ function SignInScreen({ onSignIn }: { onSignIn: (nick: string) => void }) {
 				{/* Footer strip */}
 				<div
 					style={{
-						background: "#dce9f9",
-						borderTop: "1px solid #b0c8e8",
+						background: "#faf0c0",
+						borderTop: "1px solid #e0d080",
 						padding: "6px 12px",
 						fontSize: 10,
-						color: "#555",
+						color: "#777",
 						textAlign: "center",
 					}}
 				>
@@ -198,7 +192,7 @@ function SignInScreen({ onSignIn }: { onSignIn: (nick: string) => void }) {
 	);
 }
 
-// ── Signing In Animation Screen ──────────────────────────────────────────────
+// ── Signing In Animation Screen ─────────────────────────────────────────────
 
 function SigningInScreen({ nick }: { nick: string }) {
 	return (
@@ -210,29 +204,29 @@ function SigningInScreen({ nick }: { nick: string }) {
 				justifyContent: "center",
 				height: "100%",
 				width: "100%",
-				background: "linear-gradient(180deg, #c5d9f1 0%, #e8f0fb 40%, #ffffff 100%)",
+				background: "linear-gradient(180deg, #f5e870 0%, #faf4c0 40%, #ffffff 100%)",
 				fontFamily: "Tahoma, 'Segoe UI', Arial, sans-serif",
 				gap: 12,
 			}}
 		>
-			<span style={{ fontSize: 40 }}>🦋</span>
+			<span style={{ fontSize: 40 }}>🍋</span>
 			<div style={{ fontSize: 14, color: "#333" }}>
 				Signing in as <strong>{nick}</strong>...
 			</div>
-			{/* XP-style progress bar */}
+			{/* Progress bar */}
 			<div
 				style={{
 					width: 220,
 					height: 16,
-					border: "1px solid #7f9db9",
+					border: "1px solid #c8b040",
 					borderRadius: 2,
-					background: "#f0f4fc",
+					background: "#faf8e8",
 					overflow: "hidden",
 					position: "relative",
 				}}
 			>
 				<style>{`
-					@keyframes msn-progress {
+					@keyframes lmn-progress {
 						0%   { left: -60px; }
 						100% { left: 220px; }
 					}
@@ -244,23 +238,23 @@ function SigningInScreen({ nick }: { nick: string }) {
 						left: 0,
 						width: 60,
 						height: "100%",
-						background: "linear-gradient(90deg, transparent, #0078d4, transparent)",
-						animationName: "msn-progress",
+						background: "linear-gradient(90deg, transparent, #e8d020, transparent)",
+						animationName: "lmn-progress",
 						animationDuration: "1.2s",
 						animationTimingFunction: "linear",
 						animationIterationCount: "infinite",
 					}}
 				/>
 			</div>
-			<div style={{ fontSize: 11, color: "#777" }}>Connecting to Lemon Messenger...</div>
+			<div style={{ fontSize: 11, color: "#777" }}>Connecting to LMN Messenger...</div>
 		</div>
 	);
 }
 
-// ── Main Messenger App ───────────────────────────────────────────────────────
+// ── Main Messenger App ──────────────────────────────────────────────────────
 
 export function MessengerApp() {
-	const [messages, setMessages] = useState<MsnMessage[]>([]);
+	const [messages, setMessages] = useState<LmnMessage[]>([]);
 	const [input, setInput] = useState("");
 	const [stage, setStage] = useState<ConnectionStage>("sign-in");
 	const [nick, setNick] = useState("");
@@ -274,11 +268,11 @@ export function MessengerApp() {
 	const seenMessageIds = useRef<Set<string>>(new Set());
 	const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-	const addMessage = useCallback((msg: Omit<MsnMessage, "timestamp" | "id">) => {
+	const addMessage = useCallback((msg: Omit<LmnMessage, "timestamp" | "id">) => {
 		setMessages((prev) => [...prev, { ...msg, id: ++msgCounter, timestamp: new Date() }]);
 	}, []);
 
-	// Auto-scroll on new messages
+	// Auto-scroll
 	// biome-ignore lint/correctness/useExhaustiveDependencies: intentionally scroll on messages change
 	useEffect(() => {
 		scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
@@ -313,10 +307,7 @@ export function MessengerApp() {
 				setThreadId(data.threadId);
 				lastPollTimeRef.current = new Date().toISOString();
 
-				addMessage({
-					type: "system",
-					text: "You have connected to Lemon Messenger.",
-				});
+				addMessage({ type: "system", text: "You have connected to LMN Messenger." });
 				addMessage({
 					type: "system",
 					text: "lemonsaurus 🍋 has joined the conversation.",
@@ -331,7 +322,7 @@ export function MessengerApp() {
 		return () => clearTimeout(timer);
 	}, [stage, nick, addMessage]);
 
-	// Poll for replies once in chat
+	// Poll for replies
 	useEffect(() => {
 		if (stage !== "chat" || !threadId) return;
 
@@ -406,15 +397,12 @@ export function MessengerApp() {
 
 			if (!trimmed || stage !== "chat" || !threadId) return;
 
-			// Show message optimistically
 			addMessage({ type: "message", nick, text: trimmed });
 
-			// Show typing indicator briefly
 			if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
 			setIsTyping(true);
 			typingTimerRef.current = setTimeout(() => setIsTyping(false), 2000);
 
-			// Send to backend
 			fetch("/api/irc/send", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
@@ -423,10 +411,7 @@ export function MessengerApp() {
 				.then(async (res) => {
 					if (!res.ok) {
 						const data = await res.json().catch(() => ({}));
-						addMessage({
-							type: "system",
-							text: data.error ?? "Message delivery failed.",
-						});
+						addMessage({ type: "system", text: data.error ?? "Message delivery failed." });
 					}
 				})
 				.catch(() => {
@@ -439,16 +424,10 @@ export function MessengerApp() {
 		[input, stage, nick, threadId, addMessage],
 	);
 
-	// ── Sign in / Signing in screens ──────────────────────────────────────────
-	if (stage === "sign-in") {
-		return <SignInScreen onSignIn={handleSignIn} />;
-	}
+	if (stage === "sign-in") return <SignInScreen onSignIn={handleSignIn} />;
+	if (stage === "signing-in") return <SigningInScreen nick={nick} />;
 
-	if (stage === "signing-in") {
-		return <SigningInScreen nick={nick} />;
-	}
-
-	// ── Chat window ───────────────────────────────────────────────────────────
+	// ── Chat window ─────────────────────────────────────────────────────────
 	return (
 		<div
 			style={{
@@ -462,10 +441,10 @@ export function MessengerApp() {
 				overflow: "hidden",
 			}}
 		>
-			{/* Blue gradient header */}
+			{/* Yellow gradient header */}
 			<div
 				style={{
-					background: "linear-gradient(180deg, #0055c4 0%, #1d5fb8 50%, #0047a8 100%)",
+					background: "linear-gradient(180deg, #e8d020 0%, #d4b810 50%, #c0a000 100%)",
 					padding: "10px 14px",
 					flexShrink: 0,
 					display: "flex",
@@ -473,9 +452,7 @@ export function MessengerApp() {
 					gap: 10,
 				}}
 			>
-				{/* Butterfly icon */}
-				<span style={{ fontSize: 22 }}>🦋</span>
-
+				<span style={{ fontSize: 22 }}>🍋</span>
 				<div style={{ flex: 1 }}>
 					<div
 						style={{
@@ -483,27 +460,27 @@ export function MessengerApp() {
 							fontWeight: "bold",
 							fontSize: 14,
 							letterSpacing: "0.3px",
+							textShadow: "1px 1px 2px rgba(0,0,0,0.2)",
 						}}
 					>
-						Lemon Messenger
+						LMN Messenger
 					</div>
-					<div style={{ color: "#aad4ff", fontSize: 11 }}>
+					<div style={{ color: "#fff8c0", fontSize: 11 }}>
 						Chatting with <strong style={{ color: "#ffffff" }}>lemonsaurus 🍋</strong>
 					</div>
 				</div>
 
-				{/* Contact status badge */}
+				{/* Status badge */}
 				<div
 					style={{
 						display: "flex",
 						alignItems: "center",
 						gap: 5,
-						background: "rgba(255,255,255,0.15)",
+						background: "rgba(255,255,255,0.25)",
 						borderRadius: 10,
 						padding: "3px 10px",
 					}}
 				>
-					{/* Green dot */}
 					<span
 						style={{
 							display: "inline-block",
@@ -515,15 +492,19 @@ export function MessengerApp() {
 							flexShrink: 0,
 						}}
 					/>
-					<span style={{ color: "#ffffff", fontSize: 11 }}>Online</span>
+					<span
+						style={{ color: "#ffffff", fontSize: 11, textShadow: "1px 1px 1px rgba(0,0,0,0.2)" }}
+					>
+						Online
+					</span>
 				</div>
 			</div>
 
 			{/* Contact info strip */}
 			<div
 				style={{
-					background: "#dce9f9",
-					borderBottom: "1px solid #b0c8e8",
+					background: "#faf4d0",
+					borderBottom: "1px solid #e0d080",
 					padding: "6px 14px",
 					flexShrink: 0,
 					display: "flex",
@@ -531,13 +512,12 @@ export function MessengerApp() {
 					gap: 10,
 				}}
 			>
-				{/* Avatar */}
 				<div
 					style={{
 						width: 36,
 						height: 36,
-						background: "#e8f4ff",
-						border: "2px solid #7f9db9",
+						background: "#fff8d0",
+						border: "2px solid #c8b040",
 						borderRadius: 3,
 						display: "flex",
 						alignItems: "center",
@@ -549,8 +529,8 @@ export function MessengerApp() {
 					🍋
 				</div>
 				<div>
-					<div style={{ fontWeight: "bold", fontSize: 13, color: "#003399" }}>lemonsaurus</div>
-					<div style={{ fontSize: 11, color: "#556677" }}>
+					<div style={{ fontWeight: "bold", fontSize: 13, color: "#8a7000" }}>lemonsaurus</div>
+					<div style={{ fontSize: 11, color: "#888" }}>
 						<span
 							style={{
 								display: "inline-block",
@@ -567,7 +547,7 @@ export function MessengerApp() {
 				</div>
 			</div>
 
-			{/* Chat message area */}
+			{/* Chat messages */}
 			<div
 				ref={scrollRef}
 				style={{
@@ -576,7 +556,7 @@ export function MessengerApp() {
 					overflowX: "hidden",
 					padding: "10px 14px",
 					background: "#ffffff",
-					borderBottom: "1px solid #c8d8e8",
+					borderBottom: "1px solid #e0d080",
 				}}
 			>
 				{messages.map((msg) => {
@@ -599,17 +579,11 @@ export function MessengerApp() {
 
 					const isLemon = msg.nick === "lemonsaurus";
 					const displayNick = isLemon ? "lemonsaurus 🍋" : (msg.nick ?? nick);
-					const nickColor = isLemon ? "#0033bb" : "#cc4400";
+					const nickColor = isLemon ? "#8a7000" : "#cc4400";
 
 					return (
 						<div key={msg.id} style={{ marginBottom: 10 }}>
-							<div
-								style={{
-									fontSize: 11,
-									color: "#999",
-									marginBottom: 1,
-								}}
-							>
+							<div style={{ fontSize: 11, color: "#999", marginBottom: 1 }}>
 								<strong style={{ color: nickColor, marginRight: 6 }}>{displayNick}</strong>
 								<span>{formatTime(msg.timestamp)}</span>
 							</div>
@@ -619,8 +593,7 @@ export function MessengerApp() {
 									wordBreak: "break-word",
 									lineHeight: "1.5",
 									paddingLeft: 4,
-									borderLeft: `2px solid ${isLemon ? "#4488ff" : "#ff8844"}`,
-									marginLeft: 0,
+									borderLeft: `2px solid ${isLemon ? "#e8d020" : "#ff8844"}`,
 									paddingTop: 1,
 									paddingBottom: 1,
 								}}
@@ -631,26 +604,18 @@ export function MessengerApp() {
 					);
 				})}
 
-				{/* Typing indicator */}
 				{isTyping && (
-					<div
-						style={{
-							color: "#888888",
-							fontStyle: "italic",
-							fontSize: 11,
-							margin: "4px 0 0",
-						}}
-					>
+					<div style={{ color: "#888888", fontStyle: "italic", fontSize: 11, margin: "4px 0 0" }}>
 						lemonsaurus is typing...
 					</div>
 				)}
 			</div>
 
-			{/* Input toolbar area */}
+			{/* Toolbar */}
 			<div
 				style={{
-					background: "#f0f4fc",
-					borderBottom: "1px solid #c8d8e8",
+					background: "#faf8e8",
+					borderBottom: "1px solid #e0d880",
 					padding: "4px 10px",
 					flexShrink: 0,
 					display: "flex",
@@ -658,10 +623,9 @@ export function MessengerApp() {
 					alignItems: "center",
 				}}
 			>
-				{/* Decorative toolbar buttons */}
 				<button
 					type="button"
-					title="Emoticons (decorative)"
+					title="Emoticons"
 					style={{
 						background: "linear-gradient(180deg, #f8f8f8 0%, #e8e8e8 100%)",
 						border: "1px solid #aaaaaa",
@@ -679,7 +643,7 @@ export function MessengerApp() {
 				</button>
 				<button
 					type="button"
-					title="Font (decorative)"
+					title="Font"
 					style={{
 						background: "linear-gradient(180deg, #f8f8f8 0%, #e8e8e8 100%)",
 						border: "1px solid #aaaaaa",
@@ -695,9 +659,8 @@ export function MessengerApp() {
 				>
 					A
 				</button>
-				{/* Fake font selector */}
 				<select
-					aria-label="Font (decorative)"
+					aria-label="Font"
 					disabled
 					style={{
 						fontSize: 11,
@@ -715,7 +678,7 @@ export function MessengerApp() {
 				</select>
 			</div>
 
-			{/* Text input row */}
+			{/* Input */}
 			<form
 				onSubmit={handleSubmit}
 				style={{
@@ -733,14 +696,13 @@ export function MessengerApp() {
 					onMouseDown={(e) => e.stopPropagation()}
 					style={{
 						border: "none",
-						borderTop: "1px solid #c8d8e8",
+						borderTop: "1px solid #e0d880",
 						outline: "none",
 						padding: "8px 12px",
 						fontSize: 13,
 						fontFamily: "Tahoma, 'Segoe UI', Arial, sans-serif",
 						background: "#ffffff",
 						color: "#111111",
-						resize: "none",
 					}}
 					autoComplete="off"
 					autoCorrect="off"
@@ -754,8 +716,8 @@ export function MessengerApp() {
 						display: "flex",
 						justifyContent: "flex-end",
 						padding: "4px 8px 6px",
-						background: "#f0f4fc",
-						borderTop: "1px solid #dde8f4",
+						background: "#faf8e8",
+						borderTop: "1px solid #f0e8c0",
 						gap: 6,
 					}}
 				>
@@ -763,16 +725,16 @@ export function MessengerApp() {
 						type="submit"
 						disabled={!input.trim()}
 						style={{
-							background: "linear-gradient(180deg, #f0f0f0 0%, #dcdcdc 100%)",
-							border: "1px solid #aaaaaa",
+							background: "linear-gradient(180deg, #f8e850 0%, #e0c820 100%)",
+							border: "1px solid #b0a020",
 							borderRadius: 3,
 							fontSize: 12,
 							fontFamily: "Tahoma, 'Segoe UI', Arial, sans-serif",
 							fontWeight: "bold",
 							padding: "4px 20px",
 							cursor: input.trim() ? "pointer" : "default",
-							color: input.trim() ? "#000000" : "#888888",
-							boxShadow: "inset 0 1px 0 rgba(255,255,255,0.8)",
+							color: input.trim() ? "#333" : "#999",
+							boxShadow: "inset 0 1px 0 rgba(255,255,255,0.6)",
 						}}
 					>
 						Send
