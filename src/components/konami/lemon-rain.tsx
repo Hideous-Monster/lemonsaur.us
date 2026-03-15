@@ -547,39 +547,49 @@ export function KonamiEasterEgg() {
 						// Black pause
 						ctx.fillStyle = "#0a140a";
 						ctx.fillRect(0, 0, W, H);
-					} else if (e < 4000) {
-						// POST screen — yellow on dark green like the terminal
+					} else if (e < 3200) {
+						// POST screen — yellow on dark green, fast and punchy
 						ctx.fillStyle = "#0a140a";
 						ctx.fillRect(0, 0, W, H);
-						ctx.textAlign = "left";
-						ctx.font = "14px monospace";
 						ctx.fillStyle = LEMON_YELLOW;
 
-						const postT = e - 1200;
-						const lines: string[] = [];
-						lines.push("LEMON BIOS v87.1 — POWER-ON SELF TEST");
-						lines.push("");
-						if (postT > 100) lines.push("CHECKING CITRUS PROCESSOR... OK");
-						if (postT > 300) lines.push("DETECTING LEMON COPROCESSOR... FOUND");
-						if (postT > 500) {
-							const memCounted = Math.min(87, Math.floor((postT - 500) / 20));
-							lines.push(`MEMORY TEST: ${memCounted}K / 87K`);
-						}
-						if (postT > 2300) lines.push("MEMORY TEST: 87K OK");
-						if (postT > 2500) lines.push("");
-						if (postT > 2500) lines.push("DETECTING DEVICES:");
-						if (postT > 2600) lines.push("  KEYBOARD.............. PETSCII 40-COL");
-						if (postT > 2700) lines.push("  DISPLAY............... CRT 40x25 COLOR");
-						if (postT > 2800) lines.push("  STORAGE............... 1541 FLOPPY DRIVE");
-						if (postT > 2900) lines.push("  SOUND................. SID 6581 (3CH)");
-						if (postT > 3100) lines.push("");
-						if (postT > 3100) lines.push("LEMONSTORM CLEANUP COMPLETE.");
-						if (postT > 3300) lines.push("LOADING LEMON/87...");
+						// Big BIOS title
+						ctx.textAlign = "center";
+						ctx.font = "bold 18px monospace";
+						ctx.fillText("LEMON BIOS v87.1", W / 2, 30);
+						ctx.font = "11px monospace";
+						ctx.fillStyle = "#a0a060";
+						ctx.fillText("Copyright (C) 1987 Lemon Microsystems Ltd.", W / 2, 50);
+						ctx.fillText("MOS 6510 CPU @ 1.023 MHz", W / 2, 66);
 
-						for (let i = 0; i < lines.length; i++) {
-							ctx.fillText(lines[i]!, 20, 28 + i * 18);
+						// Divider
+						ctx.fillStyle = LEMON_YELLOW;
+						ctx.fillRect(20, 78, W - 40, 1);
+
+						// POST lines — fast timing
+						const postT = e - 1200;
+						const postLines: string[] = [];
+						ctx.textAlign = "left";
+						ctx.font = "13px monospace";
+
+						if (postT > 50) {
+							const memK = Math.min(87, Math.floor(postT / 8));
+							postLines.push(`Memory Test: ${String(memK).padStart(3)}K OK`);
 						}
-					} else if (e < 7500) {
+						if (postT > 750) postLines.push("");
+						if (postT > 800) postLines.push("Keyboard.......... Detected");
+						if (postT > 900) postLines.push("Display........... 40x25 CRT Color");
+						if (postT > 1000) postLines.push("Drive A........... 1541 Floppy");
+						if (postT > 1100) postLines.push("Sound............. SID 6581 (3 voices)");
+						if (postT > 1200) postLines.push("Citrus Engine..... v3.7 OPERATIONAL");
+						if (postT > 1400) postLines.push("");
+						if (postT > 1400) postLines.push("All systems nominal. Booting LEMON/87...");
+
+						ctx.fillStyle = LEMON_YELLOW;
+						for (let i = 0; i < postLines.length; i++) {
+							ctx.fillText(postLines[i]!, 24, 100 + i * 17);
+						}
+					} else if (e < 6700) {
 						// Boot logo with loading bar
 						ctx.fillStyle = "#0a140a";
 						ctx.fillRect(0, 0, W, H);
@@ -605,7 +615,7 @@ export function KonamiEasterEgg() {
 						const barH = 18;
 						const barX = (W - barW) / 2;
 						const barY = H * 0.85;
-						const loadT = Math.min(1, (e - 4000) / 3200);
+						const loadT = Math.min(1, (e - 3200) / 3200);
 
 						// Bar outline
 						ctx.strokeStyle = LEMON_YELLOW;
