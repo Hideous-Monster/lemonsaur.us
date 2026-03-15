@@ -55,19 +55,6 @@ export async function GET(request: Request) {
 
 	const discordMessages = await res.json();
 
-	// Debug: log all message authors to identify filtering issues
-	if (Array.isArray(discordMessages) && discordMessages.length > 0) {
-		console.log(
-			"[irc/messages] authors:",
-			discordMessages.map((m: { author: { id: string; username: string } }) => ({
-				id: m.author.id,
-				username: m.author.username,
-			})),
-			"ownerId:",
-			ownerId,
-		);
-	}
-
 	// Filter to only messages from the owner
 	const messages = discordMessages
 		.filter((m: { author: { id: string } }) => m.author.id === ownerId)

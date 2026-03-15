@@ -24,7 +24,7 @@ const RAINBOW_NICK_STYLE = {
 	fontWeight: "bold" as const,
 };
 
-const CARLA_NICK_COLOR = "#ff70b0";
+const CARLA_NICK_COLOR = "#40b848";
 
 const FONT_SIZE = "16px";
 

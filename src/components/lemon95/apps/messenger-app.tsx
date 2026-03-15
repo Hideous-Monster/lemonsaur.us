@@ -303,7 +303,7 @@ function SignInScreen({
 						textAlign: "center",
 					}}
 				>
-					{carlaMode ? "Carla 🦋 is covering for lemon" : "lemonsaurus 🍋 is waiting for you"}
+					{carlaMode ? "Carla 🐍 is covering for lemon" : "lemonsaurus 🍋 is waiting for you"}
 				</div>
 			</div>
 		</div>
@@ -447,7 +447,7 @@ export function MessengerApp() {
 				addMessage({ type: "system", text: "You have connected to LMN Messenger." });
 				addMessage({
 					type: "system",
-					text: "Carla 🦋 has joined the conversation.",
+					text: "Carla 🐍 has joined the conversation.",
 				});
 				setStage("chat");
 			}, 1800);
@@ -727,8 +727,8 @@ export function MessengerApp() {
 
 	// Determine contact display values
 	const contactName = carlaMode ? "Carla" : "lemonsaurus";
-	const contactEmoji = carlaMode ? "🦋" : "🍋";
-	const contactDotColor = carlaMode ? "#ff70b0" : statusDotColor(lemonStatus);
+	const contactEmoji = carlaMode ? "🐍" : "🍋";
+	const contactDotColor = carlaMode ? "#40b848" : statusDotColor(lemonStatus);
 	const contactStatusLabel = statusLabel(lemonStatus, carlaMode);
 
 	// ── Chat window ─────────────────────────────────────────────────────────
@@ -756,7 +756,7 @@ export function MessengerApp() {
 					gap: 10,
 				}}
 			>
-				<span style={{ fontSize: 22 }}>{contactEmoji}</span>
+				<span style={{ fontSize: 22 }}>🦋</span>
 				<div style={{ flex: 1 }}>
 					<div
 						style={{
@@ -838,7 +838,7 @@ export function MessengerApp() {
 							fontWeight: "bold",
 							fontSize: 13,
 							...(carlaMode
-								? { color: "#ff70b0" }
+								? { color: "#40b848" }
 								: {
 										backgroundImage:
 											"linear-gradient(90deg, #ff5050, #ff9040, #e8e040, #40b848, #5090ff, #b860d0)",
@@ -877,7 +877,6 @@ export function MessengerApp() {
 					padding: "10px 14px",
 					background: "#ffffff",
 					borderBottom: "1px solid #e0d080",
-					scrollbarGutter: "stable",
 				}}
 			>
 				{messages.map((msg) => {
@@ -916,7 +915,7 @@ export function MessengerApp() {
 										<span>{formatTime(msg.timestamp)} </span>
 										<strong>
 											{isCarla ? (
-												<span style={{ color: "#ff70b0" }}>Carla 🦋</span>
+												<span style={{ color: "#40b848" }}>Carla 🐍</span>
 											) : (
 												<>
 													<span
@@ -954,7 +953,7 @@ export function MessengerApp() {
 									borderRadius: 4,
 									background: isRemote ? "#fff8d0" : "#f0f0f0",
 									borderLeft: isRemote ? "none" : "2px solid #ff8844",
-									borderRight: isRemote ? `2px solid ${isCarla ? "#ff70b0" : "#e8d020"}` : "none",
+									borderRight: isRemote ? `2px solid ${isCarla ? "#40b848" : "#e8d020"}` : "none",
 									fontFamily: isRemote ? "Tahoma, sans-serif" : chatFont,
 								}}
 							>
