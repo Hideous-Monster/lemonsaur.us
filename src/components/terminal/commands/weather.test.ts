@@ -31,7 +31,7 @@ describe("weatherCommand", () => {
 		const lines = await weatherCommand("");
 		const text = lines.map((l) => l.text).join("\n");
 		expect(text).toContain("OSLO");
-		expect(text).toContain("5°C");
+		expect(text).toContain("5 CELSIUS");
 		expect(text).toContain("OVERCAST");
 		expect(text).toContain("3-DAY FORECAST");
 	});
@@ -106,6 +106,6 @@ describe("weatherCommand", () => {
 		const text = lines.map((l) => l.text).join("\n");
 		expect(text).toContain("TOKYO");
 		expect(text).toContain("JAPAN");
-		expect(text).toContain("18°C");
+		expect(text).toContain("18 CELSIUS");
 	});
 });

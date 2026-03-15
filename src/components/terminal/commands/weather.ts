@@ -318,7 +318,7 @@ export async function weatherCommand(args: string): Promise<TerminalLine[]> {
 
 		const details = [
 			`  ${info.desc}`,
-			`  TEMP:     ${Math.round(current.temperature_2m)}°C`,
+			`  TEMP:     ${Math.round(current.temperature_2m)} CELSIUS`,
 			`  HUMIDITY: ${current.relative_humidity_2m}%`,
 			`  WIND:     ${current.wind_speed_10m} KM/H`,
 			"",
@@ -344,7 +344,7 @@ export async function weatherCommand(args: string): Promise<TerminalLine[]> {
 			const label = days[i]!;
 			lines.push(
 				ln(
-					`  ${label.padEnd(12)} ${Math.round(hi)}°C / ${Math.round(lo)}°C  ${dayInfo.desc}`,
+					`  ${label.padEnd(12)} HI ${Math.round(hi)} / LO ${Math.round(lo)}  ${dayInfo.desc}`,
 					"output",
 				),
 			);
