@@ -682,37 +682,52 @@ export function MessengerApp() {
 					const isLemon = msg.nick === "lemonsaurus";
 
 					return (
-						<div key={msg.id} style={{ marginBottom: 10 }}>
+						<div
+							key={msg.id}
+							style={{
+								marginBottom: 10,
+								textAlign: isLemon ? "right" : "left",
+							}}
+						>
 							<div style={{ fontSize: 11, color: "#999", marginBottom: 1 }}>
 								{isLemon ? (
-									<strong style={{ marginRight: 6 }}>
-										<span
-											style={{
-												backgroundImage:
-													"linear-gradient(90deg, #ff5050, #ff9040, #e8e040, #40b848, #5090ff, #b860d0)",
-												WebkitBackgroundClip: "text",
-												WebkitTextFillColor: "transparent",
-												backgroundClip: "text",
-											}}
-										>
-											lemonsaurus
-										</span>{" "}
-										🍋
-									</strong>
+									<>
+										<span>{formatTime(msg.timestamp)} </span>
+										<strong>
+											<span
+												style={{
+													backgroundImage:
+														"linear-gradient(90deg, #ff5050, #ff9040, #e8e040, #40b848, #5090ff, #b860d0)",
+													WebkitBackgroundClip: "text",
+													WebkitTextFillColor: "transparent",
+													backgroundClip: "text",
+												}}
+											>
+												lemonsaurus
+											</span>{" "}
+											🍋
+										</strong>
+									</>
 								) : (
-									<strong style={{ color: "#cc4400", marginRight: 6 }}>{msg.nick ?? nick}</strong>
+									<>
+										<strong style={{ color: "#cc4400", marginRight: 6 }}>{msg.nick ?? nick}</strong>
+										<span>{formatTime(msg.timestamp)}</span>
+									</>
 								)}
-								<span>{formatTime(msg.timestamp)}</span>
 							</div>
 							<div
 								style={{
 									color: "#111111",
 									wordBreak: "break-word",
 									lineHeight: "1.5",
-									paddingLeft: 4,
-									borderLeft: `2px solid ${isLemon ? "#e8d020" : "#ff8844"}`,
-									paddingTop: 1,
-									paddingBottom: 1,
+									display: "inline-block",
+									textAlign: "left",
+									maxWidth: "85%",
+									padding: "4px 8px",
+									borderRadius: 4,
+									background: isLemon ? "#fff8d0" : "#f0f0f0",
+									borderLeft: isLemon ? "none" : "2px solid #ff8844",
+									borderRight: isLemon ? "2px solid #e8d020" : "none",
 									fontFamily: isLemon ? "Tahoma, sans-serif" : chatFont,
 								}}
 							>
