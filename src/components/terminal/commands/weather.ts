@@ -316,18 +316,19 @@ export async function weatherCommand(args: string): Promise<TerminalLine[]> {
 		lines.push(ln("  CURRENT CONDITIONS:", "system"));
 		lines.push(ln("", "output"));
 
+		const deg = '<span style="font-family:monospace">°</span>';
 		const details = [
-			`  ${info.desc}`,
-			`  TEMP:     ${Math.round(current.temperature_2m)} CELSIUS`,
+			`  ${esc(info.desc)}`,
+			`  TEMP:     ${Math.round(current.temperature_2m)}${deg}C`,
 			`  HUMIDITY: ${current.relative_humidity_2m}%`,
 			`  WIND:     ${current.wind_speed_10m} KM/H`,
 			"",
 		];
 
-		// Interleave colored icon (rich HTML) and plain details
+		// Interleave colored icon (rich HTML) and details
 		for (let i = 0; i < Math.max(info.icon.length, details.length); i++) {
 			const iconPart = info.icon[i] ?? "             ";
-			const detailPart = esc(details[i] ?? "");
+			const detailPart = details[i] ?? "";
 			lines.push(ln(`<span style="white-space:pre">  ${iconPart}  ${detailPart}</span>`, "rich"));
 		}
 
@@ -344,8 +345,8 @@ export async function weatherCommand(args: string): Promise<TerminalLine[]> {
 			const label = days[i]!;
 			lines.push(
 				ln(
-					`  ${label.padEnd(12)} HI ${Math.round(hi)} / LO ${Math.round(lo)}  ${dayInfo.desc}`,
-					"output",
+					`<span style="white-space:pre">  ${esc(label.padEnd(12))} HI ${Math.round(hi)}<span style="font-family:monospace">°</span> / LO ${Math.round(lo)}<span style="font-family:monospace">°</span>  ${esc(dayInfo.desc)}</span>`,
+					"rich",
 				),
 			);
 		}
