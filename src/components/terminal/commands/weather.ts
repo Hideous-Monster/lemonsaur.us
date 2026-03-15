@@ -352,7 +352,6 @@ export async function weatherCommand(args: string): Promise<TerminalLine[]> {
 		}
 
 		lines.push(ln("  ────────────────────────────────────────", "output"));
-		lines.push(ln("  DATA: OPEN-METEO.COM (FREE, NO API KEY)", "output"));
 		lines.push(ln("", "output"));
 	} catch {
 		return [ln("WEATHER: FAILED TO FETCH DATA. CHECK YOUR CONNECTION.", "system")];
