@@ -141,6 +141,7 @@ export function KonamiEasterEgg() {
 
 			let lastSpawn = 0;
 			let exploded = false;
+			let juiceLevel = 0; // rises from 0 to H
 
 			function spawnLemon(spreadFactor: number) {
 				for (const l of lemons) {
@@ -150,14 +151,14 @@ export function KonamiEasterEgg() {
 					// Pick a random cloud to spawn from
 					const cloud = clouds[Math.floor(Math.random() * clouds.length)]!;
 					// As spreadFactor grows, lemons spawn increasingly across full width
-					if (Math.random() < spreadFactor * 0.4) {
+					if (Math.random() < spreadFactor * 0.6) {
 						l.x = Math.random() * W;
-						l.y = -20 - Math.random() * 40;
+						l.y = -20 - Math.random() * 60;
 					} else {
-						l.x = cloud.x - cloudW * 0.3 * cloud.scale + Math.random() * cloudW * 0.6 * cloud.scale;
-						l.y = cloud.y + 70 + Math.random() * 20;
+						l.x = cloud.x - cloudW * 0.4 * cloud.scale + Math.random() * cloudW * 0.8 * cloud.scale;
+						l.y = cloud.y + 50 + Math.random() * 30;
 					}
-					l.vx = (Math.random() - 0.5) * 3;
+					l.vx = (Math.random() - 0.5) * 5;
 					l.vy = 2 + Math.random() * 3;
 					l.rotation = Math.random() * Math.PI * 2;
 					l.rotSpeed = (Math.random() - 0.5) * 0.1;
@@ -172,49 +173,45 @@ export function KonamiEasterEgg() {
 
 			function drawCloud(cx: number, cy: number, flash: number) {
 				ctx.save();
-				// Draw as a single flat shape using a wide clipped ellipse filled with gradient
-				// Bottom layer: dark flat ellipse
-				ctx.fillStyle = "#1a2a1a";
-				ctx.beginPath();
-				ctx.ellipse(cx, cy + 20, cloudW * 0.48, 55, 0, 0, Math.PI * 2);
-				ctx.fill();
 
-				// Middle bumps
-				ctx.fillStyle = "#222e22";
-				ctx.beginPath();
-				ctx.ellipse(cx - 80, cy - 10, 90, 50, 0, 0, Math.PI * 2);
-				ctx.fill();
-				ctx.beginPath();
-				ctx.ellipse(cx + 70, cy - 5, 85, 48, 0, 0, Math.PI * 2);
-				ctx.fill();
+				// Build cloud as overlapping soft ellipses — bottom ones wider/flatter
+				const puffs: [number, number, number, number, string][] = [
+					// [dx, dy, rx, ry, color]
+					// Wide dark base with bumpy bottom
+					[-120, 40, 80, 30, "#1a2a1a"],
+					[-40, 45, 90, 28, "#1a2a1a"],
+					[40, 42, 85, 32, "#1a2a1a"],
+					[120, 38, 75, 28, "#1a2a1a"],
+					// Main body
+					[-100, 15, 95, 45, "#1e2e1e"],
+					[0, 20, 110, 42, "#1e2e1e"],
+					[100, 15, 90, 44, "#1e2e1e"],
+					// Upper bumps
+					[-70, -10, 80, 40, "#222e22"],
+					[50, -15, 85, 42, "#222e22"],
+					[-20, -5, 90, 38, "#252f25"],
+					// Top puffs
+					[-40, -35, 60, 32, "#2a3a2a"],
+					[30, -30, 55, 30, "#2a3a2a"],
+					[0, -40, 45, 25, "#2d3d2d"],
+				];
 
-				// Top bumps
-				ctx.fillStyle = "#2a3a2a";
-				ctx.beginPath();
-				ctx.ellipse(cx - 30, cy - 30, 70, 40, 0, 0, Math.PI * 2);
-				ctx.fill();
-				ctx.beginPath();
-				ctx.ellipse(cx + 30, cy - 25, 65, 38, 0, 0, Math.PI * 2);
-				ctx.fill();
-
-				// Flat bottom — cover the bottom half to flatten the cloud
-				ctx.fillStyle = "#1e2e1e";
-				ctx.fillRect(cx - cloudW * 0.48, cy + 15, cloudW * 0.96, 60);
-
-				// Underbelly gradient
-				const underGrad = ctx.createLinearGradient(cx, cy + 15, cx, cy + 70);
-				underGrad.addColorStop(0, "#1e2e1e");
-				underGrad.addColorStop(1, "rgba(26,42,26,0)");
-				ctx.fillStyle = underGrad;
-				ctx.fillRect(cx - cloudW * 0.48, cy + 15, cloudW * 0.96, 55);
-
-				// Lightning flash overlay
-				if (flash > 0) {
-					ctx.globalAlpha = flash * 0.4;
-					ctx.fillStyle = "#80ff80";
+				for (const [dx, dy, rx, ry, color] of puffs) {
+					ctx.fillStyle = color;
 					ctx.beginPath();
-					ctx.ellipse(cx, cy, cloudW * 0.4, 60, 0, 0, Math.PI * 2);
+					ctx.ellipse(cx + dx, cy + dy, rx, ry, 0, 0, Math.PI * 2);
 					ctx.fill();
+				}
+
+				// Lightning: flash the WHOLE cloud brighter, not a circle
+				if (flash > 0) {
+					for (const [dx, dy, rx, ry] of puffs) {
+						ctx.globalAlpha = flash * 0.35;
+						ctx.fillStyle = "#60c060";
+						ctx.beginPath();
+						ctx.ellipse(cx + dx, cy + dy, rx * 0.9, ry * 0.9, 0, 0, Math.PI * 2);
+						ctx.fill();
+					}
 					ctx.globalAlpha = 1;
 				}
 
@@ -315,6 +312,52 @@ export function KonamiEasterEgg() {
 				}
 			}
 
+			function drawJuice(level: number, time: number) {
+				if (level <= 0) return;
+				const juiceTop = H - level;
+				// Wavy surface
+				ctx.fillStyle = "#d8c830";
+				ctx.beginPath();
+				ctx.moveTo(0, H);
+				ctx.lineTo(0, juiceTop);
+				for (let x = 0; x <= W; x += 4) {
+					const wave1 = Math.sin(x * 0.02 + time * 0.003) * 6;
+					const wave2 = Math.sin(x * 0.035 + time * 0.005 + 1) * 4;
+					const wave3 = Math.sin(x * 0.008 + time * 0.002) * 8;
+					ctx.lineTo(x, juiceTop + wave1 + wave2 + wave3);
+				}
+				ctx.lineTo(W, H);
+				ctx.closePath();
+				ctx.fill();
+
+				// Lighter surface highlight
+				ctx.fillStyle = "#e8d840";
+				ctx.beginPath();
+				ctx.moveTo(0, H);
+				ctx.lineTo(0, juiceTop + 3);
+				for (let x = 0; x <= W; x += 4) {
+					const wave1 = Math.sin(x * 0.02 + time * 0.003) * 6;
+					const wave2 = Math.sin(x * 0.035 + time * 0.005 + 1) * 4;
+					const wave3 = Math.sin(x * 0.008 + time * 0.002) * 8;
+					ctx.lineTo(x, juiceTop + wave1 + wave2 + wave3 + 3);
+				}
+				ctx.lineTo(W, H);
+				ctx.closePath();
+				ctx.fill();
+
+				// Foam/bubbles near surface
+				ctx.fillStyle = "rgba(255,255,200,0.3)";
+				for (let i = 0; i < 15; i++) {
+					const bx = ((time * 0.05 + i * 97) % (W + 40)) - 20;
+					const by = juiceTop + Math.sin(time * 0.004 + i) * 5 + 10;
+					if (by < H) {
+						ctx.beginPath();
+						ctx.arc(bx, by, 3 + (i % 3), 0, Math.PI * 2);
+						ctx.fill();
+					}
+				}
+			}
+
 			const RAIN_START = 1500;
 			const EXPLODE_AT = 12000;
 			const STORM_TEXT_START = 2500;
@@ -344,13 +387,13 @@ export function KonamiEasterEgg() {
 					c.flash = Math.max(0, c.flash - 0.04);
 				}
 
-				// Spawn lemons — ramp up aggressively
+				// Spawn lemons — ramp up very aggressively
 				if (elapsed > RAIN_START && !exploded) {
-					const t = Math.min(1, (elapsed - RAIN_START) / 6000);
-					const interval = Math.max(15, 150 - t * 140);
+					const t = Math.min(1, (elapsed - RAIN_START) / 4000);
+					const interval = Math.max(10, 100 - t * 90);
 					if (now - lastSpawn > interval) {
 						lastSpawn = now;
-						const count = t > 0.7 ? 5 : t > 0.4 ? 3 : t > 0.2 ? 2 : 1;
+						const count = t > 0.6 ? 8 : t > 0.3 ? 5 : t > 0.1 ? 3 : 1;
 						for (let i = 0; i < count; i++) spawnLemon(t);
 					}
 				}
@@ -397,9 +440,14 @@ export function KonamiEasterEgg() {
 					}
 				}
 
-				// Block interaction once pile is tall enough
-				const avgPile = pileH.reduce((a, b) => a + b, 0) / PILE_COLS;
-				if (avgPile > H * 0.3 && canvas.style.pointerEvents !== "all") {
+				// Rising juice level — starts after 3s, fills screen by explosion time
+				if (elapsed > 3000 && !exploded) {
+					const juiceT = Math.min(1, (elapsed - 3000) / (EXPLODE_AT - 3000));
+					juiceLevel = juiceT * juiceT * H; // quadratic rise — slow then fast
+				}
+
+				// Block interaction once juice covers half the screen
+				if (juiceLevel > H * 0.4 && canvas.style.pointerEvents !== "all") {
 					canvas.style.pointerEvents = "all";
 				}
 
@@ -428,13 +476,15 @@ export function KonamiEasterEgg() {
 
 				// Draw
 				if (!exploded) {
+					// Juice level (behind everything)
+					drawJuice(juiceLevel, elapsed);
 					drawPile();
 					for (const l of lemons) {
 						if (!l.active || l.landed) continue;
 						drawTrail(l);
 						drawLemon(l);
 					}
-					// Draw all clouds
+					// Clouds
 					for (const c of clouds) {
 						ctx.save();
 						ctx.scale(c.scale, c.scale);
@@ -460,14 +510,12 @@ export function KonamiEasterEgg() {
 						}
 					}
 				} else {
-					// Fade pile
-					const explodeStart = performance.now();
-					const fadeProgress = Math.min(1, (now - explodeStart) / 200);
-					if (fadeProgress < 1) {
-						ctx.save();
-						ctx.globalAlpha = 1 - fadeProgress;
-						drawPile();
-						ctx.restore();
+					const explodeElapsed = elapsed - EXPLODE_AT;
+
+					if (explodeElapsed < 300) {
+						// Brief white flash
+						ctx.fillStyle = `rgba(255,255,200,${1 - explodeElapsed / 300})`;
+						ctx.fillRect(0, 0, W, H);
 					}
 
 					// Draw explosion particles
@@ -493,10 +541,49 @@ export function KonamiEasterEgg() {
 						ctx.fill();
 					}
 
+					// After particles fade, go to black then reboot
 					if (!anyActive) {
-						// All done
-						cleanup();
-						return;
+						// Fade to black
+						ctx.fillStyle = "#000000";
+						ctx.fillRect(0, 0, W, H);
+
+						// POST / reboot sequence
+						const rebootElapsed = explodeElapsed - 2000;
+						if (rebootElapsed < 0) {
+							// Still black
+						} else if (rebootElapsed < 500) {
+							ctx.font = "14px monospace";
+							ctx.fillStyle = "#40b848";
+							ctx.fillText("POST: LEMON BIOS v87.1", 20, 30);
+							ctx.fillText("MEMORY TEST: 87K OK", 20, 50);
+						} else if (rebootElapsed < 1200) {
+							ctx.font = "14px monospace";
+							ctx.fillStyle = "#40b848";
+							ctx.fillText("POST: LEMON BIOS v87.1", 20, 30);
+							ctx.fillText("MEMORY TEST: 87K OK", 20, 50);
+							ctx.fillText("LOADING LEMON/87...", 20, 80);
+							ctx.fillText("LEMONSTORM CLEANUP COMPLETE.", 20, 100);
+						} else if (rebootElapsed < 2500) {
+							// Big LEMON 87 boot screen
+							ctx.fillStyle = "#000000";
+							ctx.fillRect(0, 0, W, H);
+							ctx.font = "bold 64px monospace";
+							ctx.textAlign = "center";
+							ctx.textBaseline = "middle";
+							ctx.fillStyle = LEMON_YELLOW;
+							ctx.shadowColor = LEMON_YELLOW;
+							ctx.shadowBlur = 30;
+							ctx.fillText("LEMON/87", W / 2, H / 2 - 20);
+							ctx.shadowBlur = 0;
+							ctx.font = "16px monospace";
+							ctx.fillStyle = "#40b848";
+							ctx.fillText("REBOOTING SYSTEM...", W / 2, H / 2 + 30);
+						} else {
+							// Done — reload the page for a clean restart
+							cleanup();
+							window.location.reload();
+							return;
+						}
 					}
 				}
 
