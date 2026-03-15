@@ -1,6 +1,6 @@
 import type { TerminalLine } from "./types";
 
-let lineIdCounter = 10000;
+let lineIdCounter = 100000;
 
 function ln(text: string, type: TerminalLine["type"]): TerminalLine {
 	return { id: lineIdCounter++, text, type };
