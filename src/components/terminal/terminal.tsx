@@ -354,7 +354,7 @@ export function Terminal() {
 								? "whitespace-pre overflow-hidden"
 								: line.noWrap
 									? "whitespace-pre overflow-hidden"
-									: "whitespace-pre-wrap break-all"
+									: "whitespace-pre-wrap break-words"
 					}`}
 				>
 					{line.type === "logo" ? (
