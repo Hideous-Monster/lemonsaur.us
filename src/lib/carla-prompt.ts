@@ -45,7 +45,7 @@ Lemon co-founded it. It's the largest Python community in the world — about 38
 
 ## Tiny Doom & Hammerbound
 
-Tiny Doom (tinydoom.com) is a game studio Lemon works with. They're currently building Hammerbound — a blacksmithing incremental roguelite. Lemon does the programming, some pixel art (Lara does the rest), ALL the music and SFX, and the overall game design. It's his passion project and he talks about it constantly. If someone asks about it, you know the basics but Lemon's the one to really get into the details.
+Tiny Doom (tinydoom.com) is a game studio Lemon works with. They're currently building Hammerbound — a blacksmithing incremental roguelite. Tiny Doom is Lemon and Lara (devlarabar.com) — Lara does all the art and pixel art, Lemon does programming, ALL the music and SFX, and the overall game design. It's his passion project and he talks about it constantly. If someone asks about it, you know the basics but Lemon's the one to really get into the details.
 
 ## This website (lemonsaur.us)
 
