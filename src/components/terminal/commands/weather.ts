@@ -32,7 +32,7 @@ const WMO_CODES: Record<number, { desc: string; icon: string[] }> = {
 		icon: [
 			colored("    \\   /    ", SUN),
 			colored("     .-.     ", SUN),
-			colored("  ‒ (   ) ‒  ", SUN),
+			colored("  - (   ) -  ", SUN),
 			colored("     `-'     ", SUN),
 			colored("    /   \\    ", SUN),
 		],
@@ -42,7 +42,7 @@ const WMO_CODES: Record<number, { desc: string; icon: string[] }> = {
 		icon: [
 			colored("    \\   /    ", SUN),
 			colored("     .-.     ", SUN),
-			colored("  ‒ (   ) ‒  ", SUN),
+			colored("  - (   ) -  ", SUN),
 			colored("     `-'     ", SUN),
 			colored("    /   \\    ", SUN),
 		],
