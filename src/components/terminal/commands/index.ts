@@ -93,31 +93,41 @@ const COMMANDS: Record<string, () => CommandResult> = {
 		],
 	}),
 
-	links: () => ({
-		lines: [
-			ln("SOCIAL/MEDIA", "system"),
-			...SOCIAL_LINKS.map((link) => ln(`  ${link.url}`, "output", { href: link.url })),
-			ln("", "output"),
-			ln("COMMUNITIES I HELPED BUILD", "system"),
-			ln("  https://oomfies.gay", "output", { href: "https://oomfies.gay" }),
-			ln("  https://pythondiscord.com", "output", { href: "https://pythondiscord.com" }),
-			ln("", "output"),
-			ln("COMPANIES I STARTED", "system"),
-			ln("  https://tinydoom.com", "output", { href: "https://tinydoom.com" }),
-			ln("  https://hideous.monster", "output", { href: "https://hideous.monster" }),
-			ln("", "output"),
-			ln("SOFTWARE I MADE", "system"),
-			ln("  https://github.com/lemonsaurus/blackbox", "output", {
-				href: "https://github.com/lemonsaurus/blackbox",
-			}),
-			ln("  https://github.com/lemonsaurus/agency", "output", {
-				href: "https://github.com/lemonsaurus/agency",
-			}),
-			ln("  https://github.com/lemonsaurus/mirador", "output", {
-				href: "https://github.com/lemonsaurus/mirador",
-			}),
-		],
-	}),
+	links: () => {
+		let linkIndex = 0;
+		function linkBlock(url: string): TerminalLine {
+			const domain = url.replace(/^https?:\/\//, "").split("/")[0]!;
+			const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+			const isLeft = linkIndex % 2 === 0;
+			linkIndex++;
+			const icon = `<img src="${faviconUrl}" alt="" style="width:28px;height:28px;image-rendering:pixelated;flex-shrink:0" />`;
+			const text = `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color:#e8e040;text-decoration:underline;text-decoration-color:rgba(232,224,64,0.5);font-size:inherit">${url.toUpperCase()}</a>`;
+			const html = isLeft
+				? `<div style="display:flex;align-items:center;gap:8px;padding:4px 0">${icon}${text}</div>`
+				: `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;justify-content:flex-end">${text}${icon}</div>`;
+			return ln(html, "rich");
+		}
+
+		return {
+			lines: [
+				ln("SOCIAL/MEDIA", "system"),
+				...SOCIAL_LINKS.map((link) => linkBlock(link.url)),
+				ln("", "output"),
+				ln("COMMUNITIES I HELPED BUILD", "system"),
+				linkBlock("https://oomfies.gay"),
+				linkBlock("https://pythondiscord.com"),
+				ln("", "output"),
+				ln("COMPANIES I STARTED", "system"),
+				linkBlock("https://tinydoom.com"),
+				linkBlock("https://hideous.monster"),
+				ln("", "output"),
+				ln("SOFTWARE I MADE", "system"),
+				linkBlock("https://github.com/lemonsaurus/blackbox"),
+				linkBlock("https://github.com/lemonsaurus/agency"),
+				linkBlock("https://github.com/lemonsaurus/mirador"),
+			],
+		};
+	},
 
 	snake: () =>
 		isMobile()

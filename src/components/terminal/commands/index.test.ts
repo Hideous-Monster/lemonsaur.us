@@ -41,12 +41,12 @@ describe("executeCommand", () => {
 		expect(result.lines[0]!.text).toContain("LEMONSAURUS");
 	});
 
-	it("links returns social links with hrefs", () => {
+	it("links returns social links as rich blocks with hrefs", () => {
 		const result = executeCommand("links");
-		const linkLines = result.lines.filter((l) => l.href);
-		expect(linkLines.length).toBeGreaterThan(0);
-		for (const line of linkLines) {
-			expect(line.href).toMatch(/^https:\/\//);
+		const richLinks = result.lines.filter((l) => l.type === "rich" && l.text.includes("href="));
+		expect(richLinks.length).toBeGreaterThan(0);
+		for (const line of richLinks) {
+			expect(line.text).toMatch(/https:\/\//);
 		}
 	});
 
