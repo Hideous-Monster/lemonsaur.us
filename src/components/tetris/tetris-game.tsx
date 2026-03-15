@@ -12,10 +12,10 @@ const PREVIEW_COLS = 4;
 const PREVIEW_ROWS = 4;
 
 // Speed settings (ms per drop)
-const INITIAL_SPEED = 800;
-const SPEED_DECREMENT = 50;
-const MIN_SPEED = 100;
-const LINES_PER_LEVEL = 10;
+const INITIAL_SPEED = 700;
+const SPEED_DECREMENT = 75;
+const MIN_SPEED = 80;
+const LINES_PER_LEVEL = 8;
 
 // Colors
 const BG_COLOR = "#0a140a";
@@ -24,7 +24,7 @@ const BORDER_COLOR = "#40b848";
 const GHOST_ALPHA = 0.25;
 
 type GameState = "waiting" | "playing" | "gameover";
-type TetrominoType = "I" | "O" | "T" | "S" | "Z" | "J" | "L";
+type TetrominoType = "I" | "O" | "T" | "S" | "Z" | "J" | "L" | "LEMON";
 
 const PIECE_COLORS: Record<TetrominoType, string> = {
 	I: "#70d0b0",
@@ -34,7 +34,10 @@ const PIECE_COLORS: Record<TetrominoType, string> = {
 	Z: "#ff5050",
 	J: "#5050ff",
 	L: "#ff9040",
+	LEMON: "#e8e040",
 };
+
+const LEMON_CHANCE = 0.12;
 
 // SRS tetromino shapes — each piece has 4 rotation states
 // Coordinates are [row, col] offsets from the top-left of the bounding box
@@ -225,6 +228,9 @@ const TETROMINOES: Record<TetrominoType, number[][][]> = {
 
 const PIECE_TYPES: TetrominoType[] = ["I", "O", "T", "S", "Z", "J", "L"];
 
+// Add LEMON shape to tetrominoes — a single 1x1 block
+TETROMINOES.LEMON = [[[0, 0]], [[0, 0]], [[0, 0]], [[0, 0]]];
+
 type Cell = { type: TetrominoType } | null;
 type Board = Cell[][];
 
@@ -240,6 +246,7 @@ function emptyBoard(): Board {
 }
 
 function randomPiece(): TetrominoType {
+	if (Math.random() < LEMON_CHANCE) return "LEMON";
 	return PIECE_TYPES[Math.floor(Math.random() * PIECE_TYPES.length)]!;
 }
 
@@ -357,16 +364,41 @@ export function TetrisGame({ onExit }: TetrisGameProps) {
 			alpha = 1,
 			offsetX = 0,
 			offsetY = 0,
+			isLemon = false,
 		) => {
 			const x = offsetX + col * CELL_SIZE;
 			const y = offsetY + row * CELL_SIZE;
 			ctx.globalAlpha = alpha;
-			ctx.fillStyle = color;
-			ctx.fillRect(x + 1, y + 1, CELL_SIZE - 2, CELL_SIZE - 2);
-			// Highlight bevel
-			ctx.fillStyle = "rgba(255,255,255,0.15)";
-			ctx.fillRect(x + 1, y + 1, CELL_SIZE - 2, 3);
-			ctx.fillRect(x + 1, y + 1, 3, CELL_SIZE - 2);
+
+			if (isLemon) {
+				// Draw lemon as a yellow oval with green leaf
+				const cx = x + CELL_SIZE / 2;
+				const cy = y + CELL_SIZE / 2;
+				const rx = CELL_SIZE / 2 - 2;
+				const ry = CELL_SIZE / 2 - 3;
+				ctx.fillStyle = color;
+				ctx.beginPath();
+				ctx.ellipse(cx, cy + 1, rx, ry, 0, 0, Math.PI * 2);
+				ctx.fill();
+				// Highlight
+				ctx.fillStyle = "rgba(255,255,255,0.3)";
+				ctx.beginPath();
+				ctx.ellipse(cx - 2, cy - 1, rx * 0.4, ry * 0.4, 0, 0, Math.PI * 2);
+				ctx.fill();
+				// Leaf
+				ctx.fillStyle = "#40b848";
+				ctx.beginPath();
+				ctx.ellipse(cx + 1, y + 3, 4, 2, 0.3, 0, Math.PI * 2);
+				ctx.fill();
+			} else {
+				ctx.fillStyle = color;
+				ctx.fillRect(x + 1, y + 1, CELL_SIZE - 2, CELL_SIZE - 2);
+				// Highlight bevel
+				ctx.fillStyle = "rgba(255,255,255,0.15)";
+				ctx.fillRect(x + 1, y + 1, CELL_SIZE - 2, 3);
+				ctx.fillRect(x + 1, y + 1, 3, CELL_SIZE - 2);
+			}
+
 			ctx.globalAlpha = 1;
 		},
 		[],
@@ -399,7 +431,7 @@ export function TetrisGame({ onExit }: TetrisGameProps) {
 			const startCol = Math.floor((PREVIEW_COLS - pieceW) / 2) - minC;
 
 			for (const [dr, dc] of shape) {
-				drawCell(ctx, startRow + dr!, startCol + dc!, color);
+				drawCell(ctx, startRow + dr!, startCol + dc!, color, 1, 0, 0, type === "LEMON");
 			}
 		},
 		[drawCell],
@@ -442,10 +474,9 @@ export function TetrisGame({ onExit }: TetrisGameProps) {
 				const cell = board[r]?.[c];
 				if (cell) {
 					if (flash.has(r)) {
-						// Flash white
 						drawCell(ctx, r, c, "#ffffff");
 					} else {
-						drawCell(ctx, r, c, PIECE_COLORS[cell.type]);
+						drawCell(ctx, r, c, PIECE_COLORS[cell.type], 1, 0, 0, cell.type === "LEMON");
 					}
 				}
 			}
@@ -459,7 +490,16 @@ export function TetrisGame({ onExit }: TetrisGameProps) {
 				const ghostPiece = { ...active, row: ghostR };
 				for (const [r, c] of getCells(ghostPiece)) {
 					if (r >= 0) {
-						drawCell(ctx, r, c, PIECE_COLORS[active.type], GHOST_ALPHA);
+						drawCell(
+							ctx,
+							r,
+							c,
+							PIECE_COLORS[active.type],
+							GHOST_ALPHA,
+							0,
+							0,
+							active.type === "LEMON",
+						);
 					}
 				}
 			}
@@ -467,7 +507,7 @@ export function TetrisGame({ onExit }: TetrisGameProps) {
 			// Active piece
 			for (const [r, c] of getCells(active)) {
 				if (r >= 0) {
-					drawCell(ctx, r, c, PIECE_COLORS[active.type]);
+					drawCell(ctx, r, c, PIECE_COLORS[active.type], 1, 0, 0, active.type === "LEMON");
 				}
 			}
 		}
@@ -484,13 +524,25 @@ export function TetrisGame({ onExit }: TetrisGameProps) {
 		const { board: clearedBoard, cleared } = clearLines(newBoard);
 
 		if (cleared > 0) {
-			// Identify which rows were cleared for flash effect
 			const clearedRows = new Set<number>();
 			for (let r = 0; r < GRID_ROWS; r++) {
 				if (newBoard[r]?.every((cell) => cell !== null)) clearedRows.add(r);
 			}
+
+			// Blink animation: flash on/off 3 times then clear
+			boardRef.current = newBoard;
+			let blinkCount = 0;
+			const totalBlinks = 6; // 3 on + 3 off
+			const blinkInterval = setInterval(() => {
+				flashRowsRef.current = blinkCount % 2 === 0 ? clearedRows : new Set();
+				draw();
+				blinkCount++;
+				if (blinkCount >= totalBlinks) {
+					clearInterval(blinkInterval);
+				}
+			}, 80);
+
 			flashRowsRef.current = clearedRows;
-			boardRef.current = newBoard; // show full before clearing
 			draw();
 
 			flashTimerRef.current = setTimeout(() => {

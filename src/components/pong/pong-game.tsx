@@ -4,13 +4,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 type GameState = "waiting" | "playing" | "paused" | "gameover";
 
-const PADDLE_WIDTH = 10;
-const PADDLE_HEIGHT = 64;
+const PADDLE_WIDTH = 12;
+const PADDLE_HEIGHT = 90;
 const BALL_RADIUS = 10;
-const PADDLE_SPEED = 5;
-const BALL_INITIAL_SPEED = 4;
-const BALL_MAX_SPEED = 10;
-const SPEED_INCREASE = 0.3;
+const PADDLE_SPEED = 7;
+const BALL_INITIAL_SPEED = 6;
+const BALL_MAX_SPEED = 16;
+const SPEED_INCREASE = 0.4;
+const SPEED_ACCEL_PER_FRAME = 0.003; // ball speeds up over time
 const WINNING_SCORE = 7;
 
 // AI: how quickly the AI paddle tracks the ball (0–1 scale, lower = dumber)
@@ -301,6 +302,14 @@ export function PongGame({ onExit }: PongGameProps) {
 				aiYRef.current = Math.max(0, Math.min(h - PADDLE_HEIGHT, aiYRef.current + move));
 			}
 
+			// Gradual speed increase over time
+			const curSpeed = Math.sqrt(ballVxRef.current ** 2 + ballVyRef.current ** 2);
+			if (curSpeed < BALL_MAX_SPEED) {
+				const factor = 1 + SPEED_ACCEL_PER_FRAME;
+				ballVxRef.current *= factor;
+				ballVyRef.current *= factor;
+			}
+
 			// Move ball
 			ballXRef.current += ballVxRef.current;
 			ballYRef.current += ballVyRef.current;
@@ -326,13 +335,13 @@ export function PongGame({ onExit }: PongGameProps) {
 				ballYRef.current <= playerPaddleBot &&
 				ballVxRef.current < 0
 			) {
-				// Reflect and add angle based on hit position
+				// Edge hits: faster + steeper angle. Center hits: slower + flat
 				const hitPos = (ballYRef.current - playerPaddleTop) / PADDLE_HEIGHT - 0.5; // -0.5 to 0.5
-				const speed = Math.min(
-					BALL_MAX_SPEED,
-					Math.sqrt(ballVxRef.current ** 2 + ballVyRef.current ** 2) + SPEED_INCREASE,
-				);
-				const angle = hitPos * (Math.PI / 2.5); // max ~72° deflection
+				const edgeFactor = Math.abs(hitPos) * 2; // 0 at center, 1 at edge
+				const baseSpeed = Math.sqrt(ballVxRef.current ** 2 + ballVyRef.current ** 2);
+				const speedBoost = SPEED_INCREASE + edgeFactor * 2.5; // edge = +3.0, center = +0.4
+				const speed = Math.min(BALL_MAX_SPEED, baseSpeed + speedBoost);
+				const angle = hitPos * (Math.PI / 2.2); // max ~81° deflection
 				ballVxRef.current = Math.abs(speed * Math.cos(angle));
 				ballVyRef.current = speed * Math.sin(angle);
 				ballXRef.current = playerPaddleX + 1;
@@ -352,11 +361,11 @@ export function PongGame({ onExit }: PongGameProps) {
 				ballVxRef.current > 0
 			) {
 				const hitPos = (ballYRef.current - aiPaddleTop) / PADDLE_HEIGHT - 0.5;
-				const speed = Math.min(
-					BALL_MAX_SPEED,
-					Math.sqrt(ballVxRef.current ** 2 + ballVyRef.current ** 2) + SPEED_INCREASE,
-				);
-				const angle = hitPos * (Math.PI / 2.5);
+				const edgeFactor = Math.abs(hitPos) * 2;
+				const baseSpeed = Math.sqrt(ballVxRef.current ** 2 + ballVyRef.current ** 2);
+				const speedBoost = SPEED_INCREASE + edgeFactor * 2.5;
+				const speed = Math.min(BALL_MAX_SPEED, baseSpeed + speedBoost);
+				const angle = hitPos * (Math.PI / 2.2);
 				ballVxRef.current = -Math.abs(speed * Math.cos(angle));
 				ballVyRef.current = speed * Math.sin(angle);
 				ballXRef.current = aiPaddleX - 1;
@@ -507,8 +516,8 @@ export function PongGame({ onExit }: PongGameProps) {
 	}, [draw]);
 
 	return (
-		<div className="flex flex-col items-center gap-2 p-4 h-full">
-			<div className="flex w-full max-w-3xl items-center justify-between font-pixel text-[9px]">
+		<div className="flex flex-1 flex-col items-center gap-2 p-4">
+			<div className="flex w-full max-w-4xl items-center justify-between font-pixel text-[9px]">
 				<span className="text-c64-text">
 					PLAYER <span className="text-c64-green">◀</span>
 				</span>
@@ -520,11 +529,7 @@ export function PongGame({ onExit }: PongGameProps) {
 				</span>
 			</div>
 
-			<div
-				ref={containerRef}
-				className="relative w-full max-w-3xl flex-1 min-h-[300px] border-2 border-c64-dim"
-				style={{ minHeight: 300 }}
-			>
+			<div ref={containerRef} className="relative w-full max-w-4xl flex-1 border-2 border-c64-dim">
 				<canvas
 					ref={canvasRef}
 					className="block w-full h-full"

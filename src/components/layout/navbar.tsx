@@ -1,5 +1,6 @@
 "use client";
 
+import { BookOpen } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -99,8 +100,9 @@ export function Navbar() {
 				<div className="flex flex-col gap-4 border-t-2 border-c64-dim py-4 sm:hidden">
 					<Link
 						href="/blog"
-						className="font-pixel text-xs text-c64-text transition-colors hover:text-c64-white"
+						className="flex items-center gap-2 font-pixel text-xs text-c64-text transition-colors hover:text-c64-white"
 					>
+						<BookOpen size={14} />
 						BLOG
 					</Link>
 					{SOCIAL_LINKS.map((social) => (
