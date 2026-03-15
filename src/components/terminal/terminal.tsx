@@ -340,7 +340,7 @@ export function Terminal() {
 		// biome-ignore lint/a11y/noStaticElementInteractions: terminal container acts as click target
 		<div
 			ref={scrollRef}
-			className="min-h-0 flex-1 overflow-y-auto p-4 font-pixel text-[10px] sm:text-xs"
+			className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-4 font-pixel text-[10px] sm:text-xs"
 			onClick={focusInput}
 		>
 			{/* Rendered lines */}

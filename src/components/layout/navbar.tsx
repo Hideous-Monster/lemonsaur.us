@@ -86,12 +86,14 @@ export function Navbar() {
 				{/* Mobile hamburger */}
 				<button
 					type="button"
-					className="flex items-center justify-center sm:hidden"
+					className="flex h-12 w-10 items-center justify-center sm:hidden"
 					onClick={() => setMenuOpen((prev) => !prev)}
 					aria-label={menuOpen ? "Close menu" : "Open menu"}
 					aria-expanded={menuOpen}
 				>
-					<span className="font-pixel text-lg text-c64-text">{menuOpen ? "✕" : "≡"}</span>
+					<span className="font-pixel text-base leading-none text-c64-text">
+						{menuOpen ? "✕" : "≡"}
+					</span>
 				</button>
 			</div>
 

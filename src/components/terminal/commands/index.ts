@@ -7,6 +7,16 @@ import { weatherCommand } from "./weather";
 
 export type { CommandResult, TerminalLine };
 
+function isMobile(): boolean {
+	return typeof window !== "undefined" && window.innerWidth < 640;
+}
+
+function mobileReject(): CommandResult {
+	return {
+		lines: [ln("THIS COMMAND REQUIRES A KEYBOARD. TRY IT ON A DESKTOP!", "system")],
+	};
+}
+
 let lineIdCounter = 0;
 
 function ln(
@@ -109,10 +119,10 @@ const COMMANDS: Record<string, () => CommandResult> = {
 		],
 	}),
 
-	snake: () => ({
-		lines: [ln("LOADING LEMON SNAKE...", "system")],
-		action: "snake",
-	}),
+	snake: () =>
+		isMobile()
+			? mobileReject()
+			: { lines: [ln("LOADING LEMON SNAKE...", "system")], action: "snake" as const },
 
 	matrix: () => ({
 		lines: [ln("ENTERING THE MATRIX...", "system")],
@@ -129,20 +139,20 @@ const COMMANDS: Record<string, () => CommandResult> = {
 		action: "hack",
 	}),
 
-	doom: () => ({
-		lines: [ln("LOADING DOOM.EXE...", "system")],
-		action: "doom",
-	}),
+	doom: () =>
+		isMobile()
+			? mobileReject()
+			: { lines: [ln("LOADING DOOM.EXE...", "system")], action: "doom" as const },
 
-	tetris: () => ({
-		lines: [ln("LOADING TETRIS...", "system")],
-		action: "tetris",
-	}),
+	tetris: () =>
+		isMobile()
+			? mobileReject()
+			: { lines: [ln("LOADING TETRIS...", "system")], action: "tetris" as const },
 
-	pong: () => ({
-		lines: [ln("LOADING LEMON PONG...", "system")],
-		action: "pong",
-	}),
+	pong: () =>
+		isMobile()
+			? mobileReject()
+			: { lines: [ln("LOADING LEMON PONG...", "system")], action: "pong" as const },
 
 	fortune: () => ({
 		lines: [ln("", "output"), ln(generateFortune(), "output"), ln("", "output")],

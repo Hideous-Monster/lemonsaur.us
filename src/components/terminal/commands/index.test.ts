@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { BOOT_LINES, COMMAND_NAMES, executeCommand, makeBootLine } from ".";
 
 describe("executeCommand", () => {
@@ -127,14 +127,34 @@ describe("executeCommand", () => {
 		expect(result.lines).toEqual([]);
 	});
 
-	it("tetris triggers tetris action", () => {
+	it("tetris triggers tetris action on desktop", () => {
+		vi.spyOn(window, "innerWidth", "get").mockReturnValue(1024);
 		const result = executeCommand("tetris");
 		expect(result.action).toBe("tetris");
 	});
 
-	it("pong triggers pong action", () => {
+	it("tetris rejects on mobile", () => {
+		vi.spyOn(window, "innerWidth", "get").mockReturnValue(400);
+		const result = executeCommand("tetris");
+		expect(result.action).toBeUndefined();
+		expect(result.lines[0]!.text).toContain("KEYBOARD");
+		vi.restoreAllMocks();
+	});
+
+	it("pong triggers pong action on desktop", () => {
+		vi.spyOn(window, "innerWidth", "get").mockReturnValue(1024);
 		const result = executeCommand("pong");
 		expect(result.action).toBe("pong");
+	});
+
+	it("games reject on mobile", () => {
+		vi.spyOn(window, "innerWidth", "get").mockReturnValue(400);
+		for (const cmd of ["snake", "doom", "pong", "tetris"]) {
+			const result = executeCommand(cmd);
+			expect(result.action).toBeUndefined();
+			expect(result.lines[0]!.text).toContain("KEYBOARD");
+		}
+		vi.restoreAllMocks();
 	});
 
 	it("weather returns asyncLines function", () => {
