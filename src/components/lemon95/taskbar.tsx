@@ -70,7 +70,10 @@ export function Taskbar({
 			{/* Start button */}
 			<button
 				type="button"
-				onClick={onStartClick}
+				onClick={(e) => {
+					e.stopPropagation();
+					onStartClick();
+				}}
 				style={{
 					...BEVEL_RAISED,
 					background: "#2a3a2a",

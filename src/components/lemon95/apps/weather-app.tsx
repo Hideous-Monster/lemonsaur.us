@@ -1,8 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
-
-// ── Open-Meteo types ─────────────────────────────────────────────────────────
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface GeoResult {
 	name: string;
@@ -33,40 +31,33 @@ interface WeatherResult {
 	wind: number;
 	conditionCode: number;
 	conditionDesc: string;
-	forecast: Array<{
-		label: string;
-		hi: number;
-		lo: number;
-		desc: string;
-	}>;
+	forecast: Array<{ label: string; hi: number; lo: number; desc: string; code: number }>;
 }
 
-// ── WMO code descriptions ────────────────────────────────────────────────────
-
 const WMO: Record<number, string> = {
-	0: "CLEAR SKY",
-	1: "MAINLY CLEAR",
-	2: "PARTLY CLOUDY",
-	3: "OVERCAST",
-	45: "FOG",
-	48: "RIME FOG",
-	51: "LIGHT DRIZZLE",
-	53: "DRIZZLE",
-	55: "HEAVY DRIZZLE",
-	61: "LIGHT RAIN",
-	63: "RAIN",
-	65: "HEAVY RAIN",
-	71: "LIGHT SNOW",
-	73: "SNOW",
-	75: "HEAVY SNOW",
-	80: "RAIN SHOWERS",
-	81: "RAIN SHOWERS",
-	82: "HEAVY SHOWERS",
-	95: "THUNDERSTORM",
+	0: "Clear Sky",
+	1: "Mainly Clear",
+	2: "Partly Cloudy",
+	3: "Overcast",
+	45: "Fog",
+	48: "Rime Fog",
+	51: "Light Drizzle",
+	53: "Drizzle",
+	55: "Heavy Drizzle",
+	61: "Light Rain",
+	63: "Rain",
+	65: "Heavy Rain",
+	71: "Light Snow",
+	73: "Snow",
+	75: "Heavy Snow",
+	80: "Rain Showers",
+	81: "Rain Showers",
+	82: "Heavy Showers",
+	95: "Thunderstorm",
 };
 
 function wmoDesc(code: number): string {
-	return WMO[code] ?? `CODE ${code}`;
+	return WMO[code] ?? `Code ${code}`;
 }
 
 function wmoEmoji(code: number): string {
@@ -81,8 +72,6 @@ function wmoEmoji(code: number): string {
 	if (code === 95) return "⛈";
 	return "🌡";
 }
-
-// ── Fetch helpers ────────────────────────────────────────────────────────────
 
 async function geocode(city: string): Promise<GeoResult | null> {
 	const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`;
@@ -104,14 +93,14 @@ async function fetchWeather(lat: number, lon: number): Promise<WeatherData> {
 async function getWeather(city: string): Promise<WeatherResult> {
 	let lat = 59.91;
 	let lon = 10.75;
-	let location = "OSLO, NORWAY";
+	let location = "Oslo, Norway";
 
 	if (city.trim().toLowerCase() !== "oslo") {
 		const geo = await geocode(city);
 		if (!geo) throw new Error(`Could not find "${city}"`);
 		lat = geo.latitude;
 		lon = geo.longitude;
-		location = `${geo.name.toUpperCase()}, ${geo.country.toUpperCase()}`;
+		location = `${geo.name}, ${geo.country}`;
 	}
 
 	const data = await fetchWeather(lat, lon);
@@ -125,51 +114,14 @@ async function getWeather(city: string): Promise<WeatherResult> {
 		conditionCode: c.weather_code,
 		conditionDesc: wmoDesc(c.weather_code),
 		forecast: data.daily.time.slice(0, 3).map((_, i) => ({
-			label: i === 0 ? "TODAY" : i === 1 ? "TOMORROW" : "DAY AFTER",
+			label: i === 0 ? "Today" : i === 1 ? "Tomorrow" : "Day After",
 			hi: Math.round(data.daily.temperature_2m_max[i]!),
 			lo: Math.round(data.daily.temperature_2m_min[i]!),
 			desc: wmoDesc(data.daily.weather_code[i]!),
+			code: data.daily.weather_code[i]!,
 		})),
 	};
 }
-
-// ── Win3.1 beveled button ────────────────────────────────────────────────────
-
-function BevelButton({
-	children,
-	onClick,
-	disabled,
-}: {
-	children: React.ReactNode;
-	onClick: () => void;
-	disabled?: boolean;
-}) {
-	return (
-		<button
-			type="button"
-			onClick={onClick}
-			disabled={disabled}
-			style={{
-				background: "#1a2a1a",
-				color: disabled ? "#405030" : "#e8e040",
-				fontFamily: "monospace",
-				fontSize: 11,
-				padding: "3px 12px",
-				cursor: disabled ? "default" : "pointer",
-				borderTop: "2px solid #405030",
-				borderLeft: "2px solid #405030",
-				borderBottom: "2px solid #1a2a1a",
-				borderRight: "2px solid #1a2a1a",
-				letterSpacing: "0.05em",
-				flexShrink: 0,
-			}}
-		>
-			{children}
-		</button>
-	);
-}
-
-// ── Component ────────────────────────────────────────────────────────────────
 
 export function WeatherApp() {
 	const [city, setCity] = useState("Oslo");
@@ -178,26 +130,28 @@ export function WeatherApp() {
 	const [result, setResult] = useState<WeatherResult | null>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
 
-	const handleFetch = useCallback(async () => {
-		const q = city.trim() || "Oslo";
+	const handleFetch = useCallback(async (q?: string) => {
+		const query = (q ?? "Oslo").trim() || "Oslo";
 		setLoading(true);
 		setError(null);
 		try {
-			const w = await getWeather(q);
+			const w = await getWeather(query);
 			setResult(w);
 		} catch (e) {
-			setError(e instanceof Error ? e.message.toUpperCase() : "FETCH FAILED");
+			setError(e instanceof Error ? e.message : "Fetch failed");
 		} finally {
 			setLoading(false);
 		}
-	}, [city]);
+	}, []);
 
-	const handleKeyDown = useCallback(
-		(e: React.KeyboardEvent) => {
-			if (e.key === "Enter") handleFetch();
-		},
-		[handleFetch],
-	);
+	// Auto-load Oslo on mount
+	useEffect(() => {
+		handleFetch("Oslo");
+	}, [handleFetch]);
+
+	const handleSubmit = useCallback(() => {
+		handleFetch(city);
+	}, [city, handleFetch]);
 
 	return (
 		<div
@@ -205,131 +159,143 @@ export function WeatherApp() {
 				flex: 1,
 				display: "flex",
 				flexDirection: "column",
-				background: "#0a140a",
-				color: "#e8e040",
-				fontFamily: "monospace",
-				fontSize: 12,
+				background: "#111820",
+				color: "#e0e0e0",
+				fontFamily: "'Segoe UI', Arial, sans-serif",
+				fontSize: 13,
 				overflow: "hidden",
 			}}
 		>
-			{/* Input row */}
+			{/* Search bar */}
 			<div
 				style={{
 					display: "flex",
 					gap: 6,
-					padding: "10px 12px",
-					borderBottom: "1px solid #223a22",
+					padding: "10px 14px",
+					borderBottom: "1px solid #2a3545",
 					flexShrink: 0,
 					alignItems: "center",
+					background: "#1a2530",
 				}}
 			>
-				<span style={{ color: "#688850", fontSize: 11, flexShrink: 0 }}>CITY:</span>
+				<span style={{ fontSize: 16 }}>🔍</span>
 				<input
 					ref={inputRef}
 					value={city}
 					onChange={(e) => setCity(e.target.value)}
-					onKeyDown={handleKeyDown}
+					onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+					onMouseDown={(e) => e.stopPropagation()}
 					style={{
 						flex: 1,
-						background: "#0a200a",
-						color: "#e8e040",
-						border: "1px solid #405030",
-						fontFamily: "monospace",
-						fontSize: 12,
-						padding: "2px 6px",
+						background: "#0d1520",
+						color: "#e0e0e0",
+						border: "1px solid #3a4a5a",
+						borderRadius: 4,
+						fontFamily: "inherit",
+						fontSize: 13,
+						padding: "5px 10px",
 						outline: "none",
 					}}
-					placeholder="CITY NAME"
+					placeholder="Search city..."
 				/>
-				<BevelButton onClick={handleFetch} disabled={loading}>
-					{loading ? "..." : "GET"}
-				</BevelButton>
+				<button
+					type="button"
+					onClick={handleSubmit}
+					disabled={loading}
+					style={{
+						background: "#e8e040",
+						color: "#111820",
+						border: "none",
+						borderRadius: 4,
+						fontFamily: "inherit",
+						fontSize: 12,
+						fontWeight: "bold",
+						padding: "5px 14px",
+						cursor: loading ? "default" : "pointer",
+						opacity: loading ? 0.5 : 1,
+					}}
+				>
+					{loading ? "..." : "Go"}
+				</button>
 			</div>
 
 			{/* Content */}
-			<div style={{ flex: 1, overflow: "auto", padding: "12px 14px" }}>
-				{loading && <div style={{ color: "#688850", fontSize: 11 }}>FETCHING WEATHER DATA...</div>}
-
-				{error && (
-					<div style={{ color: "#c05040", fontSize: 11 }}>ERROR: {error.toUpperCase()}</div>
+			<div style={{ flex: 1, overflow: "auto", padding: "16px 18px" }}>
+				{loading && !result && (
+					<div style={{ color: "#8090a0", fontSize: 12 }}>Loading weather data...</div>
 				)}
 
-				{!loading && !error && !result && (
-					<div style={{ color: "#405030", fontSize: 11 }}>ENTER A CITY AND PRESS GET.</div>
-				)}
+				{error && <div style={{ color: "#ff6060", fontSize: 12 }}>Error: {error}</div>}
 
-				{result && !loading && (
+				{result && (
 					<>
-						{/* Location header */}
-						<div
-							style={{
-								color: "#b8d850",
-								fontSize: 13,
-								fontWeight: "bold",
-								marginBottom: 10,
-								letterSpacing: "0.05em",
-							}}
-						>
-							{wmoEmoji(result.conditionCode)} {result.location}
+						{/* Big temperature + location */}
+						<div style={{ display: "flex", alignItems: "flex-start", gap: 16, marginBottom: 20 }}>
+							<span style={{ fontSize: 48, lineHeight: 1 }}>{wmoEmoji(result.conditionCode)}</span>
+							<div>
+								<div style={{ fontSize: 36, fontWeight: "bold", color: "#e8e040", lineHeight: 1 }}>
+									{result.temp}°C
+								</div>
+								<div style={{ fontSize: 14, color: "#a0b0c0", marginTop: 4 }}>
+									{result.location}
+								</div>
+								<div style={{ fontSize: 12, color: "#708090", marginTop: 2 }}>
+									{result.conditionDesc}
+								</div>
+							</div>
 						</div>
 
-						{/* Current conditions box */}
+						{/* Stats row */}
 						<div
 							style={{
-								border: "1px solid #223a22",
-								padding: "8px 10px",
-								marginBottom: 12,
-								background: "#0a1a0a",
+								display: "flex",
+								gap: 20,
+								marginBottom: 20,
+								padding: "12px 16px",
+								background: "#1a2530",
+								borderRadius: 6,
 							}}
 						>
-							<div
-								style={{
-									color: "#688850",
-									fontSize: 10,
-									marginBottom: 6,
-									letterSpacing: "0.08em",
-								}}
-							>
-								CURRENT CONDITIONS
-							</div>
-							<Row label="CONDITION" value={result.conditionDesc} />
-							<Row label="TEMPERATURE" value={`${result.temp}°C`} />
-							<Row label="HUMIDITY" value={`${result.humidity}%`} />
-							<Row label="WIND" value={`${result.wind} KM/H`} />
+							<Stat label="Humidity" value={`${result.humidity}%`} icon="💧" />
+							<Stat label="Wind" value={`${result.wind} km/h`} icon="💨" />
 						</div>
 
-						{/* Forecast box */}
+						{/* Forecast */}
+						<div style={{ fontSize: 11, color: "#708090", marginBottom: 8, letterSpacing: 1 }}>
+							3-DAY FORECAST
+						</div>
 						<div
 							style={{
-								border: "1px solid #223a22",
-								padding: "8px 10px",
-								background: "#0a1a0a",
+								display: "flex",
+								flexDirection: "column",
+								gap: 1,
+								background: "#1a2530",
+								borderRadius: 6,
+								overflow: "hidden",
 							}}
 						>
-							<div
-								style={{
-									color: "#688850",
-									fontSize: 10,
-									marginBottom: 6,
-									letterSpacing: "0.08em",
-								}}
-							>
-								3-DAY FORECAST
-							</div>
 							{result.forecast.map((day) => (
 								<div
 									key={day.label}
 									style={{
 										display: "flex",
-										gap: 8,
-										marginBottom: 4,
-										fontSize: 11,
+										alignItems: "center",
+										gap: 10,
+										padding: "10px 14px",
+										background: "#111820",
 									}}
 								>
-									<span style={{ color: "#688850", width: 72, flexShrink: 0 }}>{day.label}</span>
-									<span style={{ color: "#e8e040", width: 36, flexShrink: 0 }}>{day.hi}° /</span>
-									<span style={{ color: "#b8d850", width: 30, flexShrink: 0 }}>{day.lo}°</span>
-									<span style={{ color: "#688850" }}>{day.desc}</span>
+									<span style={{ fontSize: 18, width: 28 }}>{wmoEmoji(day.code)}</span>
+									<span style={{ flex: 1, color: "#c0c8d0", fontSize: 13 }}>{day.label}</span>
+									<span
+										style={{ color: "#e8e040", fontWeight: "bold", width: 40, textAlign: "right" }}
+									>
+										{day.hi}°
+									</span>
+									<span style={{ color: "#708090", width: 40, textAlign: "right" }}>{day.lo}°</span>
+									<span style={{ color: "#8090a0", fontSize: 11, width: 90, textAlign: "right" }}>
+										{day.desc}
+									</span>
 								</div>
 							))}
 						</div>
@@ -340,11 +306,14 @@ export function WeatherApp() {
 	);
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function Stat({ label, value, icon }: { label: string; value: string; icon: string }) {
 	return (
-		<div style={{ display: "flex", gap: 8, marginBottom: 3, fontSize: 11 }}>
-			<span style={{ color: "#688850", width: 90, flexShrink: 0 }}>{label}</span>
-			<span style={{ color: "#e8e040" }}>{value}</span>
+		<div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+			<span style={{ fontSize: 18 }}>{icon}</span>
+			<div>
+				<div style={{ fontSize: 11, color: "#708090" }}>{label}</div>
+				<div style={{ fontSize: 14, color: "#e0e0e0", fontWeight: "bold" }}>{value}</div>
+			</div>
 		</div>
 	);
 }

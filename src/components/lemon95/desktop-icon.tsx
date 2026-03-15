@@ -26,14 +26,14 @@ export function DesktopIcon({ app, onDoubleClick }: DesktopIconProps) {
 			}}
 			onBlur={() => setSelected(false)}
 			style={{
-				width: 72,
+				width: 90,
 				display: "flex",
 				flexDirection: "column",
 				alignItems: "center",
-				gap: 4,
-				padding: "6px 4px",
+				gap: 6,
+				padding: "8px 6px",
 				cursor: "pointer",
-				outline: selected ? "1px dotted #e8e040" : "1px solid transparent",
+				outline: selected ? "2px dotted #e8e040" : "2px solid transparent",
 				background: selected ? "rgba(232, 224, 64, 0.15)" : "transparent",
 				userSelect: "none",
 			}}
@@ -41,10 +41,11 @@ export function DesktopIcon({ app, onDoubleClick }: DesktopIconProps) {
 			{/* Icon */}
 			<span
 				style={{
-					fontSize: 32,
+					fontSize: 44,
 					lineHeight: 1,
 					display: "block",
 					textAlign: "center",
+					filter: "drop-shadow(2px 2px 3px rgba(0,0,0,0.7))",
 				}}
 				aria-hidden="true"
 			>
@@ -56,12 +57,17 @@ export function DesktopIcon({ app, onDoubleClick }: DesktopIconProps) {
 				style={{
 					color: "#e8e040",
 					fontFamily: "monospace",
-					fontSize: 10,
+					fontSize: 11,
+					fontWeight: "bold",
 					textAlign: "center",
-					lineHeight: 1.3,
-					textShadow: "1px 1px 2px #000, -1px -1px 2px #000",
+					lineHeight: 1.4,
+					textShadow:
+						"1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 0 0 4px #000",
 					wordBreak: "break-word",
 					maxWidth: "100%",
+					background: "rgba(0,0,0,0.5)",
+					padding: "1px 4px",
+					borderRadius: 2,
 				}}
 			>
 				{app.title}

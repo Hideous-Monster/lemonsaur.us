@@ -191,7 +191,7 @@ export function Win95Window({
 				style={{
 					flex: 1,
 					background: "#0a140a",
-					overflow: "hidden",
+					overflow: "auto",
 					display: "flex",
 					flexDirection: "column",
 				}}
