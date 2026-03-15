@@ -111,14 +111,22 @@ export function KonamiEasterEgg() {
 			const H = canvas.height;
 			const startTime = performance.now();
 
-			// Cloud state
-			const cloudW = 400;
-			const cloudTargetX = W * 0.6;
-			const cloudTargetY = 50;
-			let cloudX = W + cloudW;
-			const cloudY = cloudTargetY;
-			let lightningFlash = 0;
-			let lightningTimer = 0;
+			// Multiple clouds that drift across
+			const cloudW = 350;
+			interface Cloud {
+				x: number;
+				y: number;
+				targetX: number;
+				speed: number;
+				scale: number;
+				flash: number;
+				flashTimer: number;
+			}
+			const clouds: Cloud[] = [
+				{ x: W + 200, y: 45, targetX: W * 0.7, speed: 0, scale: 1, flash: 0, flashTimer: 500 },
+				{ x: W + 400, y: 35, targetX: W * 0.3, speed: 0, scale: 0.9, flash: 0, flashTimer: 800 },
+				{ x: W + 600, y: 55, targetX: W * 0.5, speed: 0, scale: 0.85, flash: 0, flashTimer: 1200 },
+			];
 
 			// Lemon pool
 			const lemons: Lemon[] = Array.from({ length: LEMON_POOL_SIZE }, makeLemon);
@@ -133,22 +141,29 @@ export function KonamiEasterEgg() {
 
 			let lastSpawn = 0;
 			let exploded = false;
-			let filledScreen = false;
 
-			function spawnLemon() {
+			function spawnLemon(spreadFactor: number) {
 				for (const l of lemons) {
 					if (l.active) continue;
 					l.active = true;
 					l.landed = false;
-					l.x = cloudX - cloudW * 0.3 + Math.random() * cloudW * 0.6;
-					l.y = cloudY + 70 + Math.random() * 20;
-					l.vx = (Math.random() - 0.5) * 2;
-					l.vy = 1 + Math.random() * 2;
+					// Pick a random cloud to spawn from
+					const cloud = clouds[Math.floor(Math.random() * clouds.length)]!;
+					// As spreadFactor grows, lemons spawn increasingly across full width
+					if (Math.random() < spreadFactor * 0.4) {
+						l.x = Math.random() * W;
+						l.y = -20 - Math.random() * 40;
+					} else {
+						l.x = cloud.x - cloudW * 0.3 * cloud.scale + Math.random() * cloudW * 0.6 * cloud.scale;
+						l.y = cloud.y + 70 + Math.random() * 20;
+					}
+					l.vx = (Math.random() - 0.5) * 3;
+					l.vy = 2 + Math.random() * 3;
 					l.rotation = Math.random() * Math.PI * 2;
 					l.rotSpeed = (Math.random() - 0.5) * 0.1;
 					l.wobblePhase = Math.random() * Math.PI * 2;
 					l.wobbleAmp = 10 + Math.random() * 15;
-					l.radius = 10 + Math.random() * 10;
+					l.radius = 10 + Math.random() * 12;
 					l.trailAge.fill(1);
 					l.trailHead = 0;
 					return;
@@ -300,38 +315,43 @@ export function KonamiEasterEgg() {
 				}
 			}
 
+			const RAIN_START = 1500;
+			const EXPLODE_AT = 12000;
+			const STORM_TEXT_START = 2500;
+			const STORM_TEXT_END = 5000;
+
 			function frame(now: number) {
 				const elapsed = now - startTime;
 				ctx.clearRect(0, 0, W, H);
 
-				// Cloud ease-in
-				const cloudProgress = Math.min(1, elapsed / 1500);
-				const eased = 1 - (1 - cloudProgress) ** 3;
-				cloudX = W + cloudW * 0.5 + (cloudTargetX - W - cloudW * 0.5) * eased;
-
-				// Lightning
-				lightningTimer -= 16;
-				if (lightningTimer <= 0 && elapsed < 10000) {
-					lightningTimer = 600 + Math.random() * 1500;
-					lightningFlash = 0.7 + Math.random() * 0.3;
+				// Cloud movement — each cloud eases to its target, then drifts slowly
+				for (let i = 0; i < clouds.length; i++) {
+					const c = clouds[i]!;
+					const delay = i * 400;
+					const progress = Math.min(1, Math.max(0, elapsed - delay) / 1800);
+					const eased = 1 - (1 - progress) ** 3;
+					c.x = W + 200 + i * 200 + (c.targetX - W - 200 - i * 200) * eased;
+					// Slow drift after arriving
+					if (progress >= 1) {
+						c.x += Math.sin(elapsed * 0.0003 + i * 2) * 30;
+					}
+					// Lightning
+					c.flashTimer -= 16;
+					if (c.flashTimer <= 0 && elapsed < EXPLODE_AT) {
+						c.flashTimer = 500 + Math.random() * 2000;
+						c.flash = 0.7 + Math.random() * 0.3;
+					}
+					c.flash = Math.max(0, c.flash - 0.04);
 				}
-				lightningFlash = Math.max(0, lightningFlash - 0.04);
 
-				// Check if screen is filled
-				const minPile = Math.min(...Array.from(pileH));
-				if (minPile >= H && !filledScreen) {
-					filledScreen = true;
-				}
-
-				// Spawn lemons (ramp up rate over time)
-				if (elapsed > 1800 && !filledScreen) {
-					const t = Math.min(1, (elapsed - 1800) / 5000);
-					const interval = Math.max(20, 200 - t * 180);
+				// Spawn lemons — ramp up aggressively
+				if (elapsed > RAIN_START && !exploded) {
+					const t = Math.min(1, (elapsed - RAIN_START) / 6000);
+					const interval = Math.max(15, 150 - t * 140);
 					if (now - lastSpawn > interval) {
 						lastSpawn = now;
-						// Spawn multiple at once as rate increases
-						const count = t > 0.5 ? 3 : t > 0.3 ? 2 : 1;
-						for (let i = 0; i < count; i++) spawnLemon();
+						const count = t > 0.7 ? 5 : t > 0.4 ? 3 : t > 0.2 ? 2 : 1;
+						for (let i = 0; i < count; i++) spawnLemon(t);
 					}
 				}
 
@@ -377,35 +397,32 @@ export function KonamiEasterEgg() {
 					}
 				}
 
-				// Block interaction once pile is tall
-				if (minPile > H * 0.4 && canvas.style.pointerEvents !== "all") {
+				// Block interaction once pile is tall enough
+				const avgPile = pileH.reduce((a, b) => a + b, 0) / PILE_COLS;
+				if (avgPile > H * 0.3 && canvas.style.pointerEvents !== "all") {
 					canvas.style.pointerEvents = "all";
 				}
 
-				// Explosion after screen fills — wait a beat then explode
-				if (filledScreen && !exploded) {
-					// Pause for half a second with full yellow screen
-					if (elapsed > 1800 + 500) {
-						// Store the time we decided to explode
-						exploded = true;
-						canvas.style.pointerEvents = "none";
-						const cx = W / 2;
-						const cy = H / 2;
-						const colors = [LEMON_YELLOW, "#f8f040", LEAF_GREEN, "#ffffff", LEMON_DARK, "#fff880"];
-						for (let i = 0; i < PARTICLE_POOL_SIZE; i++) {
-							const p = particles[i]!;
-							const angle = Math.random() * Math.PI * 2;
-							const speed = 4 + Math.random() * 18;
-							p.x = cx + (Math.random() - 0.5) * W * 0.8;
-							p.y = cy + (Math.random() - 0.5) * H * 0.8;
-							p.vx = Math.cos(angle) * speed;
-							p.vy = Math.sin(angle) * speed - 3;
-							p.radius = 3 + Math.random() * 8;
-							p.color = colors[Math.floor(Math.random() * colors.length)]!;
-							p.alpha = 1;
-							p.alphaDelta = 0.01 + Math.random() * 0.025;
-							p.active = true;
-						}
+				// Explosion at fixed time
+				if (elapsed > EXPLODE_AT && !exploded) {
+					exploded = true;
+					canvas.style.pointerEvents = "none";
+					const cx = W / 2;
+					const cy = H / 2;
+					const colors = [LEMON_YELLOW, "#f8f040", LEAF_GREEN, "#ffffff", LEMON_DARK, "#fff880"];
+					for (let i = 0; i < PARTICLE_POOL_SIZE; i++) {
+						const p = particles[i]!;
+						const angle = Math.random() * Math.PI * 2;
+						const speed = 4 + Math.random() * 18;
+						p.x = cx + (Math.random() - 0.5) * W * 0.8;
+						p.y = cy + (Math.random() - 0.5) * H * 0.8;
+						p.vx = Math.cos(angle) * speed;
+						p.vy = Math.sin(angle) * speed - 3;
+						p.radius = 3 + Math.random() * 8;
+						p.color = colors[Math.floor(Math.random() * colors.length)]!;
+						p.alpha = 1;
+						p.alphaDelta = 0.01 + Math.random() * 0.025;
+						p.active = true;
 					}
 				}
 
@@ -417,7 +434,31 @@ export function KonamiEasterEgg() {
 						drawTrail(l);
 						drawLemon(l);
 					}
-					if (elapsed < 12000) drawCloud(cloudX, cloudY, lightningFlash);
+					// Draw all clouds
+					for (const c of clouds) {
+						ctx.save();
+						ctx.scale(c.scale, c.scale);
+						drawCloud(c.x / c.scale, c.y / c.scale, c.flash);
+						ctx.restore();
+					}
+					// LEMONSTORM text — blinks dramatically
+					if (elapsed > STORM_TEXT_START && elapsed < STORM_TEXT_END) {
+						const textElapsed = elapsed - STORM_TEXT_START;
+						const blink = Math.sin(textElapsed * 0.012) > 0;
+						if (blink) {
+							ctx.save();
+							ctx.font = "bold 48px monospace";
+							ctx.textAlign = "center";
+							ctx.textBaseline = "middle";
+							ctx.fillStyle = LEMON_YELLOW;
+							ctx.shadowColor = LEMON_YELLOW;
+							ctx.shadowBlur = 20;
+							ctx.fillText("LEMONSTORM", W / 2, H / 2);
+							ctx.shadowBlur = 40;
+							ctx.fillText("LEMONSTORM", W / 2, H / 2);
+							ctx.restore();
+						}
+					}
 				} else {
 					// Fade pile
 					const explodeStart = performance.now();
@@ -476,7 +517,6 @@ export function KonamiEasterEgg() {
 
 	useEffect(() => {
 		let sequence: string[] = [];
-
 		function handleKey(e: KeyboardEvent) {
 			if (activeRef.current) return;
 			sequence.push(e.key);
@@ -486,7 +526,6 @@ export function KonamiEasterEgg() {
 				triggerRef.current();
 			}
 		}
-
 		window.addEventListener("keydown", handleKey);
 		return () => window.removeEventListener("keydown", handleKey);
 	}, []);
