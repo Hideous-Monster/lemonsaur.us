@@ -397,6 +397,7 @@ export function MessengerApp() {
 	const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const carlaHistoryRef = useRef<Array<{ role: "user" | "assistant"; content: string }>>([]);
 	const cooldownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+	const carlaThreadIdRef = useRef<string | null>(null);
 
 	const addMessage = useCallback((msg: Omit<LmnMessage, "timestamp" | "id">) => {
 		setMessages((prev) => [...prev, { ...msg, id: ++msgCounter, timestamp: new Date() }]);
@@ -489,14 +490,22 @@ export function MessengerApp() {
 		return () => clearTimeout(timer);
 	}, [stage, nick, carlaMode, addMessage]);
 
-	// Poll for replies (Discord mode only)
+	// Poll for replies
+	// Discord mode: polls the main threadId for lemon's replies
+	// Carla mode: polls carlaThreadIdRef once a thread is created (so lemon can jump in)
 	useEffect(() => {
-		if (stage !== "chat" || !threadId || carlaMode) return;
+		if (stage !== "chat") return;
+
+		const activeThreadId = carlaMode ? carlaThreadIdRef.current : threadId;
+		if (!activeThreadId) return;
 
 		async function poll() {
+			const pollThreadId = carlaMode ? carlaThreadIdRef.current : threadId;
+			if (!pollThreadId) return;
+
 			try {
 				const url = new URL("/api/irc/messages", window.location.origin);
-				url.searchParams.set("threadId", threadId!);
+				url.searchParams.set("threadId", pollThreadId);
 				if (lastPollTimeRef.current) url.searchParams.set("since", lastPollTimeRef.current);
 
 				const res = await fetch(url.toString());
@@ -565,9 +574,6 @@ export function MessengerApp() {
 				{ role: "user" as const, content: userMessage },
 			].slice(-20);
 
-			// Show typing indicator briefly
-			setIsTyping(true);
-
 			try {
 				const res = await fetch("/api/irc/chat", {
 					method: "POST",
@@ -575,10 +581,10 @@ export function MessengerApp() {
 					body: JSON.stringify({
 						messages: carlaHistoryRef.current,
 						nick,
+						threadId: carlaThreadIdRef.current,
 					}),
 				});
 
-				setIsTyping(false);
 				const data = await res.json();
 
 				if (!res.ok) {
@@ -591,15 +597,36 @@ export function MessengerApp() {
 
 				const reply: string = data.reply ?? "Sorry, I couldn't come up with a response!";
 
+				// Store thread ID for subsequent requests and polling
+				if (data.threadId && !carlaThreadIdRef.current) {
+					carlaThreadIdRef.current = data.threadId;
+					lastPollTimeRef.current = new Date().toISOString();
+				}
+
 				carlaHistoryRef.current = [
 					...carlaHistoryRef.current,
 					{ role: "assistant" as const, content: reply },
 				].slice(-20);
 
-				setMessages((prev) => [
-					...prev,
-					{ id: ++msgCounter, type: "message", nick: "Carla", text: reply, timestamp: new Date() },
-				]);
+				// Typing delay: wordCount / 100 WPM, min 1s, max 8s
+				const wordCount = reply.trim().split(/\s+/).length;
+				const delayMs = Math.min(Math.max((wordCount / 100) * 60 * 1000, 1000), 8000);
+
+				setIsTyping(true);
+				if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+				typingTimerRef.current = setTimeout(() => {
+					setIsTyping(false);
+					setMessages((prev) => [
+						...prev,
+						{
+							id: ++msgCounter,
+							type: "message",
+							nick: "Carla",
+							text: reply,
+							timestamp: new Date(),
+						},
+					]);
+				}, delayMs);
 			} catch {
 				setIsTyping(false);
 				addMessage({

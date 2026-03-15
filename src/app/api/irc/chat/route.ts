@@ -1,32 +1,11 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+import { CARLA_SYSTEM_PROMPT } from "@/lib/carla-prompt";
 
 const GEMINI_API_URL =
 	"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
-
-const CARLA_SYSTEM_PROMPT = `You are Carla, a friendly assistant who works closely with lemonsaurus (also known as Lemon). You're chatting with someone on lemonsaurus's retro-themed personal website (lemonsaur.us), through an IRC-style and MSN Messenger-style chat interface.
-
-Lemon is currently away and you're covering for him. You should:
-- Be warm, friendly, and a little playful — match the vibe of the site
-- Answer questions about Lemon and his projects based on what you know
-- If someone wants to leave a message for Lemon, acknowledge it warmly and let them know you'll pass it along
-- Be honest when you don't know something — say "I'm not sure about that, but I can pass the question to Lemon!"
-- Keep responses concise (2-3 sentences usually) — this is a chat, not an essay
-- Never pretend to be Lemon
-- Never break character or mention that you're an AI/LLM
-
-About lemonsaurus:
-- Goes by Lemon online, real name Leon
-- Software engineer based in Norway
-- Runs the Hideous Monster organization/studio
-- Built lemonsaur.us — a retro terminal-themed personal website with a hidden Win95-style desktop OS (Lemon 95)
-- The website features games (Snake, Tetris, Pong, Doom), an IRC chat, weather, fortune cookies, and more
-- Previously ran Python Discord, one of the largest programming communities
-- Loves retro computing aesthetics, game development, and creative coding
-- Has a thing for lemons (obviously)
-
-When someone first messages you, introduce yourself briefly — something like "Hey! Lemon's not around right now, but I'm Carla — I work with him. Happy to help with anything or take a message for him!"`;
+const DISCORD_API = "https://discord.com/api/v10";
 
 // In-memory rate limit: IP -> { count, windowStart }
 const chatRateLimit = new Map<string, { count: number; windowStart: number }>();
@@ -109,7 +88,7 @@ async function callGroq(apiKey: string, messages: ChatMessage[]): Promise<string
 			},
 			body: JSON.stringify({
 				model: "llama-3.1-8b-instant",
-				messages: [{ role: "system", content: CARLA_SYSTEM_PROMPT }, ...messages],
+				messages: [{ role: "system" as const, content: CARLA_SYSTEM_PROMPT }, ...messages],
 				max_tokens: 300,
 			}),
 			signal: controller.signal,
@@ -131,6 +110,103 @@ async function callGroq(apiKey: string, messages: ChatMessage[]): Promise<string
 	}
 }
 
+async function createCarlaThread(
+	nick: string,
+	botToken: string,
+	forumChannelId: string,
+): Promise<string | null> {
+	const now = new Date();
+	const dateStr = `${now.toISOString().replace("T", " ").slice(0, 16)} UTC`;
+	const threadName = `Carla: ${nick} — ${dateStr}`;
+
+	try {
+		const threadRes = await fetch(`${DISCORD_API}/channels/${forumChannelId}/threads`, {
+			method: "POST",
+			headers: {
+				Authorization: `Bot ${botToken}`,
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				name: threadName,
+				message: {
+					content: `**${nick}** is chatting with Carla on lemonsaur.us`,
+				},
+			}),
+		});
+
+		if (!threadRes.ok) {
+			const err = await threadRes.text();
+			console.error("Discord Carla thread creation failed:", err);
+			return null;
+		}
+
+		const thread = await threadRes.json();
+		return thread.id as string;
+	} catch (err) {
+		console.error("Discord Carla thread creation error:", err);
+		return null;
+	}
+}
+
+async function dmOwner(
+	botToken: string,
+	ownerId: string,
+	nick: string,
+	threadId: string,
+): Promise<void> {
+	try {
+		const dmChannelRes = await fetch(`${DISCORD_API}/users/@me/channels`, {
+			method: "POST",
+			headers: {
+				Authorization: `Bot ${botToken}`,
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({ recipient_id: ownerId }),
+		});
+
+		if (!dmChannelRes.ok) return;
+
+		const dmChannel = await dmChannelRes.json();
+		const guildId = process.env.DISCORD_GUILD_ID;
+		const threadLink = guildId
+			? `https://discord.com/channels/${guildId}/${threadId}`
+			: `(thread ID: ${threadId})`;
+
+		await fetch(`${DISCORD_API}/channels/${dmChannel.id}/messages`, {
+			method: "POST",
+			headers: {
+				Authorization: `Bot ${botToken}`,
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				content: `🦋 **${nick}** is chatting with Carla on lemonsaur.us!\n${threadLink}`,
+			}),
+		});
+	} catch (e) {
+		console.error("Failed to DM owner about Carla chat:", e);
+	}
+}
+
+async function postToThread(
+	botToken: string,
+	threadId: string,
+	username: string,
+	content: string,
+): Promise<void> {
+	try {
+		await fetch(`${DISCORD_API}/channels/${threadId}/messages`, {
+			method: "POST",
+			headers: {
+				Authorization: `Bot ${botToken}`,
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({ content: `**${username}:** ${content}` }),
+		});
+	} catch (e) {
+		console.error("Failed to post message to Carla thread:", e);
+	}
+}
+
 export async function POST(request: Request) {
 	const body = await request.json().catch(() => null);
 
@@ -139,6 +215,8 @@ export async function POST(request: Request) {
 	}
 
 	const messages: ChatMessage[] = body.messages.slice(-20);
+	const nick: string = body.nick;
+	const incomingThreadId: string | null = typeof body.threadId === "string" ? body.threadId : null;
 
 	if (messages.length === 0) {
 		return NextResponse.json({ error: "messages must not be empty" }, { status: 400 });
@@ -174,10 +252,40 @@ export async function POST(request: Request) {
 
 	// Try Gemini first, fall back to Groq
 	const geminiReply = geminiKey ? await callGemini(geminiKey, messages) : null;
-	if (geminiReply) return NextResponse.json({ reply: geminiReply });
+	const groqReply = !geminiReply && groqKey ? await callGroq(groqKey, messages) : null;
+	const reply = geminiReply ?? groqReply;
 
-	const groqReply = groqKey ? await callGroq(groqKey, messages) : null;
-	if (groqReply) return NextResponse.json({ reply: groqReply });
+	if (!reply) {
+		return NextResponse.json({ error: "Failed to get a response" }, { status: 502 });
+	}
 
-	return NextResponse.json({ error: "Failed to get a response" }, { status: 502 });
+	// Log to Discord (fire-and-forget, best effort)
+	const botToken = process.env.DISCORD_BOT_TOKEN;
+	const forumChannelId = process.env.DISCORD_FORUM_CHANNEL_ID;
+	const ownerId = process.env.DISCORD_OWNER_ID;
+
+	let outgoingThreadId: string | null = incomingThreadId;
+
+	if (botToken && forumChannelId && ownerId) {
+		// Get the user's message (last user message in the array)
+		const lastUserMessage = [...messages].reverse().find((m) => m.role === "user");
+
+		if (!outgoingThreadId) {
+			// First message — create thread and DM owner
+			outgoingThreadId = await createCarlaThread(nick, botToken, forumChannelId);
+			if (outgoingThreadId) {
+				dmOwner(botToken, ownerId, nick, outgoingThreadId).catch(() => {});
+			}
+		}
+
+		if (outgoingThreadId) {
+			const threadId = outgoingThreadId;
+			if (lastUserMessage) {
+				await postToThread(botToken, threadId, nick, lastUserMessage.content);
+			}
+			await postToThread(botToken, threadId, "Carla", reply);
+		}
+	}
+
+	return NextResponse.json({ reply, threadId: outgoingThreadId });
 }

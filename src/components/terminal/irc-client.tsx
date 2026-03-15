@@ -311,6 +311,8 @@ export function IrcClient({ onExit }: IrcClientProps) {
 	const seenMessageIds = useRef<Set<string>>(new Set());
 	const carlaHistoryRef = useRef<Array<{ role: "user" | "assistant"; content: string }>>([]);
 	const cooldownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+	const carlaThreadIdRef = useRef<string | null>(null);
+	const [carlaTyping, setCarlaTyping] = useState(false);
 
 	const addMessage = useCallback((msg: Omit<IrcMessage, "timestamp">) => {
 		setMessages((prev) => [...prev, { ...msg, timestamp: new Date() }]);
@@ -371,7 +373,7 @@ export function IrcClient({ onExit }: IrcClientProps) {
 						},
 						{
 							type: "system",
-							text: "* Carla (assistant) is here to help!",
+							text: "* Carla is here!",
 							timestamp: new Date(),
 							nick: JSON.stringify({ color: CARLA_NICK_COLOR }),
 						},
@@ -491,14 +493,22 @@ export function IrcClient({ onExit }: IrcClientProps) {
 		};
 	}, [stage, nick, addMessage, carlaMode]);
 
-	// Start polling for replies once in chat (Discord mode only)
+	// Start polling for replies once in chat
+	// Discord mode: polls using the main threadId for lemon's replies
+	// Carla mode: polls using carlaThreadIdRef once a thread is created (so lemon can jump in)
 	useEffect(() => {
-		if (stage !== "chat" || !threadId || carlaMode) return;
+		if (stage !== "chat") return;
+
+		const activeThreadId = carlaMode ? carlaThreadIdRef.current : threadId;
+		if (!activeThreadId) return;
 
 		async function poll() {
+			const pollThreadId = carlaMode ? carlaThreadIdRef.current : threadId;
+			if (!pollThreadId) return;
+
 			try {
 				const url = new URL("/api/irc/messages", window.location.origin);
-				url.searchParams.set("threadId", threadId!);
+				url.searchParams.set("threadId", pollThreadId);
 				if (lastPollTimeRef.current) url.searchParams.set("since", lastPollTimeRef.current);
 
 				const res = await fetch(url.toString());
@@ -586,6 +596,7 @@ export function IrcClient({ onExit }: IrcClientProps) {
 					body: JSON.stringify({
 						messages: carlaHistoryRef.current,
 						nick,
+						threadId: carlaThreadIdRef.current,
 					}),
 				});
 
@@ -601,12 +612,26 @@ export function IrcClient({ onExit }: IrcClientProps) {
 
 				const reply: string = data.reply ?? "Sorry, I couldn't come up with a response!";
 
+				// Store thread ID for subsequent requests and polling
+				if (data.threadId && !carlaThreadIdRef.current) {
+					carlaThreadIdRef.current = data.threadId;
+					lastPollTimeRef.current = new Date().toISOString();
+				}
+
 				carlaHistoryRef.current = [
 					...carlaHistoryRef.current,
 					{ role: "assistant" as const, content: reply },
 				].slice(-20);
 
-				addMessage({ type: "message", nick: "Carla", text: reply });
+				// Typing delay: wordCount / 100 WPM, min 1s, max 8s
+				const wordCount = reply.trim().split(/\s+/).length;
+				const delayMs = Math.min(Math.max((wordCount / 100) * 60 * 1000, 1000), 8000);
+
+				setCarlaTyping(true);
+				setTimeout(() => {
+					setCarlaTyping(false);
+					addMessage({ type: "message", nick: "Carla", text: reply });
+				}, delayMs);
 			} catch {
 				addMessage({
 					type: "system",
@@ -780,6 +805,14 @@ export function IrcClient({ onExit }: IrcClientProps) {
 						</div>
 					);
 				})}
+
+				{carlaTyping && (
+					<div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+						<span style={{ color: CARLA_NICK_COLOR, fontStyle: "italic" }}>
+							* Carla is typing...
+						</span>
+					</div>
+				)}
 			</div>
 
 			{/* Input area */}
