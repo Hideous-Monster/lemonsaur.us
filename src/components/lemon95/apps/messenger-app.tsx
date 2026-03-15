@@ -528,16 +528,38 @@ export function MessengerApp() {
 					}
 
 					if (unseen.length > 0) {
-						setMessages((prev) => [
-							...prev,
-							...unseen.map((m) => ({
-								id: ++msgCounter,
-								type: "message" as const,
-								nick: "lemonsaurus",
-								text: m.content,
-								timestamp: new Date(m.timestamp),
-							})),
-						]);
+						if (carlaMode) {
+							setCarlaMode(false);
+							setLemonStatus("online");
+							setThreadId(carlaThreadIdRef.current);
+							setMessages((prev) => [
+								...prev,
+								{
+									id: ++msgCounter,
+									type: "system" as const,
+									text: "lemonsaurus 🍋 has joined the conversation!",
+									timestamp: new Date(),
+								},
+								...unseen.map((m) => ({
+									id: ++msgCounter,
+									type: "message" as const,
+									nick: "lemonsaurus",
+									text: m.content,
+									timestamp: new Date(m.timestamp),
+								})),
+							]);
+						} else {
+							setMessages((prev) => [
+								...prev,
+								...unseen.map((m) => ({
+									id: ++msgCounter,
+									type: "message" as const,
+									nick: "lemonsaurus",
+									text: m.content,
+									timestamp: new Date(m.timestamp),
+								})),
+							]);
+						}
 					}
 				}
 			} catch {

@@ -531,15 +531,37 @@ export function IrcClient({ onExit }: IrcClientProps) {
 					}
 
 					if (unseen.length > 0) {
-						setMessages((prev) => [
-							...prev,
-							...unseen.map((m) => ({
-								type: "message" as const,
-								nick: "@lemonsaurus",
-								text: m.content,
-								timestamp: new Date(m.timestamp),
-							})),
-						]);
+						// If we're in Carla mode and lemon replies, switch to lemon mode
+						if (carlaMode) {
+							setCarlaMode(false);
+							setLemonStatus("online");
+							setThreadId(carlaThreadIdRef.current);
+							setMessages((prev) => [
+								...prev,
+								{
+									type: "system",
+									text: "* lemonsaurus has joined the conversation!",
+									timestamp: new Date(),
+									nick: JSON.stringify({ color: "#40b848", bold: true }),
+								},
+								...unseen.map((m) => ({
+									type: "message" as const,
+									nick: "@lemonsaurus",
+									text: m.content,
+									timestamp: new Date(m.timestamp),
+								})),
+							]);
+						} else {
+							setMessages((prev) => [
+								...prev,
+								...unseen.map((m) => ({
+									type: "message" as const,
+									nick: "@lemonsaurus",
+									text: m.content,
+									timestamp: new Date(m.timestamp),
+								})),
+							]);
+						}
 					}
 				}
 			} catch {
