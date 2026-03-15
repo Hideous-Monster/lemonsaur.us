@@ -311,7 +311,7 @@ export function IrcClient({ onExit }: IrcClientProps) {
 	const seenMessageIds = useRef<Set<string>>(new Set());
 	const carlaHistoryRef = useRef<Array<{ role: "user" | "assistant"; content: string }>>([]);
 	const cooldownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-	const carlaThreadIdRef = useRef<string | null>(null);
+	const [carlaThreadId, setCarlaThreadId] = useState<string | null>(null);
 	const [carlaTyping, setCarlaTyping] = useState(false);
 
 	const addMessage = useCallback((msg: Omit<IrcMessage, "timestamp">) => {
@@ -499,11 +499,11 @@ export function IrcClient({ onExit }: IrcClientProps) {
 	useEffect(() => {
 		if (stage !== "chat") return;
 
-		const activeThreadId = carlaMode ? carlaThreadIdRef.current : threadId;
+		const activeThreadId = carlaMode ? carlaThreadId : threadId;
 		if (!activeThreadId) return;
 
 		async function poll() {
-			const pollThreadId = carlaMode ? carlaThreadIdRef.current : threadId;
+			const pollThreadId = carlaMode ? carlaThreadId : threadId;
 			if (!pollThreadId) return;
 
 			try {
@@ -535,7 +535,7 @@ export function IrcClient({ onExit }: IrcClientProps) {
 						if (carlaMode) {
 							setCarlaMode(false);
 							setLemonStatus("online");
-							setThreadId(carlaThreadIdRef.current);
+							setThreadId(carlaThreadId);
 							setMessages((prev) => [
 								...prev,
 								{
@@ -574,7 +574,7 @@ export function IrcClient({ onExit }: IrcClientProps) {
 		return () => {
 			if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
 		};
-	}, [stage, threadId, carlaMode]);
+	}, [stage, threadId, carlaMode, carlaThreadId]);
 
 	// Cleanup on unmount
 	useEffect(() => {
@@ -618,7 +618,7 @@ export function IrcClient({ onExit }: IrcClientProps) {
 					body: JSON.stringify({
 						messages: carlaHistoryRef.current,
 						nick,
-						threadId: carlaThreadIdRef.current,
+						threadId: carlaThreadId,
 					}),
 				});
 
@@ -635,8 +635,8 @@ export function IrcClient({ onExit }: IrcClientProps) {
 				const reply: string = data.reply ?? "Sorry, I couldn't come up with a response!";
 
 				// Store thread ID for subsequent requests and polling
-				if (data.threadId && !carlaThreadIdRef.current) {
-					carlaThreadIdRef.current = data.threadId;
+				if (data.threadId && !carlaThreadId) {
+					setCarlaThreadId(data.threadId);
 					lastPollTimeRef.current = new Date().toISOString();
 				}
 

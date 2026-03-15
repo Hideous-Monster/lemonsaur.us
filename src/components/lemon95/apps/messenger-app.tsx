@@ -397,7 +397,7 @@ export function MessengerApp() {
 	const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const carlaHistoryRef = useRef<Array<{ role: "user" | "assistant"; content: string }>>([]);
 	const cooldownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-	const carlaThreadIdRef = useRef<string | null>(null);
+	const [carlaThreadId, setCarlaThreadId] = useState<string | null>(null);
 
 	const addMessage = useCallback((msg: Omit<LmnMessage, "timestamp" | "id">) => {
 		setMessages((prev) => [...prev, { ...msg, id: ++msgCounter, timestamp: new Date() }]);
@@ -425,10 +425,10 @@ export function MessengerApp() {
 	}, []);
 
 	// Auto-scroll
-	// biome-ignore lint/correctness/useExhaustiveDependencies: intentionally scroll on messages change
+	// biome-ignore lint/correctness/useExhaustiveDependencies: intentionally scroll on messages/typing change
 	useEffect(() => {
-		scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
-	}, [messages]);
+		setTimeout(() => scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight }), 0);
+	}, [messages, isTyping]);
 
 	// Focus input when in chat
 	useEffect(() => {
@@ -496,11 +496,11 @@ export function MessengerApp() {
 	useEffect(() => {
 		if (stage !== "chat") return;
 
-		const activeThreadId = carlaMode ? carlaThreadIdRef.current : threadId;
+		const activeThreadId = carlaMode ? carlaThreadId : threadId;
 		if (!activeThreadId) return;
 
 		async function poll() {
-			const pollThreadId = carlaMode ? carlaThreadIdRef.current : threadId;
+			const pollThreadId = carlaMode ? carlaThreadId : threadId;
 			if (!pollThreadId) return;
 
 			try {
@@ -531,7 +531,7 @@ export function MessengerApp() {
 						if (carlaMode) {
 							setCarlaMode(false);
 							setLemonStatus("online");
-							setThreadId(carlaThreadIdRef.current);
+							setThreadId(carlaThreadId);
 							setMessages((prev) => [
 								...prev,
 								{
@@ -572,7 +572,7 @@ export function MessengerApp() {
 		return () => {
 			if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
 		};
-	}, [stage, threadId, carlaMode]);
+	}, [stage, threadId, carlaMode, carlaThreadId]);
 
 	// Cleanup on unmount
 	useEffect(() => {
@@ -603,7 +603,7 @@ export function MessengerApp() {
 					body: JSON.stringify({
 						messages: carlaHistoryRef.current,
 						nick,
-						threadId: carlaThreadIdRef.current,
+						threadId: carlaThreadId,
 					}),
 				});
 
@@ -620,8 +620,8 @@ export function MessengerApp() {
 				const reply: string = data.reply ?? "Sorry, I couldn't come up with a response!";
 
 				// Store thread ID for subsequent requests and polling
-				if (data.threadId && !carlaThreadIdRef.current) {
-					carlaThreadIdRef.current = data.threadId;
+				if (data.threadId && !carlaThreadId) {
+					setCarlaThreadId(data.threadId);
 					lastPollTimeRef.current = new Date().toISOString();
 				}
 
