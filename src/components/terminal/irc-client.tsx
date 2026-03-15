@@ -287,6 +287,10 @@ const MOTD: MotdLine[] = [
 
 // ── Main IRC client ─────────────────────────────────────────────────────────
 
+const MAX_MESSAGE_LENGTH = 500;
+const CHAR_COUNTER_THRESHOLD = 400;
+const COOLDOWN_SECONDS = 2;
+
 export function IrcClient({ onExit }: IrcClientProps) {
 	const [messages, setMessages] = useState<IrcMessage[]>([]);
 	const [input, setInput] = useState("");
@@ -296,6 +300,7 @@ export function IrcClient({ onExit }: IrcClientProps) {
 	const [lemonStatus, setLemonStatus] = useState<LemonStatus>("offline");
 	const [carlaMode, setCarlaMode] = useState(false);
 	const [statusChecked, setStatusChecked] = useState(false);
+	const [cooldownSeconds, setCooldownSeconds] = useState<number>(0);
 
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
@@ -305,6 +310,7 @@ export function IrcClient({ onExit }: IrcClientProps) {
 	const lastPollTimeRef = useRef<string | null>(null);
 	const seenMessageIds = useRef<Set<string>>(new Set());
 	const carlaHistoryRef = useRef<Array<{ role: "user" | "assistant"; content: string }>>([]);
+	const cooldownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
 	const addMessage = useCallback((msg: Omit<IrcMessage, "timestamp">) => {
 		setMessages((prev) => [...prev, { ...msg, timestamp: new Date() }]);
@@ -543,6 +549,7 @@ export function IrcClient({ onExit }: IrcClientProps) {
 		return () => {
 			if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
 			if (motdTimerRef.current) clearTimeout(motdTimerRef.current);
+			if (cooldownIntervalRef.current) clearInterval(cooldownIntervalRef.current);
 		};
 	}, []);
 
@@ -610,6 +617,21 @@ export function IrcClient({ onExit }: IrcClientProps) {
 		[nick, addMessage],
 	);
 
+	const startCooldown = useCallback(() => {
+		setCooldownSeconds(COOLDOWN_SECONDS);
+		if (cooldownIntervalRef.current) clearInterval(cooldownIntervalRef.current);
+		cooldownIntervalRef.current = setInterval(() => {
+			setCooldownSeconds((prev) => {
+				if (prev <= 1) {
+					if (cooldownIntervalRef.current) clearInterval(cooldownIntervalRef.current);
+					setTimeout(() => inputRef.current?.focus(), 10);
+					return 0;
+				}
+				return prev - 1;
+			});
+		}, 1000);
+	}, []);
+
 	const handleSubmit = useCallback(
 		(e: React.FormEvent) => {
 			e.preventDefault();
@@ -657,6 +679,7 @@ export function IrcClient({ onExit }: IrcClientProps) {
 
 			// Regular message — show optimistically
 			addMessage({ type: "message", nick, text: trimmed });
+			startCooldown();
 
 			if (carlaMode) {
 				// Carla mode — send to AI
@@ -688,7 +711,7 @@ export function IrcClient({ onExit }: IrcClientProps) {
 					});
 				});
 		},
-		[input, stage, nick, threadId, carlaMode, addMessage, onExit, sendToCarla],
+		[input, stage, nick, threadId, carlaMode, addMessage, onExit, sendToCarla, startCooldown],
 	);
 
 	// ── Nick selection screen ───────────────────────────────────────────────
@@ -761,51 +784,76 @@ export function IrcClient({ onExit }: IrcClientProps) {
 
 			{/* Input area */}
 			{stage === "chat" && (
-				<form
-					onSubmit={handleSubmit}
+				<div
 					style={{
-						display: "flex",
-						alignItems: "center",
-						padding: "10px 14px",
 						borderTop: "1px solid #2a3a2a",
 						backgroundColor: "#060e06",
 						flexShrink: 0,
 					}}
 				>
-					<span
+					<form
+						onSubmit={handleSubmit}
 						style={{
-							color: "#688850",
-							marginRight: "6px",
-							whiteSpace: "nowrap",
-							fontSize: FONT_SIZE,
+							display: "flex",
+							alignItems: "center",
+							padding: "10px 14px",
 						}}
 					>
-						[#lemonsaurus]{" "}
-					</span>
-					<input
-						ref={inputRef}
-						type="text"
-						value={input}
-						onChange={(e) => setInput(e.target.value)}
-						style={{
-							flex: 1,
-							background: "transparent",
-							border: "none",
-							outline: "none",
-							color: "#e8e040",
-							fontFamily: "monospace",
-							fontSize: FONT_SIZE,
-							caretColor: "#e8e040",
-						}}
-						autoComplete="off"
-						autoCorrect="off"
-						autoCapitalize="off"
-						spellCheck={false}
-						// biome-ignore lint/a11y/noAutofocus: IRC input must auto-focus
-						autoFocus
-						aria-label="IRC message input"
-					/>
-				</form>
+						<span
+							style={{
+								color: "#688850",
+								marginRight: "6px",
+								whiteSpace: "nowrap",
+								fontSize: FONT_SIZE,
+							}}
+						>
+							[#lemonsaurus]
+							{cooldownSeconds > 0 && (
+								<span style={{ color: "#405030", marginLeft: 4 }}>({cooldownSeconds}s)</span>
+							)}{" "}
+						</span>
+						<input
+							ref={inputRef}
+							type="text"
+							value={input}
+							onChange={(e) => setInput(e.target.value)}
+							disabled={cooldownSeconds > 0}
+							maxLength={MAX_MESSAGE_LENGTH}
+							style={{
+								flex: 1,
+								background: "transparent",
+								border: "none",
+								outline: "none",
+								color: cooldownSeconds > 0 ? "#405030" : "#e8e040",
+								fontFamily: "monospace",
+								fontSize: FONT_SIZE,
+								caretColor: "#e8e040",
+								cursor: cooldownSeconds > 0 ? "not-allowed" : "text",
+							}}
+							autoComplete="off"
+							autoCorrect="off"
+							autoCapitalize="off"
+							spellCheck={false}
+							// biome-ignore lint/a11y/noAutofocus: IRC input must auto-focus
+							autoFocus
+							aria-label="IRC message input"
+						/>
+					</form>
+					{input.length > CHAR_COUNTER_THRESHOLD && (
+						<div
+							style={{
+								textAlign: "right",
+								paddingRight: 14,
+								paddingBottom: 4,
+								fontSize: 11,
+								color: input.length >= MAX_MESSAGE_LENGTH ? "#ff5050" : "#4a5a3a",
+								fontFamily: "monospace",
+							}}
+						>
+							{input.length}/{MAX_MESSAGE_LENGTH}
+						</div>
+					)}
+				</div>
 			)}
 		</div>
 	);

@@ -369,6 +369,10 @@ function SigningInScreen({ nick }: { nick: string }) {
 	);
 }
 
+const MAX_MESSAGE_LENGTH = 500;
+const CHAR_COUNTER_THRESHOLD = 400;
+const COOLDOWN_SECONDS = 2;
+
 // ── Main Messenger App ──────────────────────────────────────────────────────
 
 export function MessengerApp() {
@@ -383,6 +387,7 @@ export function MessengerApp() {
 	const [connectError, setConnectError] = useState("");
 	const [lemonStatus, setLemonStatus] = useState<LemonStatus>("offline");
 	const [carlaMode, setCarlaMode] = useState(false);
+	const [cooldownSeconds, setCooldownSeconds] = useState<number>(0);
 
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
@@ -391,6 +396,7 @@ export function MessengerApp() {
 	const seenMessageIds = useRef<Set<string>>(new Set());
 	const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const carlaHistoryRef = useRef<Array<{ role: "user" | "assistant"; content: string }>>([]);
+	const cooldownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
 	const addMessage = useCallback((msg: Omit<LmnMessage, "timestamp" | "id">) => {
 		setMessages((prev) => [...prev, { ...msg, id: ++msgCounter, timestamp: new Date() }]);
@@ -542,6 +548,7 @@ export function MessengerApp() {
 		return () => {
 			if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
 			if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+			if (cooldownIntervalRef.current) clearInterval(cooldownIntervalRef.current);
 		};
 	}, []);
 
@@ -604,6 +611,21 @@ export function MessengerApp() {
 		[nick, addMessage],
 	);
 
+	const startCooldown = useCallback(() => {
+		setCooldownSeconds(COOLDOWN_SECONDS);
+		if (cooldownIntervalRef.current) clearInterval(cooldownIntervalRef.current);
+		cooldownIntervalRef.current = setInterval(() => {
+			setCooldownSeconds((prev) => {
+				if (prev <= 1) {
+					if (cooldownIntervalRef.current) clearInterval(cooldownIntervalRef.current);
+					setTimeout(() => inputRef.current?.focus(), 10);
+					return 0;
+				}
+				return prev - 1;
+			});
+		}, 1000);
+	}, []);
+
 	const handleSubmit = useCallback(
 		(e: React.FormEvent) => {
 			e.preventDefault();
@@ -613,6 +635,7 @@ export function MessengerApp() {
 			if (!trimmed || stage !== "chat") return;
 
 			addMessage({ type: "message", nick, text: trimmed });
+			startCooldown();
 
 			if (carlaMode) {
 				sendToCarla(trimmed);
@@ -644,7 +667,7 @@ export function MessengerApp() {
 					});
 				});
 		},
-		[input, stage, nick, threadId, carlaMode, addMessage, sendToCarla],
+		[input, stage, nick, threadId, carlaMode, addMessage, sendToCarla, startCooldown],
 	);
 
 	if (stage === "sign-in")
@@ -1026,6 +1049,8 @@ export function MessengerApp() {
 					value={input}
 					onChange={(e) => setInput(e.target.value)}
 					onMouseDown={(e) => e.stopPropagation()}
+					disabled={cooldownSeconds > 0}
+					maxLength={MAX_MESSAGE_LENGTH}
 					style={{
 						border: "none",
 						borderTop: "1px solid #e0d880",
@@ -1033,8 +1058,9 @@ export function MessengerApp() {
 						padding: "8px 12px",
 						fontSize: 13,
 						fontFamily: chatFont,
-						background: "#ffffff",
-						color: "#111111",
+						background: cooldownSeconds > 0 ? "#f8f8f0" : "#ffffff",
+						color: cooldownSeconds > 0 ? "#aaa" : "#111111",
+						cursor: cooldownSeconds > 0 ? "not-allowed" : "text",
 					}}
 					autoComplete="off"
 					autoCorrect="off"
@@ -1046,30 +1072,45 @@ export function MessengerApp() {
 				<div
 					style={{
 						display: "flex",
-						justifyContent: "flex-end",
+						justifyContent: "space-between",
+						alignItems: "center",
 						padding: "4px 8px 6px",
 						background: "#faf8e8",
 						borderTop: "1px solid #f0e8c0",
 						gap: 6,
 					}}
 				>
+					<div
+						style={{
+							fontSize: 11,
+							color: input.length >= MAX_MESSAGE_LENGTH ? "#cc0000" : "#aaa",
+							fontFamily: "Tahoma, 'Segoe UI', Arial, sans-serif",
+							visibility: input.length > CHAR_COUNTER_THRESHOLD ? "visible" : "hidden",
+						}}
+					>
+						{input.length}/{MAX_MESSAGE_LENGTH}
+					</div>
 					<button
 						type="submit"
-						disabled={!input.trim()}
+						disabled={!input.trim() || cooldownSeconds > 0}
 						style={{
-							background: "linear-gradient(180deg, #f8e850 0%, #e0c820 100%)",
-							border: "1px solid #b0a020",
+							background:
+								cooldownSeconds > 0
+									? "linear-gradient(180deg, #e8e8e8 0%, #d8d8d8 100%)"
+									: "linear-gradient(180deg, #f8e850 0%, #e0c820 100%)",
+							border: `1px solid ${cooldownSeconds > 0 ? "#cccccc" : "#b0a020"}`,
 							borderRadius: 3,
 							fontSize: 12,
 							fontFamily: "Tahoma, 'Segoe UI', Arial, sans-serif",
 							fontWeight: "bold",
 							padding: "4px 20px",
-							cursor: input.trim() ? "pointer" : "default",
-							color: input.trim() ? "#333" : "#999",
+							cursor: input.trim() && cooldownSeconds === 0 ? "pointer" : "default",
+							color: input.trim() && cooldownSeconds === 0 ? "#333" : "#999",
 							boxShadow: "inset 0 1px 0 rgba(255,255,255,0.6)",
+							minWidth: 60,
 						}}
 					>
-						Send
+						{cooldownSeconds > 0 ? `${cooldownSeconds}s` : "Send"}
 					</button>
 				</div>
 			</form>
