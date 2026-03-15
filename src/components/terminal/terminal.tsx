@@ -347,12 +347,14 @@ export function Terminal() {
 			{lines.map((line) => (
 				<div
 					key={line.id}
-					className={`min-h-[1.5em] whitespace-pre-wrap leading-relaxed ${
+					className={`min-h-[1.5em] leading-relaxed ${
 						line.type === "logo"
-							? "font-mono text-xs leading-none"
+							? "whitespace-pre-wrap font-mono text-xs leading-none"
 							: line.type === "rich"
-								? ""
-								: "break-all"
+								? "whitespace-pre overflow-hidden"
+								: line.type === "system"
+									? "whitespace-pre overflow-hidden"
+									: "whitespace-pre-wrap break-all"
 					}`}
 				>
 					{line.type === "logo" ? (
