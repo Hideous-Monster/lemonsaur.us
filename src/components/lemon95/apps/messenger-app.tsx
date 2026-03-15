@@ -873,6 +873,7 @@ export function MessengerApp() {
 				style={{
 					flex: 1,
 					overflowY: "auto",
+					scrollbarWidth: "none",
 					overflowX: "hidden",
 					padding: "10px 14px",
 					background: "#ffffff",
@@ -984,6 +985,7 @@ export function MessengerApp() {
 						gap: 2,
 						maxHeight: 140,
 						overflowY: "auto",
+						scrollbarWidth: "none",
 					}}
 				>
 					{EMOJI_GRID.map((emoji) => (

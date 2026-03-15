@@ -790,6 +790,7 @@ export function IrcClient({ onExit }: IrcClientProps) {
 				style={{
 					flex: 1,
 					overflowY: "auto",
+					scrollbarWidth: "none",
 					overflowX: "hidden",
 					padding: "10px 14px",
 					scrollbarGutter: "stable",

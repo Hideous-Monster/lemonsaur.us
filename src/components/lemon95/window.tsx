@@ -192,6 +192,7 @@ export function Win95Window({
 					flex: 1,
 					background: "#0a140a",
 					overflow: "auto",
+					scrollbarWidth: "none",
 					display: "flex",
 					flexDirection: "column",
 				}}
