@@ -387,8 +387,8 @@ export function KonamiEasterEgg() {
 					c.flash = Math.max(0, c.flash - 0.04);
 				}
 
-				// Spawn lemons — ramp up very aggressively
-				if (elapsed > RAIN_START && !exploded) {
+				// Spawn lemons — keep going until explosion
+				if (elapsed > RAIN_START && elapsed < EXPLODE_AT) {
 					const t = Math.min(1, (elapsed - RAIN_START) / 4000);
 					const interval = Math.max(10, 100 - t * 90);
 					if (now - lastSpawn > interval) {
@@ -440,10 +440,10 @@ export function KonamiEasterEgg() {
 					}
 				}
 
-				// Rising juice level — starts after 3s, fills screen by explosion time
+				// Rising juice level — starts after 3s, accelerates (cubic)
 				if (elapsed > 3000 && !exploded) {
 					const juiceT = Math.min(1, (elapsed - 3000) / (EXPLODE_AT - 3000));
-					juiceLevel = juiceT * juiceT * H; // quadratic rise — slow then fast
+					juiceLevel = juiceT * juiceT * juiceT * H; // cubic — slow start, fast finish
 				}
 
 				// Block interaction once juice covers half the screen
@@ -510,80 +510,71 @@ export function KonamiEasterEgg() {
 						}
 					}
 				} else {
-					const explodeElapsed = elapsed - EXPLODE_AT;
+					const e = elapsed - EXPLODE_AT;
+					canvas.style.pointerEvents = "all";
 
-					if (explodeElapsed < 300) {
-						// Brief white flash
-						ctx.fillStyle = `rgba(255,255,200,${1 - explodeElapsed / 300})`;
+					if (e < 100) {
+						// White flash
+						ctx.fillStyle = "#ffffcc";
 						ctx.fillRect(0, 0, W, H);
-					}
-
-					// Draw explosion particles
-					let anyActive = false;
-					for (const p of particles) {
-						if (!p.active) continue;
-						anyActive = true;
-						p.x += p.vx;
-						p.y += p.vy;
-						p.vy += 0.15;
-						p.alpha -= p.alphaDelta;
-						if (p.alpha <= 0) {
-							p.active = false;
-							continue;
-						}
-						ctx.fillStyle =
-							p.color +
-							Math.round(p.alpha * 255)
-								.toString(16)
-								.padStart(2, "0");
-						ctx.beginPath();
-						ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-						ctx.fill();
-					}
-
-					// After particles fade, go to black then reboot
-					if (!anyActive) {
-						// Fade to black
+					} else if (e < 800) {
+						// BSOD
+						ctx.fillStyle = "#0000aa";
+						ctx.fillRect(0, 0, W, H);
+						ctx.font = "bold 16px monospace";
+						ctx.fillStyle = "#ffffff";
+						ctx.textAlign = "center";
+						ctx.fillText("*** LEMON/87 SYSTEM FAILURE ***", W / 2, H / 2 - 60);
+						ctx.font = "13px monospace";
+						ctx.fillText(
+							"A fatal exception 0xC0FFEE has occurred at 0028:C0DE1337",
+							W / 2,
+							H / 2 - 20,
+						);
+						ctx.fillText(
+							"LEMONSTORM.SYS caused a citrus overflow in module LEMON.DRV",
+							W / 2,
+							H / 2 + 10,
+						);
+						ctx.fillText("", W / 2, H / 2 + 40);
+						ctx.fillText("*  Press any key to reboot the system.  *", W / 2, H / 2 + 60);
+						ctx.fillText("*  Press CTRL+ALT+DEL if system hangs.  *", W / 2, H / 2 + 80);
+					} else if (e < 1200) {
+						// Black
 						ctx.fillStyle = "#000000";
 						ctx.fillRect(0, 0, W, H);
-
-						// POST / reboot sequence
-						const rebootElapsed = explodeElapsed - 2000;
-						if (rebootElapsed < 0) {
-							// Still black
-						} else if (rebootElapsed < 500) {
-							ctx.font = "14px monospace";
-							ctx.fillStyle = "#40b848";
-							ctx.fillText("POST: LEMON BIOS v87.1", 20, 30);
-							ctx.fillText("MEMORY TEST: 87K OK", 20, 50);
-						} else if (rebootElapsed < 1200) {
-							ctx.font = "14px monospace";
-							ctx.fillStyle = "#40b848";
-							ctx.fillText("POST: LEMON BIOS v87.1", 20, 30);
-							ctx.fillText("MEMORY TEST: 87K OK", 20, 50);
-							ctx.fillText("LOADING LEMON/87...", 20, 80);
-							ctx.fillText("LEMONSTORM CLEANUP COMPLETE.", 20, 100);
-						} else if (rebootElapsed < 2500) {
-							// Big LEMON 87 boot screen
-							ctx.fillStyle = "#000000";
-							ctx.fillRect(0, 0, W, H);
-							ctx.font = "bold 64px monospace";
-							ctx.textAlign = "center";
-							ctx.textBaseline = "middle";
-							ctx.fillStyle = LEMON_YELLOW;
-							ctx.shadowColor = LEMON_YELLOW;
-							ctx.shadowBlur = 30;
-							ctx.fillText("LEMON/87", W / 2, H / 2 - 20);
-							ctx.shadowBlur = 0;
-							ctx.font = "16px monospace";
-							ctx.fillStyle = "#40b848";
-							ctx.fillText("REBOOTING SYSTEM...", W / 2, H / 2 + 30);
-						} else {
-							// Done — reload the page for a clean restart
-							cleanup();
-							window.location.reload();
-							return;
+					} else if (e < 1800) {
+						// POST
+						ctx.fillStyle = "#000000";
+						ctx.fillRect(0, 0, W, H);
+						ctx.textAlign = "left";
+						ctx.font = "14px monospace";
+						ctx.fillStyle = "#40b848";
+						ctx.fillText("POST: LEMON BIOS v87.1", 20, 30);
+						ctx.fillText("MEMORY TEST: 87K OK", 20, 50);
+						if (e > 1500) {
+							ctx.fillText("LOADING LEMON/87...", 20, 70);
+							ctx.fillText("LEMONSTORM CLEANUP COMPLETE.", 20, 90);
 						}
+					} else if (e < 3200) {
+						// Boot logo
+						ctx.fillStyle = "#000000";
+						ctx.fillRect(0, 0, W, H);
+						ctx.textAlign = "center";
+						ctx.textBaseline = "middle";
+						ctx.font = "bold 64px monospace";
+						ctx.fillStyle = LEMON_YELLOW;
+						ctx.shadowColor = LEMON_YELLOW;
+						ctx.shadowBlur = 30;
+						ctx.fillText("LEMON/87", W / 2, H / 2 - 20);
+						ctx.shadowBlur = 0;
+						ctx.font = "16px monospace";
+						ctx.fillStyle = "#40b848";
+						ctx.fillText("REBOOTING SYSTEM...", W / 2, H / 2 + 30);
+					} else {
+						cleanup();
+						window.location.reload();
+						return;
 					}
 				}
 
