@@ -86,7 +86,7 @@ export function Navbar() {
 				{/* Mobile hamburger */}
 				<button
 					type="button"
-					className="flex w-10 self-stretch items-center justify-center sm:hidden"
+					className="flex w-10 items-center justify-center pt-0.5 sm:hidden"
 					onClick={() => setMenuOpen((prev) => !prev)}
 					aria-label={menuOpen ? "Close menu" : "Open menu"}
 					aria-expanded={menuOpen}
