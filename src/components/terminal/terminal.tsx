@@ -6,6 +6,7 @@ import { PongGame } from "@/components/pong/pong-game";
 import { SnakeGame } from "@/components/snake/snake-game";
 import { DoomSim } from "@/components/terminal/doom-sim";
 import { HackerSim } from "@/components/terminal/hacker-sim";
+import { IrcClient } from "@/components/terminal/irc-client";
 import { MatrixRain } from "@/components/terminal/matrix-rain";
 import { TetrisGame } from "@/components/tetris/tetris-game";
 import {
@@ -60,6 +61,7 @@ type TerminalMode =
 	| "doom"
 	| "tetris"
 	| "pong"
+	| "irc"
 	| "destroyed";
 
 interface TerminalProps {
@@ -143,6 +145,7 @@ export function Terminal({ onUpgrade }: TerminalProps = {}) {
 				doom: "doom",
 				tetris: "tetris",
 				pong: "pong",
+				irc: "irc",
 			};
 
 			if (result.action && result.action in modeActions) {
@@ -309,6 +312,24 @@ export function Terminal({ onUpgrade }: TerminalProps = {}) {
 		]);
 		setTimeout(() => inputRef.current?.focus(), 50);
 	}, []);
+
+	const handleIrcExit = useCallback(() => {
+		setMode("terminal");
+		setLines((prev) => [
+			...prev,
+			makeBootLine("DISCONNECTED FROM LEMONNET IRC.", "system"),
+			makeBootLine("READY.", "system"),
+		]);
+		setTimeout(() => inputRef.current?.focus(), 50);
+	}, []);
+
+	if (mode === "irc") {
+		return (
+			<div className="flex flex-1 overflow-hidden">
+				<IrcClient onExit={handleIrcExit} />
+			</div>
+		);
+	}
 
 	if (mode === "destroyed") {
 		return (

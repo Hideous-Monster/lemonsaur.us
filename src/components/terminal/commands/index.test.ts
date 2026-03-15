@@ -101,10 +101,33 @@ describe("executeCommand", () => {
 		expect(result.lines.length).toBeGreaterThan(0);
 	});
 
+	it("irc returns irc action on desktop", () => {
+		vi.spyOn(window, "innerWidth", "get").mockReturnValue(1024);
+		const result = executeCommand("irc");
+		expect(result.action).toBe("irc");
+		expect(result.lines.length).toBeGreaterThan(0);
+		expect(result.lines[0]!.text).toContain("IRC");
+		vi.restoreAllMocks();
+	});
+
+	it("irc rejects on mobile", () => {
+		vi.spyOn(window, "innerWidth", "get").mockReturnValue(400);
+		const result = executeCommand("irc");
+		expect(result.action).toBeUndefined();
+		expect(result.lines[0]!.text).toContain("KEYBOARD");
+		vi.restoreAllMocks();
+	});
+
 	it("help includes DOOM in command list", () => {
 		const result = executeCommand("help");
 		const text = result.lines.map((l) => l.text).join("\n");
 		expect(text).toContain("DOOM");
+	});
+
+	it("help includes IRC in command list", () => {
+		const result = executeCommand("help");
+		const text = result.lines.map((l) => l.text).join("\n");
+		expect(text).toContain("IRC");
 	});
 
 	it("neofetch returns system info with lemon art", () => {

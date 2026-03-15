@@ -49,6 +49,9 @@ const COMMANDS: Record<string, () => CommandResult> = {
 			ln("  HACK     - HACKER MODE", "output"),
 			ln("  MATRIX   - THE ZEN OF DIGITAL RAIN", "output"),
 			ln("", "output"),
+			ln(" SOCIAL", "system"),
+			ln("  IRC     - CHAT WITH LEMONSAURUS", "output"),
+			ln("", "output"),
 			ln(" SYSTEM", "system"),
 			ln("  CLEAR    - CLEAR SCREEN", "output"),
 			ln("  HELP     - SHOW THIS LIST", "output"),
@@ -156,6 +159,11 @@ const COMMANDS: Record<string, () => CommandResult> = {
 		lines: [ln("INITIALIZING HACK SEQUENCE...", "system")],
 		action: "hack",
 	}),
+
+	irc: () =>
+		isMobile()
+			? mobileReject()
+			: { lines: [ln("CONNECTING TO LEMONNET IRC...", "system")], action: "irc" as const },
 
 	doom: () =>
 		isMobile()
