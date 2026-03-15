@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 const DISCORD_API = "https://discord.com/api/v10";
-const DISCORD_EPOCH = 1420070400000n;
+const DISCORD_EPOCH = BigInt(1420070400000);
 
 /** Convert an ISO timestamp to a Discord snowflake for use as `after` param. */
 function isoToSnowflake(iso: string): string | null {
@@ -9,7 +9,7 @@ function isoToSnowflake(iso: string): string | null {
 		const ms = BigInt(new Date(iso).getTime());
 		if (Number.isNaN(Number(ms))) return null;
 		// Snowflake = (timestamp_ms - DISCORD_EPOCH) << 22
-		return ((ms - DISCORD_EPOCH) << 22n).toString();
+		return ((ms - DISCORD_EPOCH) << BigInt(22)).toString();
 	} catch {
 		return null;
 	}
