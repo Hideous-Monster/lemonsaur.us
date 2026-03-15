@@ -371,9 +371,10 @@ export function Terminal() {
 							href={line.href}
 							target="_blank"
 							rel="noopener noreferrer"
-							className="text-c64-yellow underline decoration-c64-yellow/50 hover:text-c64-white"
+							className="inline-flex items-center gap-1 text-c64-yellow underline decoration-c64-yellow/50 hover:text-c64-white"
 						>
-							{line.text.toUpperCase()}
+							<span className="no-underline">↗</span>
+							{line.text.trim().toUpperCase()}
 						</a>
 					) : (
 						<span
