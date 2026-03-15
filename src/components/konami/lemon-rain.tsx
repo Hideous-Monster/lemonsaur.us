@@ -364,8 +364,7 @@ export function KonamiEasterEgg() {
 
 			const RAIN_START = 1500;
 			const EXPLODE_AT = 12000;
-			const STORM_TEXT_START = 2500;
-			const STORM_TEXT_END = 5000;
+			const STORM_TEXT_START = 2000;
 
 			function frame(now: number) {
 				const elapsed = now - startTime;
@@ -444,10 +443,10 @@ export function KonamiEasterEgg() {
 					}
 				}
 
-				// Rising juice level — starts after 3s, accelerates (cubic)
-				if (elapsed > 3000 && !exploded) {
-					const juiceT = Math.min(1, (elapsed - 3000) / (EXPLODE_AT - 3000));
-					juiceLevel = juiceT * juiceT * juiceT * H; // cubic — slow start, fast finish
+				// Rising juice level — starts with rain, accelerates (cubic)
+				if (elapsed > RAIN_START && !exploded) {
+					const juiceT = Math.min(1, (elapsed - RAIN_START) / (EXPLODE_AT - RAIN_START));
+					juiceLevel = juiceT * juiceT * juiceT * H;
 				}
 
 				// Block interaction once juice covers half the screen
@@ -495,20 +494,20 @@ export function KonamiEasterEgg() {
 						drawCloud(c.x / c.scale, c.y / c.scale, c.flash);
 						ctx.restore();
 					}
-					// LEMONSTORM text — blinks dramatically
-					if (elapsed > STORM_TEXT_START && elapsed < STORM_TEXT_END) {
+					// LEMONSTORM text — blinks until explosion
+					if (elapsed > STORM_TEXT_START) {
 						const textElapsed = elapsed - STORM_TEXT_START;
-						const blink = Math.sin(textElapsed * 0.012) > 0;
+						const blink = Math.sin(textElapsed * 0.015) > 0;
 						if (blink) {
 							ctx.save();
-							ctx.font = "bold 48px monospace";
+							ctx.font = "bold 72px monospace";
 							ctx.textAlign = "center";
 							ctx.textBaseline = "middle";
 							ctx.fillStyle = LEMON_YELLOW;
 							ctx.shadowColor = LEMON_YELLOW;
-							ctx.shadowBlur = 20;
+							ctx.shadowBlur = 30;
 							ctx.fillText("LEMONSTORM", W / 2, H / 2);
-							ctx.shadowBlur = 40;
+							ctx.shadowBlur = 60;
 							ctx.fillText("LEMONSTORM", W / 2, H / 2);
 							ctx.restore();
 						}
