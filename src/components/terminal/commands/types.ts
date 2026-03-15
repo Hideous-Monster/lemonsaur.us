@@ -8,6 +8,16 @@ export interface TerminalLine {
 
 export interface CommandResult {
 	lines: TerminalLine[];
-	action?: "navigate" | "clear" | "snake" | "matrix" | "hack" | "doom" | "destroy";
+	action?:
+		| "navigate"
+		| "clear"
+		| "snake"
+		| "matrix"
+		| "hack"
+		| "doom"
+		| "destroy"
+		| "tetris"
+		| "pong";
 	href?: string;
+	asyncLines?: () => Promise<TerminalLine[]>;
 }

@@ -2,10 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { PongGame } from "@/components/pong/pong-game";
 import { SnakeGame } from "@/components/snake/snake-game";
 import { DoomSim } from "@/components/terminal/doom-sim";
 import { HackerSim } from "@/components/terminal/hacker-sim";
 import { MatrixRain } from "@/components/terminal/matrix-rain";
+import { TetrisGame } from "@/components/tetris/tetris-game";
 import {
 	BOOT_LINES,
 	COMMAND_NAMES,
@@ -49,7 +51,15 @@ function rainbowChar(index: number, total: number): string {
 	return `rgb(${r},${g},${b})`;
 }
 
-type TerminalMode = "terminal" | "snake" | "matrix" | "hack" | "doom" | "destroyed";
+type TerminalMode =
+	| "terminal"
+	| "snake"
+	| "matrix"
+	| "hack"
+	| "doom"
+	| "tetris"
+	| "pong"
+	| "destroyed";
 
 export function Terminal() {
 	const [lines, setLines] = useState<TerminalLine[]>([]);
@@ -143,6 +153,18 @@ export function Terminal() {
 				return;
 			}
 
+			if (result.action === "tetris") {
+				setLines((prev) => [...prev, ...result.lines]);
+				setTimeout(() => setMode("tetris"), 300);
+				return;
+			}
+
+			if (result.action === "pong") {
+				setLines((prev) => [...prev, ...result.lines]);
+				setTimeout(() => setMode("pong"), 300);
+				return;
+			}
+
 			if (result.action === "destroy") {
 				setLines((prev) => [...prev, ...result.lines]);
 				setTimeout(() => setMode("destroyed"), 800);
@@ -156,6 +178,12 @@ export function Terminal() {
 			}
 
 			setLines((prev) => [...prev, ...result.lines]);
+
+			if (result.asyncLines) {
+				result.asyncLines().then((asyncResult) => {
+					setLines((prev) => [...prev, ...asyncResult]);
+				});
+			}
 		},
 		[input, booting, router],
 	);
@@ -226,6 +254,18 @@ export function Terminal() {
 		setTimeout(() => inputRef.current?.focus(), 50);
 	}, []);
 
+	const handleTetrisExit = useCallback(() => {
+		setMode("terminal");
+		setLines((prev) => [...prev, makeBootLine("READY.", "system")]);
+		setTimeout(() => inputRef.current?.focus(), 50);
+	}, []);
+
+	const handlePongExit = useCallback(() => {
+		setMode("terminal");
+		setLines((prev) => [...prev, makeBootLine("READY.", "system")]);
+		setTimeout(() => inputRef.current?.focus(), 50);
+	}, []);
+
 	const handleDoomExit = useCallback(() => {
 		setMode("terminal");
 		setLines((prev) => [
@@ -267,6 +307,22 @@ export function Terminal() {
 		return (
 			<div className="flex flex-1 overflow-hidden">
 				<MatrixRain onExit={handleMatrixExit} />
+			</div>
+		);
+	}
+
+	if (mode === "tetris") {
+		return (
+			<div className="flex flex-1 items-center justify-center overflow-y-auto">
+				<TetrisGame onExit={handleTetrisExit} />
+			</div>
+		);
+	}
+
+	if (mode === "pong") {
+		return (
+			<div className="flex flex-1 overflow-hidden">
+				<PongGame onExit={handlePongExit} />
 			</div>
 		);
 	}

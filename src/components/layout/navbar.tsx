@@ -16,7 +16,7 @@ export function Navbar() {
 		setLemoji(ALL_LEMOJIS[Math.floor(Math.random() * ALL_LEMOJIS.length)]!);
 	}, []);
 
-	// Close menu on route change
+	// biome-ignore lint/correctness/useExhaustiveDependencies: intentionally re-run on route change
 	useEffect(() => {
 		setMenuOpen(false);
 	}, [pathname]);

@@ -3,6 +3,7 @@ import { cat, cd, ls, pwd } from "../filesystem";
 import { generateFortune } from "./fortune";
 import { neofetch } from "./neofetch";
 import type { CommandResult, TerminalLine } from "./types";
+import { weatherCommand } from "./weather";
 
 export type { CommandResult, TerminalLine };
 
@@ -30,6 +31,9 @@ const COMMANDS: Record<string, () => CommandResult> = {
 			ln("  DOOM     - RUN DOOM", "output"),
 			ln("  FORTUNE  - WORDS OF WISDOM", "output"),
 			ln("  NEOFETCH - SYSTEM INFO", "output"),
+			ln("  TETRIS   - PLAY TETRIS", "output"),
+			ln("  PONG     - LEMON PONG VS CPU", "output"),
+			ln("  WEATHER  - CHECK THE WEATHER", "output"),
 			ln("  CLEAR    - CLEAR SCREEN", "output"),
 		],
 	}),
@@ -123,6 +127,16 @@ const COMMANDS: Record<string, () => CommandResult> = {
 		action: "doom",
 	}),
 
+	tetris: () => ({
+		lines: [ln("LOADING TETRIS...", "system")],
+		action: "tetris",
+	}),
+
+	pong: () => ({
+		lines: [ln("LOADING LEMON PONG...", "system")],
+		action: "pong",
+	}),
+
 	fortune: () => ({
 		lines: [ln("", "output"), ln(generateFortune(), "output"), ln("", "output")],
 	}),
@@ -199,6 +213,11 @@ const ARG_COMMANDS: Record<string, (args: string) => CommandResult> = {
 
 	echo: (args) => ({
 		lines: [ln(args ? args.toUpperCase() : "", "output")],
+	}),
+
+	weather: (args) => ({
+		lines: [ln(`FETCHING WEATHER FOR "${(args.trim() || "OSLO").toUpperCase()}"...`, "system")],
+		asyncLines: () => weatherCommand(args),
 	}),
 };
 

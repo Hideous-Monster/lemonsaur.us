@@ -127,6 +127,28 @@ describe("executeCommand", () => {
 		expect(result.lines).toEqual([]);
 	});
 
+	it("tetris triggers tetris action", () => {
+		const result = executeCommand("tetris");
+		expect(result.action).toBe("tetris");
+	});
+
+	it("pong triggers pong action", () => {
+		const result = executeCommand("pong");
+		expect(result.action).toBe("pong");
+	});
+
+	it("weather returns asyncLines function", () => {
+		const result = executeCommand("weather");
+		expect(result.asyncLines).toBeTypeOf("function");
+		expect(result.lines[0]!.text).toContain("OSLO");
+	});
+
+	it("weather accepts city argument", () => {
+		const result = executeCommand("weather tokyo");
+		expect(result.asyncLines).toBeTypeOf("function");
+		expect(result.lines[0]!.text).toContain("TOKYO");
+	});
+
 	it("rm -rf / triggers destroy action", () => {
 		const result = executeCommand("rm -rf /");
 		expect(result.action).toBe("destroy");
