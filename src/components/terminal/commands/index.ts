@@ -94,17 +94,17 @@ const COMMANDS: Record<string, () => CommandResult> = {
 	}),
 
 	links: () => {
-		let linkIndex = 0;
+		const MAX_DISPLAY_LEN = 35;
 		function linkBlock(url: string): TerminalLine {
 			const domain = url.replace(/^https?:\/\//, "").split("/")[0]!;
 			const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
-			const isLeft = linkIndex % 2 === 0;
-			linkIndex++;
+			let display = url.replace(/^https?:\/\//, "").toUpperCase();
+			if (display.length > MAX_DISPLAY_LEN) {
+				display = `${display.slice(0, MAX_DISPLAY_LEN - 1)}…`;
+			}
 			const icon = `<img src="${faviconUrl}" alt="" style="width:28px;height:28px;image-rendering:pixelated;flex-shrink:0" />`;
-			const text = `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color:#e8e040;text-decoration:underline;text-decoration-color:rgba(232,224,64,0.5);font-size:inherit">${url.toUpperCase()}</a>`;
-			const html = isLeft
-				? `<div style="display:flex;align-items:center;gap:8px;padding:4px 0">${icon}${text}</div>`
-				: `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;justify-content:flex-end">${text}${icon}</div>`;
+			const text = `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color:#e8e040;text-decoration:underline;text-decoration-color:rgba(232,224,64,0.5);font-size:inherit">${display}</a>`;
+			const html = `<div style="display:flex;align-items:center;gap:8px;padding:4px 0">${icon}${text}</div>`;
 			return ln(html, "rich");
 		}
 
