@@ -16,14 +16,14 @@ const DESKTOP_APPS: DesktopApp[] = [
 	{ id: "pong", title: "Pong", icon: "🍋", defaultWidth: 850, defaultHeight: 580 },
 	{ id: "doom", title: "Doom", icon: "💀", defaultWidth: 850, defaultHeight: 580 },
 	{ id: "weather", title: "Weather", icon: "🌤", defaultWidth: 520, defaultHeight: 500 },
-	{ id: "about", title: "About", icon: "👤", defaultWidth: 750, defaultHeight: 700 },
+	{ id: "about", title: "About Lemonsaurus", icon: "👤", defaultWidth: 750, defaultHeight: 700 },
 	{ id: "links", title: "Links", icon: "🌐", defaultWidth: 800, defaultHeight: 650 },
 	{ id: "fortune", title: "Fortune", icon: "🔮", defaultWidth: 550, defaultHeight: 420 },
 	{ id: "matrix", title: "Matrix", icon: "💊", defaultWidth: 850, defaultHeight: 580 },
 	{ id: "hack", title: "Hack", icon: "💻", defaultWidth: 850, defaultHeight: 580 },
 	{ id: "neofetch", title: "Neofetch", icon: "🖥", defaultWidth: 550, defaultHeight: 450 },
 	{ id: "blog", title: "Blog", icon: "📰", defaultWidth: 900, defaultHeight: 650 },
-	{ id: "messenger", title: "Messenger", icon: "🦋", defaultWidth: 500, defaultHeight: 550 },
+	{ id: "messenger", title: "LMN Messenger", icon: "🦋", defaultWidth: 500, defaultHeight: 550 },
 ];
 
 interface DesktopProps {
@@ -148,7 +148,10 @@ export function Desktop({ onShutDown }: DesktopProps) {
 						</span>
 						{"  "}
 						<span style={{ color: "#70b0ff" }}>
-							&#x1FA78; {vitals.sys}/{vitals.dia}
+							<span style={{ display: "inline-block", filter: "hue-rotate(200deg) saturate(2)" }}>
+								&#x1FA78;
+							</span>{" "}
+							{vitals.sys}/{vitals.dia}
 						</span>
 					</div>
 				</>

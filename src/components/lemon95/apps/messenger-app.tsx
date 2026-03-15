@@ -14,6 +14,70 @@ interface LmnMessage {
 
 type ConnectionStage = "sign-in" | "signing-in" | "chat";
 
+const EMOJI_GRID = [
+	"😊",
+	"😂",
+	"🤣",
+	"❤️",
+	"😍",
+	"🥺",
+	"😭",
+	"😘",
+	"🥰",
+	"😎",
+	"🤔",
+	"😏",
+	"🙄",
+	"😤",
+	"😡",
+	"🤯",
+	"🥳",
+	"🤩",
+	"😴",
+	"🤢",
+	"💀",
+	"👻",
+	"👽",
+	"🤖",
+	"🍋",
+	"🦕",
+	"🔥",
+	"✨",
+	"💯",
+	"🎉",
+	"🎮",
+	"🎵",
+	"👍",
+	"👎",
+	"👋",
+	"🤝",
+	"✌️",
+	"🤙",
+	"💪",
+	"🙏",
+	"😺",
+	"🐍",
+	"🦋",
+	"🌈",
+	"⭐",
+	"🌙",
+	"☀️",
+	"🌊",
+];
+
+const FONT_OPTIONS = [
+	"Tahoma",
+	"Comic Sans MS",
+	"Arial",
+	"Georgia",
+	"Courier New",
+	"Impact",
+	"Papyrus",
+	"Wingdings",
+	"Lucida Console",
+	"Times New Roman",
+];
+
 function formatTime(date: Date): string {
 	const h = date.getHours().toString().padStart(2, "0");
 	const m = date.getMinutes().toString().padStart(2, "0");
@@ -260,6 +324,8 @@ export function MessengerApp() {
 	const [nick, setNick] = useState("");
 	const [threadId, setThreadId] = useState<string | null>(null);
 	const [isTyping, setIsTyping] = useState(false);
+	const [chatFont, setChatFont] = useState("Tahoma");
+	const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
@@ -512,24 +578,33 @@ export function MessengerApp() {
 					gap: 10,
 				}}
 			>
-				<div
+				<img
+					src="/images/lemon_portrait.avif"
+					alt="lemonsaurus"
 					style={{
 						width: 36,
 						height: 36,
-						background: "#fff8d0",
 						border: "2px solid #c8b040",
 						borderRadius: 3,
-						display: "flex",
-						alignItems: "center",
-						justifyContent: "center",
-						fontSize: 20,
+						objectFit: "cover",
+						imageRendering: "pixelated",
 						flexShrink: 0,
 					}}
-				>
-					🍋
-				</div>
+				/>
 				<div>
-					<div style={{ fontWeight: "bold", fontSize: 13, color: "#8a7000" }}>lemonsaurus</div>
+					<div
+						style={{
+							fontWeight: "bold",
+							fontSize: 13,
+							backgroundImage:
+								"linear-gradient(90deg, #ff5050, #ff9040, #e8e040, #40b848, #5090ff, #b860d0)",
+							WebkitBackgroundClip: "text",
+							WebkitTextFillColor: "transparent",
+							backgroundClip: "text",
+						}}
+					>
+						lemonsaurus
+					</div>
 					<div style={{ fontSize: 11, color: "#888" }}>
 						<span
 							style={{
@@ -579,12 +654,26 @@ export function MessengerApp() {
 
 					const isLemon = msg.nick === "lemonsaurus";
 					const displayNick = isLemon ? "lemonsaurus 🍋" : (msg.nick ?? nick);
-					const nickColor = isLemon ? "#8a7000" : "#cc4400";
 
 					return (
 						<div key={msg.id} style={{ marginBottom: 10 }}>
 							<div style={{ fontSize: 11, color: "#999", marginBottom: 1 }}>
-								<strong style={{ color: nickColor, marginRight: 6 }}>{displayNick}</strong>
+								<strong
+									style={
+										isLemon
+											? {
+													marginRight: 6,
+													backgroundImage:
+														"linear-gradient(90deg, #ff5050, #ff9040, #e8e040, #40b848, #5090ff, #b860d0)",
+													WebkitBackgroundClip: "text",
+													WebkitTextFillColor: "transparent",
+													backgroundClip: "text",
+												}
+											: { color: "#cc4400", marginRight: 6 }
+									}
+								>
+									{displayNick}
+								</strong>
 								<span>{formatTime(msg.timestamp)}</span>
 							</div>
 							<div
@@ -596,6 +685,7 @@ export function MessengerApp() {
 									borderLeft: `2px solid ${isLemon ? "#e8d020" : "#ff8844"}`,
 									paddingTop: 1,
 									paddingBottom: 1,
+									fontFamily: isLemon ? "Tahoma, sans-serif" : chatFont,
 								}}
 							>
 								{msg.text}
@@ -610,6 +700,59 @@ export function MessengerApp() {
 					</div>
 				)}
 			</div>
+
+			{/* Emoji picker popup */}
+			{showEmojiPicker && (
+				<div
+					style={{
+						background: "#ffffff",
+						border: "1px solid #c8b040",
+						borderBottom: "none",
+						padding: 8,
+						flexShrink: 0,
+						display: "grid",
+						gridTemplateColumns: "repeat(8, 1fr)",
+						gap: 2,
+						maxHeight: 140,
+						overflowY: "auto",
+					}}
+				>
+					{EMOJI_GRID.map((emoji) => (
+						<button
+							key={emoji}
+							type="button"
+							onClick={() => {
+								setInput((prev) => prev + emoji);
+								setShowEmojiPicker(false);
+								inputRef.current?.focus();
+							}}
+							style={{
+								background: "transparent",
+								border: "1px solid transparent",
+								borderRadius: 3,
+								fontSize: 18,
+								width: 32,
+								height: 32,
+								cursor: "pointer",
+								display: "flex",
+								alignItems: "center",
+								justifyContent: "center",
+								padding: 0,
+							}}
+							onMouseEnter={(e) => {
+								(e.currentTarget as HTMLButtonElement).style.background = "#faf0c0";
+								(e.currentTarget as HTMLButtonElement).style.borderColor = "#e0d080";
+							}}
+							onMouseLeave={(e) => {
+								(e.currentTarget as HTMLButtonElement).style.background = "transparent";
+								(e.currentTarget as HTMLButtonElement).style.borderColor = "transparent";
+							}}
+						>
+							{emoji}
+						</button>
+					))}
+				</div>
+			)}
 
 			{/* Toolbar */}
 			<div
@@ -626,14 +769,17 @@ export function MessengerApp() {
 				<button
 					type="button"
 					title="Emoticons"
+					onClick={() => setShowEmojiPicker((v) => !v)}
 					style={{
-						background: "linear-gradient(180deg, #f8f8f8 0%, #e8e8e8 100%)",
-						border: "1px solid #aaaaaa",
+						background: showEmojiPicker
+							? "linear-gradient(180deg, #e0e0e0 0%, #d0d0d0 100%)"
+							: "linear-gradient(180deg, #f8f8f8 0%, #e8e8e8 100%)",
+						border: `1px solid ${showEmojiPicker ? "#888" : "#aaaaaa"}`,
 						borderRadius: 2,
 						fontSize: 14,
 						width: 24,
 						height: 22,
-						cursor: "default",
+						cursor: "pointer",
 						display: "flex",
 						alignItems: "center",
 						justifyContent: "center",
@@ -641,40 +787,29 @@ export function MessengerApp() {
 				>
 					😊
 				</button>
-				<button
-					type="button"
-					title="Font"
-					style={{
-						background: "linear-gradient(180deg, #f8f8f8 0%, #e8e8e8 100%)",
-						border: "1px solid #aaaaaa",
-						borderRadius: 2,
-						fontSize: 11,
-						fontWeight: "bold",
-						width: 24,
-						height: 22,
-						cursor: "default",
-						fontFamily: "Tahoma, sans-serif",
-						color: "#333",
-					}}
-				>
-					A
-				</button>
 				<select
 					aria-label="Font"
-					disabled
+					value={chatFont}
+					onChange={(e) => {
+						setChatFont(e.target.value);
+						inputRef.current?.focus();
+					}}
 					style={{
 						fontSize: 11,
-						fontFamily: "Tahoma, sans-serif",
+						fontFamily: chatFont,
 						border: "1px solid #aaaaaa",
 						background: "#ffffff",
 						height: 22,
-						color: "#555",
-						cursor: "default",
+						color: "#333",
+						cursor: "pointer",
+						maxWidth: 140,
 					}}
 				>
-					<option>Tahoma</option>
-					<option>Comic Sans MS</option>
-					<option>Arial</option>
+					{FONT_OPTIONS.map((f) => (
+						<option key={f} value={f} style={{ fontFamily: f }}>
+							{f}
+						</option>
+					))}
 				</select>
 			</div>
 
@@ -700,7 +835,7 @@ export function MessengerApp() {
 						outline: "none",
 						padding: "8px 12px",
 						fontSize: 13,
-						fontFamily: "Tahoma, 'Segoe UI', Arial, sans-serif",
+						fontFamily: chatFont,
 						background: "#ffffff",
 						color: "#111111",
 					}}
