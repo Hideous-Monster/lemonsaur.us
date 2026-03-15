@@ -401,6 +401,14 @@ export function KonamiEasterEgg() {
 					}
 				}
 
+				// Recycle landed lemons submerged by juice
+				const juiceSurface = H - juiceLevel;
+				for (const l of lemons) {
+					if (l.active && l.landed && l.y > juiceSurface) {
+						l.active = false;
+					}
+				}
+
 				// Update lemons
 				for (const l of lemons) {
 					if (!l.active || l.landed) continue;
@@ -715,7 +723,8 @@ export function KonamiEasterEgg() {
 						ctx.fillText("(C) 1987 LEMON MICROSYSTEMS LTD. ALL RIGHTS RESERVED.", cx, H - 20);
 					} else {
 						cleanup();
-						window.location.reload();
+						// Force a full page reload — replaces history so it boots fresh
+						window.location.replace(window.location.pathname);
 						return;
 					}
 				}
