@@ -335,7 +335,7 @@ export async function weatherCommand(args: string): Promise<TerminalLine[]> {
 		// Forecast
 		lines.push(ln("", "output"));
 		lines.push(ln("  3-DAY FORECAST:", "system"));
-		lines.push(ln("  ────────────────────────────────────────", "output"));
+		lines.push(ln("  ────────────────────────────────────────", "system"));
 
 		const days = ["TODAY", "TOMORROW", "DAY AFTER"];
 		for (let i = 0; i < Math.min(3, data.daily.time.length); i++) {
@@ -351,7 +351,7 @@ export async function weatherCommand(args: string): Promise<TerminalLine[]> {
 			);
 		}
 
-		lines.push(ln("  ────────────────────────────────────────", "output"));
+		lines.push(ln("  ────────────────────────────────────────", "system"));
 		lines.push(ln("", "output"));
 	} catch {
 		return [ln("WEATHER: FAILED TO FETCH DATA. CHECK YOUR CONNECTION.", "system")];
