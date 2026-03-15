@@ -590,58 +590,76 @@ export function KonamiEasterEgg() {
 							ctx.fillText(postLines[i]!, 24, 100 + i * 17);
 						}
 					} else if (e < 6700) {
-						// Boot logo with loading bar
+						// Boot logo screen
 						ctx.fillStyle = "#0a140a";
 						ctx.fillRect(0, 0, W, H);
 
-						// Draw boot image fullscreen (cover)
+						const cx = W / 2;
+
+						// Lemon image — centered, large but not fullscreen
 						if (bootImg.complete && bootImg.naturalWidth > 0) {
-							const imgRatio = bootImg.naturalWidth / bootImg.naturalHeight;
-							const canvasRatio = W / H;
-							let drawW: number;
-							let drawH: number;
-							if (canvasRatio > imgRatio) {
-								drawW = W;
-								drawH = W / imgRatio;
-							} else {
-								drawH = H;
-								drawW = H * imgRatio;
-							}
-							ctx.drawImage(bootImg, (W - drawW) / 2, (H - drawH) / 2, drawW, drawH);
+							const maxImgH = H * 0.35;
+							const imgScale = maxImgH / bootImg.naturalHeight;
+							const imgW = bootImg.naturalWidth * imgScale;
+							const imgH = maxImgH;
+							ctx.imageSmoothingEnabled = false;
+							ctx.drawImage(bootImg, cx - imgW / 2, H * 0.12, imgW, imgH);
 						}
 
-						// Loading bar near bottom
-						const barW = Math.min(500, W * 0.7);
-						const barH = 18;
-						const barX = (W - barW) / 2;
-						const barY = H * 0.85;
+						// LEMON/87 logo text below the image
+						ctx.textAlign = "center";
+						ctx.font = "bold 52px monospace";
+						ctx.fillStyle = LEMON_YELLOW;
+						ctx.shadowColor = LEMON_YELLOW;
+						ctx.shadowBlur = 25;
+						ctx.fillText("LEMON/87", cx, H * 0.58);
+						ctx.shadowBlur = 0;
+
+						// Subtitle
+						ctx.font = "14px monospace";
+						ctx.fillStyle = "#a0a060";
+						ctx.fillText("PERSONAL COMPUTER OPERATING SYSTEM", cx, H * 0.63);
+
+						// Progress bar
+						const barW = Math.min(400, W * 0.5);
+						const barH = 14;
+						const barX = cx - barW / 2;
+						const barY = H * 0.72;
 						const loadT = Math.min(1, (e - 3200) / 3200);
 
+						// Bar background
+						ctx.fillStyle = "#1a2a1a";
+						ctx.fillRect(barX, barY, barW, barH);
+
 						// Bar outline
-						ctx.strokeStyle = LEMON_YELLOW;
-						ctx.lineWidth = 2;
+						ctx.strokeStyle = "#405030";
+						ctx.lineWidth = 1;
 						ctx.strokeRect(barX, barY, barW, barH);
 
-						// Rainbow gradient fill ROYGBIV
+						// Rainbow gradient fill
 						const fillW = barW * loadT;
 						if (fillW > 0) {
 							const grad = ctx.createLinearGradient(barX, 0, barX + barW, 0);
-							grad.addColorStop(0, "#ff5050"); // Red
-							grad.addColorStop(0.16, "#ff9040"); // Orange
-							grad.addColorStop(0.33, "#e8e040"); // Yellow
-							grad.addColorStop(0.5, "#40b848"); // Green
-							grad.addColorStop(0.66, "#5090ff"); // Blue
-							grad.addColorStop(0.83, "#8050d0"); // Indigo
-							grad.addColorStop(1, "#c050ff"); // Violet
+							grad.addColorStop(0, "#ff5050");
+							grad.addColorStop(0.16, "#ff9040");
+							grad.addColorStop(0.33, "#e8e040");
+							grad.addColorStop(0.5, "#40b848");
+							grad.addColorStop(0.66, "#5090ff");
+							grad.addColorStop(0.83, "#8050d0");
+							grad.addColorStop(1, "#c050ff");
 							ctx.fillStyle = grad;
-							ctx.fillRect(barX + 2, barY + 2, fillW - 4, barH - 4);
+							ctx.fillRect(barX + 1, barY + 1, fillW - 2, barH - 2);
 						}
 
 						// Loading text
-						ctx.textAlign = "center";
-						ctx.font = "12px monospace";
+						ctx.font = "11px monospace";
 						ctx.fillStyle = LEMON_YELLOW;
-						ctx.fillText(loadT < 1 ? "LOADING LEMON/87..." : "READY.", W / 2, barY + barH + 24);
+						ctx.fillText(loadT < 1 ? "LOADING SYSTEM..." : "READY.", cx, barY + barH + 20);
+
+						// Copyright at very bottom
+						ctx.font = "10px monospace";
+						ctx.fillStyle = "#706820";
+						ctx.fillText("(C) 1987 LEMON MICROSYSTEMS LTD. ALL RIGHTS RESERVED.", cx, H - 20);
 					} else {
 						cleanup();
 						window.location.reload();
