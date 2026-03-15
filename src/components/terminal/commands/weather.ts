@@ -6,83 +6,219 @@ function ln(text: string, type: TerminalLine["type"]): TerminalLine {
 	return { id: lineIdCounter++, text, type };
 }
 
-// WMO weather code → description + ASCII icon
+// Escape HTML entities for safe rich rendering
+function esc(s: string): string {
+	return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// Wrap text in a colored span
+function colored(text: string, color: string): string {
+	return `<span style="color:${color}">${esc(text)}</span>`;
+}
+
+// Colors
+const SUN = "#e8e040";
+const CLOUD_LIGHT = "#c0c0c0";
+const CLOUD_DARK = "#808080";
+const RAIN = "#5090ff";
+const SNOW = "#ffffff";
+const FOG = "#909090";
+const THUNDER = "#e8e040";
+
+// WMO weather code → description + colored ASCII icon (HTML)
 const WMO_CODES: Record<number, { desc: string; icon: string[] }> = {
 	0: {
 		desc: "CLEAR SKY",
-		icon: ["    \\   /    ", "     .-.     ", "  ‒ (   ) ‒  ", "     `-'     ", "    /   \\    "],
+		icon: [
+			colored("    \\   /    ", SUN),
+			colored("     .-.     ", SUN),
+			colored("  ‒ (   ) ‒  ", SUN),
+			colored("     `-'     ", SUN),
+			colored("    /   \\    ", SUN),
+		],
 	},
 	1: {
 		desc: "MAINLY CLEAR",
-		icon: ["    \\   /    ", "     .-.     ", "  ‒ (   ) ‒  ", "     `-'     ", "    /   \\    "],
+		icon: [
+			colored("    \\   /    ", SUN),
+			colored("     .-.     ", SUN),
+			colored("  ‒ (   ) ‒  ", SUN),
+			colored("     `-'     ", SUN),
+			colored("    /   \\    ", SUN),
+		],
 	},
 	2: {
 		desc: "PARTLY CLOUDY",
-		icon: ["    \\   /    ", "     .-.     ", "  ‒ (   )    ", "    /`-' .-. ", "       (   ) "],
+		icon: [
+			colored("    \\   /    ", SUN),
+			colored("     .-.     ", SUN),
+			colored("  ‒ (   )    ", SUN),
+			colored("    /`-'", SUN) + colored(" .-. ", CLOUD_LIGHT),
+			colored("       ", SUN) + colored("(   ) ", CLOUD_LIGHT),
+		],
 	},
 	3: {
 		desc: "OVERCAST",
-		icon: ["             ", "     .--.    ", "  .-(    ).  ", " (___.__)__) ", "             "],
+		icon: [
+			"             ",
+			colored("     .--.    ", CLOUD_DARK),
+			colored("  .-(    ).  ", CLOUD_DARK),
+			colored(" (___.__)__) ", CLOUD_DARK),
+			"             ",
+		],
 	},
 	45: {
 		desc: "FOG",
-		icon: [" _ - _ - _ - ", "  _ - _ - _  ", " _ - _ - _ - ", "  _ - _ - _  ", " _ - _ - _ - "],
+		icon: [
+			colored(" _ - _ - _ - ", FOG),
+			colored("  _ - _ - _  ", FOG),
+			colored(" _ - _ - _ - ", FOG),
+			colored("  _ - _ - _  ", FOG),
+			colored(" _ - _ - _ - ", FOG),
+		],
 	},
 	48: {
 		desc: "RIME FOG",
-		icon: [" _ - _ - _ - ", "  _ - _ - _  ", " _ - _ - _ - ", "  _ - _ - _  ", " _ - _ - _ - "],
+		icon: [
+			colored(" _ - _ - _ - ", FOG),
+			colored("  _ - _ - _  ", FOG),
+			colored(" _ - _ - _ - ", FOG),
+			colored("  _ - _ - _  ", FOG),
+			colored(" _ - _ - _ - ", FOG),
+		],
 	},
 	51: {
 		desc: "LIGHT DRIZZLE",
-		icon: ["     .--.    ", "  .-(    ).  ", " (___.__)__) ", "   ' ' ' '   ", "  ' ' ' '    "],
+		icon: [
+			colored("     .--.    ", CLOUD_LIGHT),
+			colored("  .-(    ).  ", CLOUD_LIGHT),
+			colored(" (___.__)__) ", CLOUD_LIGHT),
+			colored("   ' ' ' '   ", RAIN),
+			colored("  ' ' ' '    ", RAIN),
+		],
 	},
 	53: {
 		desc: "DRIZZLE",
-		icon: ["     .--.    ", "  .-(    ).  ", " (___.__)__) ", "   ' ' ' '   ", "  ' ' ' '    "],
+		icon: [
+			colored("     .--.    ", CLOUD_LIGHT),
+			colored("  .-(    ).  ", CLOUD_LIGHT),
+			colored(" (___.__)__) ", CLOUD_LIGHT),
+			colored("   ' ' ' '   ", RAIN),
+			colored("  ' ' ' '    ", RAIN),
+		],
 	},
 	55: {
 		desc: "HEAVY DRIZZLE",
-		icon: ["     .--.    ", "  .-(    ).  ", " (___.__)__) ", "   ' ' ' '   ", "  ' ' ' '    "],
+		icon: [
+			colored("     .--.    ", CLOUD_DARK),
+			colored("  .-(    ).  ", CLOUD_DARK),
+			colored(" (___.__)__) ", CLOUD_DARK),
+			colored("   ' ' ' '   ", RAIN),
+			colored("  ' ' ' '    ", RAIN),
+		],
 	},
 	61: {
 		desc: "LIGHT RAIN",
-		icon: ["     .--.    ", "  .-(    ).  ", " (___.__)__) ", "   / / / /   ", "  / / / /    "],
+		icon: [
+			colored("     .--.    ", CLOUD_LIGHT),
+			colored("  .-(    ).  ", CLOUD_LIGHT),
+			colored(" (___.__)__) ", CLOUD_LIGHT),
+			colored("   / / / /   ", RAIN),
+			colored("  / / / /    ", RAIN),
+		],
 	},
 	63: {
 		desc: "RAIN",
-		icon: ["     .--.    ", "  .-(    ).  ", " (___.__)__) ", "   / / / /   ", "  / / / /    "],
+		icon: [
+			colored("     .--.    ", CLOUD_DARK),
+			colored("  .-(    ).  ", CLOUD_DARK),
+			colored(" (___.__)__) ", CLOUD_DARK),
+			colored("   / / / /   ", RAIN),
+			colored("  / / / /    ", RAIN),
+		],
 	},
 	65: {
 		desc: "HEAVY RAIN",
-		icon: ["     .--.    ", "  .-(    ).  ", " (___.__)__) ", "  /// /// //  ", " /// /// //   "],
+		icon: [
+			colored("     .--.    ", CLOUD_DARK),
+			colored("  .-(    ).  ", CLOUD_DARK),
+			colored(" (___.__)__) ", CLOUD_DARK),
+			colored("  /// /// //  ", RAIN),
+			colored(" /// /// //   ", RAIN),
+		],
 	},
 	71: {
 		desc: "LIGHT SNOW",
-		icon: ["     .--.    ", "  .-(    ).  ", " (___.__)__) ", "   *  *  *   ", "  *  *  *    "],
+		icon: [
+			colored("     .--.    ", CLOUD_LIGHT),
+			colored("  .-(    ).  ", CLOUD_LIGHT),
+			colored(" (___.__)__) ", CLOUD_LIGHT),
+			colored("   *  *  *   ", SNOW),
+			colored("  *  *  *    ", SNOW),
+		],
 	},
 	73: {
 		desc: "SNOW",
-		icon: ["     .--.    ", "  .-(    ).  ", " (___.__)__) ", "   *  *  *   ", "  *  *  *    "],
+		icon: [
+			colored("     .--.    ", CLOUD_DARK),
+			colored("  .-(    ).  ", CLOUD_DARK),
+			colored(" (___.__)__) ", CLOUD_DARK),
+			colored("   *  *  *   ", SNOW),
+			colored("  *  *  *    ", SNOW),
+		],
 	},
 	75: {
 		desc: "HEAVY SNOW",
-		icon: ["     .--.    ", "  .-(    ).  ", " (___.__)__) ", "  ** ** **    ", " ** ** **     "],
+		icon: [
+			colored("     .--.    ", CLOUD_DARK),
+			colored("  .-(    ).  ", CLOUD_DARK),
+			colored(" (___.__)__) ", CLOUD_DARK),
+			colored("  ** ** **    ", SNOW),
+			colored(" ** ** **     ", SNOW),
+		],
 	},
 	80: {
 		desc: "RAIN SHOWERS",
-		icon: ["     .--.    ", "  .-(    ).  ", " (___.__)__) ", "   / / / /   ", "  / / / /    "],
+		icon: [
+			colored("     .--.    ", CLOUD_LIGHT),
+			colored("  .-(    ).  ", CLOUD_LIGHT),
+			colored(" (___.__)__) ", CLOUD_LIGHT),
+			colored("   / / / /   ", RAIN),
+			colored("  / / / /    ", RAIN),
+		],
 	},
 	81: {
 		desc: "RAIN SHOWERS",
-		icon: ["     .--.    ", "  .-(    ).  ", " (___.__)__) ", "   / / / /   ", "  / / / /    "],
+		icon: [
+			colored("     .--.    ", CLOUD_LIGHT),
+			colored("  .-(    ).  ", CLOUD_LIGHT),
+			colored(" (___.__)__) ", CLOUD_LIGHT),
+			colored("   / / / /   ", RAIN),
+			colored("  / / / /    ", RAIN),
+		],
 	},
 	82: {
 		desc: "HEAVY SHOWERS",
-		icon: ["     .--.    ", "  .-(    ).  ", " (___.__)__) ", "  /// /// //  ", " /// /// //   "],
+		icon: [
+			colored("     .--.    ", CLOUD_DARK),
+			colored("  .-(    ).  ", CLOUD_DARK),
+			colored(" (___.__)__) ", CLOUD_DARK),
+			colored("  /// /// //  ", RAIN),
+			colored(" /// /// //   ", RAIN),
+		],
 	},
 	95: {
 		desc: "THUNDERSTORM",
-		icon: ["     .--.    ", "  .-(    ).  ", " (___.__)__) ", "   ⚡/ ⚡/   ", "  / ⚡/ /    "],
+		icon: [
+			colored("     .--.    ", CLOUD_DARK),
+			colored("  .-(    ).  ", CLOUD_DARK),
+			colored(" (___.__)__) ", CLOUD_DARK),
+			colored("   ⚡", THUNDER) +
+				colored("/ ", RAIN) +
+				colored("⚡", THUNDER) +
+				colored("/   ", RAIN),
+			colored("  / ", RAIN) + colored("⚡", THUNDER) + colored("/ /    ", RAIN),
+		],
 	},
 };
 
@@ -90,7 +226,13 @@ function getWeatherInfo(code: number): { desc: string; icon: string[] } {
 	return (
 		WMO_CODES[code] ?? {
 			desc: `CODE ${code}`,
-			icon: ["     .--.    ", "  .-(    ).  ", " (___.__)__) ", "     ???     ", "             "],
+			icon: [
+				colored("     .--.    ", CLOUD_DARK),
+				colored("  .-(    ).  ", CLOUD_DARK),
+				colored(" (___.__)__) ", CLOUD_DARK),
+				"     ???     ",
+				"             ",
+			],
 		}
 	);
 }
@@ -176,17 +318,17 @@ export async function weatherCommand(args: string): Promise<TerminalLine[]> {
 
 		const details = [
 			`  ${info.desc}`,
-			`  TEMP:     ${current.temperature_2m}°C`,
+			`  TEMP:     ${Math.round(current.temperature_2m)}°C`,
 			`  HUMIDITY: ${current.relative_humidity_2m}%`,
 			`  WIND:     ${current.wind_speed_10m} KM/H`,
 			"",
 		];
 
-		// Interleave icon and details
+		// Interleave colored icon (rich HTML) and plain details
 		for (let i = 0; i < Math.max(info.icon.length, details.length); i++) {
 			const iconPart = info.icon[i] ?? "             ";
-			const detailPart = details[i] ?? "";
-			lines.push(ln(`  ${iconPart}  ${detailPart}`, "output"));
+			const detailPart = esc(details[i] ?? "");
+			lines.push(ln(`<span style="white-space:pre">  ${iconPart}  ${detailPart}</span>`, "rich"));
 		}
 
 		// Forecast
@@ -202,7 +344,7 @@ export async function weatherCommand(args: string): Promise<TerminalLine[]> {
 			const label = days[i]!;
 			lines.push(
 				ln(
-					`  ${label.padEnd(12)} ${hi.toString().padStart(3)}°/${lo.toString().padStart(3)}°  ${dayInfo.desc}`,
+					`  ${label.padEnd(12)} ${Math.round(hi)}°C / ${Math.round(lo)}°C  ${dayInfo.desc}`,
 					"output",
 				),
 			);
