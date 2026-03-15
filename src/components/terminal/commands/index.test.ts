@@ -212,18 +212,21 @@ describe("executeCommand", () => {
 	it("returns snarky roast for grep", () => {
 		const result = executeCommand("grep foo");
 		expect(result.lines[0]!.type).toBe("system");
-		expect(result.lines[0]!.text).toContain("GREP");
+		expect(result.lines[0]!.text).toContain("COMMODORE");
 	});
 
-	it("returns snarky roast for python", () => {
-		const result = executeCommand("python");
-		expect(result.lines[0]!.type).toBe("system");
-		expect(result.lines[0]!.text).toContain("INTERPRETER");
+	it("refuses package manager installs", () => {
+		for (const cmd of ["npm", "apt", "pip", "pacman", "brew", "cargo"]) {
+			const result = executeCommand(cmd);
+			expect(result.lines[0]!.text).toContain("NOT PERMITTED");
+		}
 	});
 
-	it("returns snarky roast for vim", () => {
-		const result = executeCommand("vim");
-		expect(result.lines[0]!.text).toContain("VIM");
+	it("disables vim and emacs for user safety", () => {
+		for (const cmd of ["vim", "vi", "emacs"]) {
+			const result = executeCommand(cmd);
+			expect(result.lines[0]!.text).toContain("DISABLED");
+		}
 	});
 
 	it("roasts still return syntax error for truly unknown commands", () => {

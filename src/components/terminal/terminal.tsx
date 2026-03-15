@@ -338,7 +338,7 @@ export function Terminal() {
 					className="relative flex items-center text-sm leading-relaxed"
 				>
 					<span className="text-c64-yellow">&gt;&nbsp;</span>
-					<span className="text-c64-yellow">{input.toUpperCase()}</span>
+					<span className="whitespace-pre text-c64-yellow">{input.toUpperCase()}</span>
 					<span className="cursor-blink inline-block h-[1em] w-[0.6em] translate-y-[0.15em] bg-c64-yellow" />
 					<input
 						ref={inputRef}

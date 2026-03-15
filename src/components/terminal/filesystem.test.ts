@@ -46,6 +46,11 @@ describe("filesystem", () => {
 			expect(lines.some((l) => l.includes(".HIDDEN"))).toBe(true);
 		});
 
+		it("shows dotfiles with -lla flag", () => {
+			const lines = ls("-lla");
+			expect(lines.some((l) => l.includes(".HIDDEN"))).toBe(true);
+		});
+
 		it("lists a subdirectory by path", () => {
 			const lines = ls("projects");
 			expect(lines.some((l) => l.includes("BLACKBOX.GIT"))).toBe(true);

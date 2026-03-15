@@ -244,7 +244,9 @@ export function pwd(): string {
 }
 
 export function ls(args: string): string[] {
-	const showHidden = args.includes("-a") || args.includes("-la") || args.includes("-al");
+	// Show hidden files if any flag argument contains 'a' (e.g. -a, -la, -lla, -al)
+	const flags = args.split(/\s+/).filter((a) => a.startsWith("-"));
+	const showHidden = flags.some((f) => f.slice(1).includes("a"));
 	const targetArg = args
 		.split(/\s+/)
 		.filter((a) => !a.startsWith("-"))
