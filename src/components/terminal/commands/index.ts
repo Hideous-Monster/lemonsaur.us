@@ -108,20 +108,24 @@ const COMMANDS: Record<string, () => CommandResult> = {
 			return ln(html, "rich");
 		}
 
+		const h = (text: string) =>
+			ln(`<div style="font-size:1.1em;padding-top:4px">${text}</div>`, "rich");
+
 		return {
 			lines: [
-				ln("SOCIAL/MEDIA", "system"),
+				ln("", "output"),
+				h("SOCIAL/MEDIA"),
 				...SOCIAL_LINKS.map((link) => linkBlock(link.url)),
 				ln("", "output"),
-				ln("COMMUNITIES I HELPED BUILD", "system"),
+				h("COMMUNITIES I HELPED BUILD"),
 				linkBlock("https://oomfies.gay"),
 				linkBlock("https://pythondiscord.com"),
 				ln("", "output"),
-				ln("COMPANIES I STARTED", "system"),
+				h("COMPANIES I STARTED"),
 				linkBlock("https://tinydoom.com"),
 				linkBlock("https://hideous.monster"),
 				ln("", "output"),
-				ln("SOFTWARE I MADE", "system"),
+				h("SOFTWARE I MADE"),
 				linkBlock("https://github.com/lemonsaurus/blackbox"),
 				linkBlock("https://github.com/lemonsaurus/agency"),
 				linkBlock("https://github.com/lemonsaurus/mirador"),
