@@ -341,11 +341,11 @@ export function IrcClient({ onExit }: IrcClientProps) {
 		checkStatus();
 	}, []);
 
-	// Auto-scroll on new messages
-	// biome-ignore lint/correctness/useExhaustiveDependencies: intentionally scroll on messages change
+	// Auto-scroll on new messages or typing indicator
+	// biome-ignore lint/correctness/useExhaustiveDependencies: intentionally scroll on messages/typing change
 	useEffect(() => {
-		scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
-	}, [messages]);
+		setTimeout(() => scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight }), 0);
+	}, [messages, carlaTyping]);
 
 	// Focus input when ready
 	useEffect(() => {
@@ -770,6 +770,7 @@ export function IrcClient({ onExit }: IrcClientProps) {
 					overflowY: "auto",
 					overflowX: "hidden",
 					padding: "10px 14px",
+					scrollbarGutter: "stable",
 					lineHeight: "1.7",
 				}}
 			>
@@ -805,14 +806,6 @@ export function IrcClient({ onExit }: IrcClientProps) {
 						</div>
 					);
 				})}
-
-				{carlaTyping && (
-					<div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-						<span style={{ color: CARLA_NICK_COLOR, fontStyle: "italic" }}>
-							* Carla is typing...
-						</span>
-					</div>
-				)}
 			</div>
 
 			{/* Input area */}
