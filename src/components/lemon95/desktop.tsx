@@ -81,6 +81,7 @@ export function Desktop({ onShutDown }: DesktopProps) {
 				bottom: 32,
 				background: "#1a2e1a",
 				overflow: "hidden",
+				zIndex: 60,
 			}}
 		>
 			{/* Desktop icon grid — top-to-bottom, then left-to-right */}

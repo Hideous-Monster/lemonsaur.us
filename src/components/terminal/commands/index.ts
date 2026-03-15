@@ -246,6 +246,77 @@ const ARG_COMMANDS: Record<string, (args: string) => CommandResult> = {
 		lines: [ln(args ? args.toUpperCase() : "", "output")],
 	}),
 
+	upgrade: (args) => {
+		const a = args.toLowerCase().trim();
+		if (a === "") {
+			return {
+				lines: [
+					ln("", "output"),
+					ln("╔══════════════════════════════════════════╗", "system"),
+					ln("║  ⚠  LEMON/95 UPGRADE UTILITY  ⚠        ║", "system"),
+					ln("╚══════════════════════════════════════════╝", "system"),
+					ln("", "output"),
+					ln("WARNING: THIS WILL UPGRADE YOUR SYSTEM TO", "system"),
+					ln("LEMON/95 (BETA). THIS IS EXPERIMENTAL AND", "system"),
+					ln("MAY CAUSE IRREVERSIBLE DAMAGE INCLUDING:", "system"),
+					ln("", "output"),
+					ln("  * TOTAL LOSS OF TERMINAL FUNCTIONALITY", "output"),
+					ln("  * SPONTANEOUS LEMON COMBUSTION", "output"),
+					ln("  * PERMANENT GUI DEPENDENCY", "output"),
+					ln("  * YOUR FILES MAY BECOME SENTIENT", "output"),
+					ln("", "output"),
+					ln("TYPE 'UPGRADE YES' TO PROCEED.", "system"),
+					ln("", "output"),
+				],
+			};
+		}
+		if (a === "yes") {
+			return {
+				lines: [
+					ln("", "output"),
+					ln("ARE YOU REALLY SURE? THE LAST PERSON WHO", "system"),
+					ln("UPGRADED HASN'T BEEN SEEN SINCE.", "system"),
+					ln("", "output"),
+					ln("THEIR COMPUTER NOW ONLY DISPLAYS LEMONS.", "system"),
+					ln("", "output"),
+					ln("THIS IS NOT COVERED BY WARRANTY.", "system"),
+					ln("LEMON MICROSYSTEMS ASSUMES NO LIABILITY.", "system"),
+					ln("", "output"),
+					ln("TYPE 'UPGRADE YES REALLY' TO CONFIRM.", "system"),
+					ln("", "output"),
+				],
+			};
+		}
+		if (a === "yes really") {
+			return {
+				lines: [
+					ln("", "output"),
+					ln("FINAL WARNING.", "system"),
+					ln("", "output"),
+					ln("THERE IS NO GOING BACK.", "system"),
+					ln("WELL, ACTUALLY THERE IS. BUT STILL.", "system"),
+					ln("", "output"),
+					ln("TYPE 'UPGRADE YES REALLY DO IT' TO INSTALL.", "system"),
+					ln("", "output"),
+				],
+			};
+		}
+		if (a === "yes really do it") {
+			return {
+				lines: [
+					ln("", "output"),
+					ln("INSTALLING LEMON/95...", "system"),
+					ln("DON'T SAY WE DIDN'T WARN YOU.", "system"),
+					ln("", "output"),
+				],
+				action: "upgrade",
+			};
+		}
+		return {
+			lines: [ln("UPGRADE: INVALID ARGUMENT. TYPE 'UPGRADE' FOR OPTIONS.", "system")],
+		};
+	},
+
 	weather: (args) => ({
 		lines: [ln(`FETCHING WEATHER FOR "${(args.trim() || "OSLO").toUpperCase()}"...`, "system")],
 		asyncLines: () => weatherCommand(args),

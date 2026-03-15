@@ -722,11 +722,12 @@ export function KonamiEasterEgg() {
 						ctx.fillStyle = "#706820";
 						ctx.fillText("(C) 1987 LEMON MICROSYSTEMS LTD. ALL RIGHTS RESERVED.", cx, H - 20);
 					} else {
-						// Keep canvas as a black cover so old page never flashes through
+						// Boot into Lemon 95 after the storm
 						cancelAnimationFrame(animRef.current);
 						ctx.fillStyle = "#0a140a";
 						ctx.fillRect(0, 0, W, H);
 						canvas.style.pointerEvents = "all";
+						localStorage.setItem("os-mode", "lemon95");
 						window.location.replace(window.location.pathname);
 						return;
 					}

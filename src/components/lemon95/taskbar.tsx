@@ -58,11 +58,11 @@ export function Taskbar({
 				height: 32,
 				background: "#2a3a2a",
 				borderTop: "2px solid #405030",
+				zIndex: 70,
 				display: "flex",
 				alignItems: "center",
 				gap: 4,
 				padding: "0 4px",
-				zIndex: 9000,
 				fontFamily: "monospace",
 				fontSize: 11,
 			}}

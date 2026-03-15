@@ -174,6 +174,35 @@ describe("executeCommand", () => {
 		expect(result.action).toBe("destroy");
 	});
 
+	it("upgrade shows warnings", () => {
+		const result = executeCommand("upgrade");
+		const text = result.lines.map((l) => l.text).join("\n");
+		expect(text).toContain("WARNING");
+		expect(text).toContain("UPGRADE YES");
+	});
+
+	it("upgrade yes shows second warning", () => {
+		const result = executeCommand("upgrade yes");
+		const text = result.lines.map((l) => l.text).join("\n");
+		expect(text).toContain("REALLY");
+	});
+
+	it("upgrade yes really shows final warning", () => {
+		const result = executeCommand("upgrade yes really");
+		const text = result.lines.map((l) => l.text).join("\n");
+		expect(text).toContain("UPGRADE YES REALLY DO IT");
+	});
+
+	it("upgrade yes really do it triggers upgrade action", () => {
+		const result = executeCommand("upgrade yes really do it");
+		expect(result.action).toBe("upgrade");
+	});
+
+	it("upgrade with invalid args shows help", () => {
+		const result = executeCommand("upgrade nah");
+		expect(result.lines[0]!.text).toContain("INVALID");
+	});
+
 	it("rm without -rf / returns snarky message", () => {
 		const result = executeCommand("rm something");
 		expect(result.lines[0]!.text).toContain("RM -RF /");

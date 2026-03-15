@@ -61,7 +61,11 @@ type TerminalMode =
 	| "pong"
 	| "destroyed";
 
-export function Terminal() {
+interface TerminalProps {
+	onUpgrade?: () => void;
+}
+
+export function Terminal({ onUpgrade }: TerminalProps = {}) {
 	const [lines, setLines] = useState<TerminalLine[]>([]);
 	const [input, setInput] = useState("");
 	const [booting, setBooting] = useState(true);
@@ -162,6 +166,12 @@ export function Terminal() {
 			if (result.action === "pong") {
 				setLines((prev) => [...prev, ...result.lines]);
 				setTimeout(() => setMode("pong"), 300);
+				return;
+			}
+
+			if (result.action === "upgrade") {
+				setLines((prev) => [...prev, ...result.lines]);
+				if (onUpgrade) setTimeout(onUpgrade, 1500);
 				return;
 			}
 

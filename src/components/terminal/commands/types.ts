@@ -18,7 +18,8 @@ export interface CommandResult {
 		| "doom"
 		| "destroy"
 		| "tetris"
-		| "pong";
+		| "pong"
+		| "upgrade";
 	href?: string;
 	asyncLines?: () => Promise<TerminalLine[]>;
 }
