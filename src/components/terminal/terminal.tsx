@@ -348,9 +348,11 @@ export function Terminal() {
 				<div
 					key={line.id}
 					className={`min-h-[1.5em] whitespace-pre-wrap leading-relaxed ${
-						line.type === "logo" || line.type === "rich"
+						line.type === "logo"
 							? "font-mono text-xs leading-none"
-							: "break-all"
+							: line.type === "rich"
+								? ""
+								: "break-all"
 					}`}
 				>
 					{line.type === "logo" ? (
