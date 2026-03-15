@@ -98,6 +98,10 @@ export function KonamiEasterEgg() {
 			if (activeRef.current) return;
 			activeRef.current = true;
 
+			// Preload boot image
+			const bootImg = new Image();
+			bootImg.src = "/images/lemon87_bootup.png";
+
 			const canvas = document.createElement("canvas");
 			canvas.style.cssText =
 				"position:fixed;inset:0;z-index:9999;pointer-events:none;width:100%;height:100%;";
@@ -540,37 +544,89 @@ export function KonamiEasterEgg() {
 						ctx.fillText("*  Press any key to reboot the system.  *", W / 2, H / 2 + 60);
 						ctx.fillText("*  Press CTRL+ALT+DEL if system hangs.  *", W / 2, H / 2 + 80);
 					} else if (e < 1200) {
-						// Black
-						ctx.fillStyle = "#000000";
+						// Black pause
+						ctx.fillStyle = "#0a140a";
 						ctx.fillRect(0, 0, W, H);
-					} else if (e < 1800) {
-						// POST
-						ctx.fillStyle = "#000000";
+					} else if (e < 4000) {
+						// POST screen — yellow on dark green like the terminal
+						ctx.fillStyle = "#0a140a";
 						ctx.fillRect(0, 0, W, H);
 						ctx.textAlign = "left";
 						ctx.font = "14px monospace";
-						ctx.fillStyle = "#40b848";
-						ctx.fillText("POST: LEMON BIOS v87.1", 20, 30);
-						ctx.fillText("MEMORY TEST: 87K OK", 20, 50);
-						if (e > 1500) {
-							ctx.fillText("LOADING LEMON/87...", 20, 70);
-							ctx.fillText("LEMONSTORM CLEANUP COMPLETE.", 20, 90);
-						}
-					} else if (e < 3200) {
-						// Boot logo
-						ctx.fillStyle = "#000000";
-						ctx.fillRect(0, 0, W, H);
-						ctx.textAlign = "center";
-						ctx.textBaseline = "middle";
-						ctx.font = "bold 64px monospace";
 						ctx.fillStyle = LEMON_YELLOW;
-						ctx.shadowColor = LEMON_YELLOW;
-						ctx.shadowBlur = 30;
-						ctx.fillText("LEMON/87", W / 2, H / 2 - 20);
-						ctx.shadowBlur = 0;
-						ctx.font = "16px monospace";
-						ctx.fillStyle = "#40b848";
-						ctx.fillText("REBOOTING SYSTEM...", W / 2, H / 2 + 30);
+
+						const postT = e - 1200;
+						const lines: string[] = [];
+						lines.push("LEMON BIOS v87.1 — POWER-ON SELF TEST");
+						lines.push("");
+						if (postT > 100) lines.push("CHECKING CITRUS PROCESSOR... OK");
+						if (postT > 300) lines.push("DETECTING LEMON COPROCESSOR... FOUND");
+						if (postT > 500) {
+							const memCounted = Math.min(87, Math.floor((postT - 500) / 20));
+							lines.push(`MEMORY TEST: ${memCounted}K / 87K`);
+						}
+						if (postT > 2300) lines.push("MEMORY TEST: 87K OK");
+						if (postT > 2500) lines.push("");
+						if (postT > 2500) lines.push("DETECTING DEVICES:");
+						if (postT > 2600) lines.push("  KEYBOARD.............. PETSCII 40-COL");
+						if (postT > 2700) lines.push("  DISPLAY............... CRT 40x25 COLOR");
+						if (postT > 2800) lines.push("  STORAGE............... 1541 FLOPPY DRIVE");
+						if (postT > 2900) lines.push("  SOUND................. SID 6581 (3CH)");
+						if (postT > 3100) lines.push("");
+						if (postT > 3100) lines.push("LEMONSTORM CLEANUP COMPLETE.");
+						if (postT > 3300) lines.push("LOADING LEMON/87...");
+
+						for (let i = 0; i < lines.length; i++) {
+							ctx.fillText(lines[i]!, 20, 28 + i * 18);
+						}
+					} else if (e < 7500) {
+						// Boot logo with loading bar
+						ctx.fillStyle = "#0a140a";
+						ctx.fillRect(0, 0, W, H);
+
+						// Draw boot image centered
+						if (bootImg.complete && bootImg.naturalWidth > 0) {
+							const imgScale = Math.min(
+								(W * 0.4) / bootImg.naturalWidth,
+								(H * 0.4) / bootImg.naturalHeight,
+							);
+							const imgW = bootImg.naturalWidth * imgScale;
+							const imgH = bootImg.naturalHeight * imgScale;
+							ctx.drawImage(bootImg, (W - imgW) / 2, H * 0.25 - imgH / 2, imgW, imgH);
+						}
+
+						// Loading bar
+						const barW = Math.min(400, W * 0.6);
+						const barH = 16;
+						const barX = (W - barW) / 2;
+						const barY = H * 0.65;
+						const loadT = Math.min(1, (e - 4000) / 3200);
+
+						// Bar outline
+						ctx.strokeStyle = LEMON_YELLOW;
+						ctx.lineWidth = 2;
+						ctx.strokeRect(barX, barY, barW, barH);
+
+						// Rainbow gradient fill ROYGBIV
+						const fillW = barW * loadT;
+						if (fillW > 0) {
+							const grad = ctx.createLinearGradient(barX, 0, barX + barW, 0);
+							grad.addColorStop(0, "#ff5050"); // Red
+							grad.addColorStop(0.16, "#ff9040"); // Orange
+							grad.addColorStop(0.33, "#e8e040"); // Yellow
+							grad.addColorStop(0.5, "#40b848"); // Green
+							grad.addColorStop(0.66, "#5090ff"); // Blue
+							grad.addColorStop(0.83, "#8050d0"); // Indigo
+							grad.addColorStop(1, "#c050ff"); // Violet
+							ctx.fillStyle = grad;
+							ctx.fillRect(barX + 2, barY + 2, fillW - 4, barH - 4);
+						}
+
+						// Loading text
+						ctx.textAlign = "center";
+						ctx.font = "12px monospace";
+						ctx.fillStyle = LEMON_YELLOW;
+						ctx.fillText(loadT < 1 ? "LOADING LEMON/87..." : "READY.", W / 2, barY + barH + 24);
 					} else {
 						cleanup();
 						window.location.reload();
