@@ -877,6 +877,7 @@ export function MessengerApp() {
 					padding: "10px 14px",
 					background: "#ffffff",
 					borderBottom: "1px solid #e0d080",
+					scrollbarGutter: "stable",
 				}}
 			>
 				{messages.map((msg) => {
