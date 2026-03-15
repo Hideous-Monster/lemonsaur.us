@@ -187,20 +187,22 @@ async function dmOwner(
 	}
 }
 
-async function postToThread(
-	botToken: string,
-	threadId: string,
-	username: string,
-	content: string,
-): Promise<void> {
+async function postToThread(threadId: string, username: string, content: string): Promise<void> {
+	const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+	if (!webhookUrl) return;
+
+	const isCarla = username === "Carla";
 	try {
-		await fetch(`${DISCORD_API}/channels/${threadId}/messages`, {
+		await fetch(`${webhookUrl}?thread_id=${threadId}`, {
 			method: "POST",
-			headers: {
-				Authorization: `Bot ${botToken}`,
-				"Content-Type": "application/json",
-			},
-			body: JSON.stringify({ content: `**${username}:** ${content}` }),
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				content,
+				username: isCarla ? "Carla Stone" : username,
+				avatar_url: isCarla
+					? "https://lemonsaur.us/images/carla_avatar.png"
+					: "https://lemonsaur.us/images/lemon87_bootup.png",
+			}),
 		});
 	} catch (e) {
 		console.error("Failed to post message to Carla thread:", e);
@@ -281,9 +283,9 @@ export async function POST(request: Request) {
 		if (outgoingThreadId) {
 			const threadId = outgoingThreadId;
 			if (lastUserMessage) {
-				await postToThread(botToken, threadId, nick, lastUserMessage.content);
+				await postToThread(threadId, nick, lastUserMessage.content);
 			}
-			await postToThread(botToken, threadId, "Carla", reply);
+			await postToThread(threadId, "Carla", reply);
 		}
 	}
 

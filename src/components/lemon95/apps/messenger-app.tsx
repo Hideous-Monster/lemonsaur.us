@@ -798,7 +798,7 @@ export function MessengerApp() {
 				}}
 			>
 				<img
-					src="/images/lemon_portrait.avif"
+					src={carlaMode ? "/images/carla_avatar.avif" : "/images/lemon_portrait.avif"}
 					alt={contactName}
 					style={{
 						width: 36,
