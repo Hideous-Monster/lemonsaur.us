@@ -109,23 +109,48 @@ export function Desktop({ onShutDown }: DesktopProps) {
 		>
 			{/* Vitals overlay */}
 			{showVitals && (
-				<div
-					style={{
-						position: "absolute",
-						top: 8,
-						right: 12,
-						fontFamily: "monospace",
-						fontSize: 16,
-						zIndex: 5,
-						textShadow: "1px 1px 3px rgba(0,0,0,0.8)",
-					}}
-				>
-					<span style={{ color: "#ff5050" }}>&#x2764; {vitals.bpm} BPM</span>
-					{"  "}
-					<span style={{ color: "#70b0ff" }}>
-						&#x1FA78; {vitals.sys}/{vitals.dia}
-					</span>
-				</div>
+				<>
+					<style>{`
+						@keyframes heartbeat {
+							0%   { transform: scale(1); }
+							14%  { transform: scale(1.3); }
+							28%  { transform: scale(1); }
+							42%  { transform: scale(1.2); }
+							70%  { transform: scale(1); }
+							100% { transform: scale(1); }
+						}
+					`}</style>
+					<div
+						style={{
+							position: "absolute",
+							top: 8,
+							right: 12,
+							fontFamily: "monospace",
+							fontSize: 16,
+							zIndex: 5,
+							textShadow: "1px 1px 3px rgba(0,0,0,0.8)",
+						}}
+					>
+						<span style={{ color: "#ff5050" }}>
+							<span
+								style={{
+									display: "inline-block",
+									animationName: "heartbeat",
+									animationDuration: `${(60 / vitals.bpm).toFixed(3)}s`,
+									animationTimingFunction: "ease-in-out",
+									animationIterationCount: "infinite",
+								}}
+							>
+								&#x2764;
+							</span>{" "}
+							{vitals.bpm} BPM
+						</span>
+						{"  "}
+						<span style={{ color: "#70b0ff" }}>
+							&#x1FA78; {vitals.sys}/{vitals.dia}
+						</span>
+					</div>
+				</>
 			)}
 
 			{/* Desktop icon grid — top-to-bottom, then left-to-right */}
