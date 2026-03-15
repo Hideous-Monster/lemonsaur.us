@@ -589,6 +589,60 @@ export function KonamiEasterEgg() {
 						for (let i = 0; i < postLines.length; i++) {
 							ctx.fillText(postLines[i]!, 24, 100 + i * 17);
 						}
+
+						// Hardware init panel — bottom right
+						const hw = [
+							{ label: "CPU0", start: 100, dur: 300 },
+							{ label: "MEM1", start: 200, dur: 500 },
+							{ label: "SID0", start: 400, dur: 350 },
+							{ label: "VIC2", start: 500, dur: 400 },
+							{ label: "CIA1", start: 650, dur: 300 },
+							{ label: "CIA2", start: 700, dur: 350 },
+							{ label: "DRV0", start: 850, dur: 450 },
+							{ label: "IEC0", start: 950, dur: 400 },
+							{ label: "ROM0", start: 1050, dur: 250 },
+							{ label: "IRQ0", start: 1150, dur: 200 },
+						];
+
+						const panelX = W - 200;
+						const panelY = H - hw.length * 22 - 30;
+						ctx.font = "10px monospace";
+						ctx.fillStyle = "#405030";
+						ctx.fillText("HARDWARE INIT", panelX, panelY - 6);
+						ctx.fillRect(panelX, panelY, 170, 1);
+
+						for (let i = 0; i < hw.length; i++) {
+							const h = hw[i]!;
+							const y = panelY + 10 + i * 22;
+							const progress = Math.min(1, Math.max(0, (postT - h.start) / h.dur));
+							const done = progress >= 1;
+
+							// Label
+							ctx.font = "bold 10px monospace";
+							ctx.fillStyle = done ? LEMON_YELLOW : "#706820";
+							ctx.textAlign = "left";
+							ctx.fillText(h.label, panelX, y + 9);
+
+							// Bar background
+							const bx = panelX + 42;
+							const bw = 120;
+							const bh = 10;
+							ctx.fillStyle = "#1a2a1a";
+							ctx.fillRect(bx, y, bw, bh);
+
+							// Bar fill
+							if (progress > 0) {
+								ctx.fillStyle = done ? LEMON_YELLOW : "#cc3030";
+								ctx.fillRect(bx + 1, y + 1, (bw - 2) * progress, bh - 2);
+							}
+
+							// Status text
+							ctx.font = "9px monospace";
+							ctx.fillStyle = done ? "#40b848" : "#705030";
+							ctx.textAlign = "right";
+							ctx.fillText(done ? "OK" : `${Math.floor(progress * 100)}%`, panelX + 170, y + 9);
+						}
+						ctx.textAlign = "left";
 					} else if (e < 6700) {
 						// Boot logo screen
 						ctx.fillStyle = "#0a140a";
