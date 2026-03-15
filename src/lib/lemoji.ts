@@ -123,5 +123,5 @@ export const DECORATIVE_LEMOJIS = [
 ] as const;
 
 export function lemojiPath(name: string): string {
-	return `/images/lemoji/${name}.png`;
+	return `/images/lemoji/${name}.avif`;
 }

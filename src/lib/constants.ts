@@ -33,6 +33,9 @@ export const SOCIAL_LINKS: SocialLink[] = [
 	},
 ];
 
-export const BRAND_IMAGES = ["/images/brand/nice_lemon.png", "/images/brand/lemon_stegosaurus.png"];
+export const BRAND_IMAGES = [
+	"/images/brand/nice_lemon.avif",
+	"/images/brand/lemon_stegosaurus.avif",
+];
 
 export const NAV_LINKS = [{ label: "Blog", href: "/blog" }] as const;

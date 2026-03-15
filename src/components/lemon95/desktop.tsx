@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppPlaceholder } from "./app-placeholder";
 import { getAppComponent } from "./apps";
 import { DesktopIcon } from "./desktop-icon";
@@ -11,17 +11,18 @@ import { useWindowManager } from "./use-window-manager";
 import { Win95Window } from "./window";
 
 const DESKTOP_APPS: DesktopApp[] = [
-	{ id: "snake", title: "Snake", icon: "🐍", defaultWidth: 640, defaultHeight: 480 },
-	{ id: "tetris", title: "Tetris", icon: "🧱", defaultWidth: 300, defaultHeight: 520 },
-	{ id: "pong", title: "Pong", icon: "🍋", defaultWidth: 700, defaultHeight: 500 },
-	{ id: "doom", title: "Doom", icon: "💀", defaultWidth: 700, defaultHeight: 500 },
-	{ id: "weather", title: "Weather", icon: "🌤", defaultWidth: 400, defaultHeight: 350 },
-	{ id: "about", title: "About", icon: "👤", defaultWidth: 500, defaultHeight: 400 },
-	{ id: "links", title: "Links", icon: "🌐", defaultWidth: 600, defaultHeight: 500 },
-	{ id: "fortune", title: "Fortune", icon: "🔮", defaultWidth: 400, defaultHeight: 350 },
-	{ id: "matrix", title: "Matrix", icon: "💊", defaultWidth: 700, defaultHeight: 500 },
-	{ id: "hack", title: "Hack", icon: "💻", defaultWidth: 700, defaultHeight: 500 },
-	{ id: "neofetch", title: "Neofetch", icon: "🖥", defaultWidth: 450, defaultHeight: 350 },
+	{ id: "snake", title: "Snake", icon: "🐍", defaultWidth: 780, defaultHeight: 520 },
+	{ id: "tetris", title: "Tetris", icon: "🧱", defaultWidth: 780, defaultHeight: 600 },
+	{ id: "pong", title: "Pong", icon: "🍋", defaultWidth: 850, defaultHeight: 580 },
+	{ id: "doom", title: "Doom", icon: "💀", defaultWidth: 850, defaultHeight: 580 },
+	{ id: "weather", title: "Weather", icon: "🌤", defaultWidth: 520, defaultHeight: 500 },
+	{ id: "about", title: "About", icon: "👤", defaultWidth: 750, defaultHeight: 700 },
+	{ id: "links", title: "Links", icon: "🌐", defaultWidth: 800, defaultHeight: 650 },
+	{ id: "fortune", title: "Fortune", icon: "🔮", defaultWidth: 550, defaultHeight: 420 },
+	{ id: "matrix", title: "Matrix", icon: "💊", defaultWidth: 850, defaultHeight: 580 },
+	{ id: "hack", title: "Hack", icon: "💻", defaultWidth: 850, defaultHeight: 580 },
+	{ id: "neofetch", title: "Neofetch", icon: "🖥", defaultWidth: 550, defaultHeight: 450 },
+	{ id: "blog", title: "Blog", icon: "📰", defaultWidth: 900, defaultHeight: 650 },
 ];
 
 interface DesktopProps {
@@ -41,6 +42,24 @@ export function Desktop({ onShutDown }: DesktopProps) {
 	} = useWindowManager();
 
 	const [startMenuOpen, setStartMenuOpen] = useState(false);
+
+	// Vitals display — persisted from upgrade command
+	const [showVitals] = useState(
+		() => typeof window !== "undefined" && localStorage.getItem("show-vitals") === "1",
+	);
+	const [vitals, setVitals] = useState({ bpm: 138, sys: 118, dia: 76 });
+
+	useEffect(() => {
+		if (!showVitals) return;
+		const interval = setInterval(() => {
+			setVitals((prev) => ({
+				bpm: prev.bpm + Math.floor(Math.random() * 5) - 2,
+				sys: prev.sys + Math.floor(Math.random() * 3) - 1,
+				dia: prev.dia + Math.floor(Math.random() * 3) - 1,
+			}));
+		}, 1000);
+		return () => clearInterval(interval);
+	}, [showVitals]);
 
 	// The topmost non-minimized window is the "focused" one for taskbar highlight
 	const focusedId = useMemo(() => {
@@ -81,22 +100,46 @@ export function Desktop({ onShutDown }: DesktopProps) {
 				inset: 0,
 				bottom: 32,
 				background: "#1a2e1a",
+				backgroundImage: "url(/images/windows_bg.avif)",
+				backgroundSize: "cover",
+				backgroundPosition: "center",
 				overflow: "hidden",
 				zIndex: 60,
 			}}
 		>
+			{/* Vitals overlay */}
+			{showVitals && (
+				<div
+					style={{
+						position: "absolute",
+						top: 8,
+						right: 12,
+						fontFamily: "monospace",
+						fontSize: 16,
+						zIndex: 5,
+						textShadow: "1px 1px 3px rgba(0,0,0,0.8)",
+					}}
+				>
+					<span style={{ color: "#ff5050" }}>&#x2764; {vitals.bpm} BPM</span>
+					{"  "}
+					<span style={{ color: "#70b0ff" }}>
+						&#x1FA78; {vitals.sys}/{vitals.dia}
+					</span>
+				</div>
+			)}
+
 			{/* Desktop icon grid — top-to-bottom, then left-to-right */}
 			<div
 				style={{
 					position: "absolute",
-					top: 8,
-					left: 8,
+					top: 12,
+					left: 12,
 					bottom: 0,
 					display: "flex",
 					flexDirection: "column",
 					flexWrap: "wrap",
 					alignContent: "flex-start",
-					gap: 8,
+					gap: 6,
 					padding: 4,
 				}}
 			>

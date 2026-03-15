@@ -2,19 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-// ── Lemon ASCII art (compact, 8 lines) ──────────────────────────────────────
-
-const LEMON_ART = [
-	"  ⠀⢀⣴⣾⣿⣷⣦⡀",
-	"  ⢠⣿⣿⣿⣿⣿⣿⣷",
-	"  ⣾⣿⠀⠀⠀⠀⠻⣿⡄",
-	"  ⣿⣿⠀⠀⠀⠀⢸⣿",
-	"  ⢿⣿⡀⠀⠀⠀⣸⣿",
-	"  ⠸⣿⣿⣤⣤⣾⣿⠇",
-	"  ⠀⠈⠻⢿⡿⠟⠁",
-];
-
-const ART_COLORS = ["#e8e040", "#e0d838", "#d8d030", "#c8c828", "#b0b830", "#80a838", "#40b848"];
+const LEMON_IMG = "/images/lemon87_bootup.avif";
 
 // ── Win3.1 group box ─────────────────────────────────────────────────────────
 
@@ -124,23 +112,19 @@ export function NeofetchApp() {
 						marginBottom: 14,
 					}}
 				>
-					{/* Lemon art */}
-					<div style={{ flexShrink: 0, lineHeight: 1.3 }}>
-						{LEMON_ART.map((line, i) => (
-							<div
-								// biome-ignore lint/suspicious/noArrayIndexKey: static art lines
-								key={i}
-								style={{
-									color: ART_COLORS[i] ?? "#40b848",
-									fontSize: 11,
-									fontFamily: "monospace",
-									whiteSpace: "pre",
-								}}
-							>
-								{line}
-							</div>
-						))}
-					</div>
+					{/* Lemon image */}
+					{/* biome-ignore lint/performance/noImgElement: small inline icon */}
+					<img
+						src={LEMON_IMG}
+						alt="Lemon"
+						style={{
+							width: 80,
+							height: 80,
+							objectFit: "contain",
+							imageRendering: "pixelated",
+							flexShrink: 0,
+						}}
+					/>
 
 					{/* Identity text */}
 					<div style={{ flex: 1 }}>
@@ -228,36 +212,6 @@ export function NeofetchApp() {
 						))}
 					</div>
 				</GroupBox>
-			</div>
-
-			{/* Bottom buttons bar */}
-			<div
-				style={{
-					display: "flex",
-					justifyContent: "flex-end",
-					gap: 6,
-					padding: "8px 12px",
-					borderTop: "1px solid #223a22",
-					flexShrink: 0,
-				}}
-			>
-				<button
-					type="button"
-					style={{
-						background: "#1a2a1a",
-						color: "#e8e040",
-						fontFamily: "monospace",
-						fontSize: 11,
-						padding: "3px 16px",
-						borderTop: "2px solid #405030",
-						borderLeft: "2px solid #405030",
-						borderBottom: "2px solid #1a2a1a",
-						borderRight: "2px solid #1a2a1a",
-						cursor: "default",
-					}}
-				>
-					OK
-				</button>
 			</div>
 		</div>
 	);

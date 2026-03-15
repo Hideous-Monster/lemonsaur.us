@@ -85,7 +85,7 @@ const COMMANDS: Record<string, () => CommandResult> = {
 					`TYPE 'LINKS' TO SEE SOME OTHER STUFF I MADE!` +
 					`</div>` +
 					`<div class="portrait-crt" style="flex-shrink:0;width:130px;height:130px;border:3px double #e8e040;padding:3px;background:#0a140a;overflow:hidden">` +
-					`<img src="/images/lemon_portrait.png" alt="LEMONSAURUS" style="width:100%;height:100%;object-fit:cover;image-rendering:pixelated" />` +
+					`<img src="/images/lemon_portrait.avif" alt="LEMONSAURUS" style="width:100%;height:100%;object-fit:cover;image-rendering:pixelated" />` +
 					`<div class="portrait-scan ps1"></div><div class="portrait-scan ps2"></div><div class="portrait-scan ps3"></div>` +
 					`</div>` +
 					`</div>`,

@@ -53,7 +53,7 @@ describe("lemoji", () => {
 
 	describe("lemojiPath", () => {
 		it("returns the correct public path", () => {
-			expect(lemojiPath("lemon_happy")).toBe("/images/lemoji/lemon_happy.png");
+			expect(lemojiPath("lemon_happy")).toBe("/images/lemoji/lemon_happy.avif");
 		});
 	});
 });

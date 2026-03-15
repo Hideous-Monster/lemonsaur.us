@@ -100,7 +100,7 @@ export function KonamiEasterEgg() {
 
 			// Preload boot image
 			const bootImg = new Image();
-			bootImg.src = "/images/lemon87_bootup.png";
+			bootImg.src = "/images/lemon87_bootup.avif";
 
 			const canvas = document.createElement("canvas");
 			canvas.style.cssText =

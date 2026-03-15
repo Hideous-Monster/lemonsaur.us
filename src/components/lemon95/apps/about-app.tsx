@@ -164,7 +164,7 @@ export function AboutApp() {
 						}}
 					>
 						<Image
-							src="/images/lemon_portrait.png"
+							src="/images/lemon_portrait.avif"
 							alt="Lemonsaurus portrait"
 							width={100}
 							height={100}
