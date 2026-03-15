@@ -50,7 +50,7 @@ const COMMANDS: Record<string, () => CommandResult> = {
 			ln("  MATRIX   - THE ZEN OF DIGITAL RAIN", "output"),
 			ln("", "output"),
 			ln(" SOCIAL", "system"),
-			ln("  IRC     - CHAT WITH LEMONSAURUS", "output"),
+			ln("  IRC        - CHAT WITH LEMONSAURUS", "output"),
 			ln("", "output"),
 			ln(" SYSTEM", "system"),
 			ln("  CLEAR    - CLEAR SCREEN", "output"),

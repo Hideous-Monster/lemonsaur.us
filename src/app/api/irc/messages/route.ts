@@ -58,7 +58,8 @@ export async function GET(request: Request) {
 	// Filter to only messages from the owner
 	const messages = discordMessages
 		.filter((m: { author: { id: string } }) => m.author.id === ownerId)
-		.map((m: { content: string; timestamp: string; author: { username: string } }) => ({
+		.map((m: { id: string; content: string; timestamp: string; author: { username: string } }) => ({
+			id: m.id,
 			content: m.content,
 			timestamp: m.timestamp,
 			author: m.author.username,

@@ -42,13 +42,27 @@ const MOTD_LINES = [
 	"* Please enter your nickname: ",
 ];
 
+const RAINBOW_NICK_STYLE = {
+	backgroundImage: "linear-gradient(90deg, #ff5050, #ff9040, #e8e040, #40b848, #5090ff, #b860d0)",
+	WebkitBackgroundClip: "text",
+	WebkitTextFillColor: "transparent",
+	backgroundClip: "text",
+	fontWeight: "bold" as const,
+};
+
 function formatTime(date: Date): string {
 	return `[${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}]`;
 }
 
-function lineColor(type: IrcMessage["type"]): string {
-	if (type === "system") return "#688850";
-	return "#b8d850";
+function isLemonsaurus(nick: string | undefined): boolean {
+	return nick === "@lemonsaurus";
+}
+
+function NickSpan({ nick }: { nick: string }) {
+	if (isLemonsaurus(nick)) {
+		return <span style={RAINBOW_NICK_STYLE}>&lt;{nick}&gt;</span>;
+	}
+	return <span style={{ color: "#e8e040" }}>&lt;{nick}&gt;</span>;
 }
 
 export function IrcClient({ onExit }: IrcClientProps) {
@@ -57,13 +71,14 @@ export function IrcClient({ onExit }: IrcClientProps) {
 	const [stage, setStage] = useState<ConnectionStage>("intro");
 	const [nick, setNick] = useState("");
 	const [threadId, setThreadId] = useState<string | null>(null);
-	const [lastPollTime, setLastPollTime] = useState<string | null>(null);
 
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
 	const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 	const motdIndexRef = useRef(0);
 	const motdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const lastPollTimeRef = useRef<string | null>(null);
+	const seenMessageIds = useRef<Set<string>>(new Set());
 
 	const addMessage = useCallback((msg: Omit<IrcMessage, "timestamp">) => {
 		setMessages((prev) => [...prev, { ...msg, timestamp: new Date() }]);
@@ -111,47 +126,58 @@ export function IrcClient({ onExit }: IrcClientProps) {
 		};
 	}, [stage, addMessage]);
 
-	// Start polling for replies once in chat
+	// Start polling for replies once in chat — uses refs to avoid re-creating the interval
 	useEffect(() => {
 		if (stage !== "chat" || !threadId) return;
 
-		pollIntervalRef.current = setInterval(async () => {
+		async function poll() {
 			try {
 				const url = new URL("/api/irc/messages", window.location.origin);
-				url.searchParams.set("threadId", threadId);
-				if (lastPollTime) url.searchParams.set("since", lastPollTime);
+				url.searchParams.set("threadId", threadId!);
+				if (lastPollTimeRef.current) url.searchParams.set("since", lastPollTimeRef.current);
 
 				const res = await fetch(url.toString());
 				if (!res.ok) return;
 
 				const data = await res.json();
-				const newMessages: Array<{ content: string; timestamp: string; author: string }> =
-					data.messages ?? [];
+				const newMessages: Array<{
+					id: string;
+					content: string;
+					timestamp: string;
+					author: string;
+				}> = data.messages ?? [];
 
 				if (newMessages.length > 0) {
-					setLastPollTime(newMessages[newMessages.length - 1]!.timestamp);
+					lastPollTimeRef.current = newMessages[newMessages.length - 1]!.timestamp;
 
-					for (const m of newMessages) {
+					const unseen = newMessages.filter((m) => !seenMessageIds.current.has(m.id));
+					for (const m of unseen) {
+						seenMessageIds.current.add(m.id);
+					}
+
+					if (unseen.length > 0) {
 						setMessages((prev) => [
 							...prev,
-							{
-								type: "message",
-								nick: `@${m.author}`,
+							...unseen.map((m) => ({
+								type: "message" as const,
+								nick: "@lemonsaurus",
 								text: m.content,
 								timestamp: new Date(m.timestamp),
-							},
+							})),
 						]);
 					}
 				}
 			} catch {
 				// Silent — network errors don't need to surface every poll
 			}
-		}, 3000);
+		}
+
+		pollIntervalRef.current = setInterval(poll, 3000);
 
 		return () => {
 			if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
 		};
-	}, [stage, threadId, lastPollTime]);
+	}, [stage, threadId]);
 
 	// Cleanup on unmount
 	useEffect(() => {
@@ -207,7 +233,7 @@ export function IrcClient({ onExit }: IrcClientProps) {
 				}
 
 				setThreadId(data.threadId);
-				setLastPollTime(new Date().toISOString());
+				lastPollTimeRef.current = new Date().toISOString();
 				setStage("chat");
 			} catch {
 				addMessage({
@@ -250,7 +276,7 @@ export function IrcClient({ onExit }: IrcClientProps) {
 				const cmd = parts[0]?.toLowerCase();
 
 				if (cmd === "quit") {
-					addMessage({ type: "system", text: `* Disconnecting from #lemonsaurus...` });
+					addMessage({ type: "system", text: "* Disconnecting from #lemonsaurus..." });
 					addMessage({ type: "system", text: `* ${nick} has quit (Leaving)` });
 					if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
 					setTimeout(onExit, 800);
@@ -323,7 +349,7 @@ export function IrcClient({ onExit }: IrcClientProps) {
 				backgroundColor: "#0a140a",
 				color: "#b8d850",
 				fontFamily: "monospace",
-				fontSize: "13px",
+				fontSize: "15px",
 				overflow: "hidden",
 			}}
 		>
@@ -335,7 +361,7 @@ export function IrcClient({ onExit }: IrcClientProps) {
 					overflowY: "auto",
 					overflowX: "hidden",
 					padding: "8px 12px",
-					lineHeight: "1.5",
+					lineHeight: "1.6",
 				}}
 			>
 				{messages.map((msg, i) => (
@@ -344,11 +370,11 @@ export function IrcClient({ onExit }: IrcClientProps) {
 						{msg.type === "message" ? (
 							<span>
 								<span style={{ color: "#688850" }}>{formatTime(msg.timestamp)} </span>
-								<span style={{ color: "#e8e040" }}>&lt;{msg.nick}&gt;</span>
+								<NickSpan nick={msg.nick!} />
 								<span style={{ color: "#b8d850" }}> {msg.text}</span>
 							</span>
 						) : (
-							<span style={{ color: lineColor(msg.type) }}>
+							<span style={{ color: "#688850" }}>
 								{formatTime(msg.timestamp)} {msg.text}
 							</span>
 						)}
@@ -363,7 +389,7 @@ export function IrcClient({ onExit }: IrcClientProps) {
 					style={{
 						display: "flex",
 						alignItems: "center",
-						padding: "6px 12px",
+						padding: "8px 12px",
 						borderTop: "1px solid #1a2a1a",
 						backgroundColor: "#060e06",
 						flexShrink: 0,
@@ -384,7 +410,7 @@ export function IrcClient({ onExit }: IrcClientProps) {
 							outline: "none",
 							color: "#b8d850",
 							fontFamily: "monospace",
-							fontSize: "13px",
+							fontSize: "15px",
 							caretColor: "#b8d850",
 						}}
 						autoComplete="off"
