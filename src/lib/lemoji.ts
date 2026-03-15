@@ -48,9 +48,6 @@ export const LEMOJI_MAP: Record<string, string> = {
 	":warpaint:": "lemon_warpaint",
 	":partying:": "lemoji_partying",
 	":pleading:": "lemoji_pleading",
-	":autumn:": "lemon_s_autumn",
-	":winter:": "lemon_s_winter",
-
 	// Text emoticon aliases
 	":)": "lemon_smile",
 	":D": "lemon_happy",
@@ -109,8 +106,6 @@ export const ALL_LEMOJIS = [
 	"lemon_zipped_mouth",
 	"lemoji_partying",
 	"lemoji_pleading",
-	"lemon_s_autumn",
-	"lemon_s_winter",
 ] as const;
 
 /** A curated subset of "positive vibes" lemojis for decorative scattering. */

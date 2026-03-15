@@ -31,8 +31,8 @@ describe("lemoji", () => {
 			}
 		});
 
-		it("has 45 entries", () => {
-			expect(ALL_LEMOJIS).toHaveLength(45);
+		it("has 43 entries", () => {
+			expect(ALL_LEMOJIS).toHaveLength(43);
 		});
 	});
 
