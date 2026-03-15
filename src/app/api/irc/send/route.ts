@@ -73,7 +73,7 @@ export async function POST(request: Request) {
 		body: JSON.stringify({
 			content: message,
 			username: nick.slice(0, 32),
-			avatar_url: "https://lemonsaur.us/images/lemon_87.png",
+			avatar_url: "https://lemonsaur.us/images/lemon87_bootup.png",
 		}),
 	});
 
