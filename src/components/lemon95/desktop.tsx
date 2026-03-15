@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { AppPlaceholder } from "./app-placeholder";
+import { getAppComponent } from "./apps";
 import { DesktopIcon } from "./desktop-icon";
 import { StartMenu } from "./start-menu";
 import { Taskbar } from "./taskbar";
@@ -116,7 +117,11 @@ export function Desktop({ onShutDown }: DesktopProps) {
 					onMove={moveWindow}
 					onResize={resizeWindow}
 				>
-					<AppPlaceholder appName={win.title} />
+					{(() => {
+						const AppComponent = getAppComponent(win.app);
+						if (AppComponent) return <AppComponent />;
+						return <AppPlaceholder appName={win.title} />;
+					})()}
 				</Win95Window>
 			))}
 
