@@ -64,7 +64,7 @@ const MARQUEE_STYLE: React.CSSProperties = {
 
 const MARQUEE_INNER_STYLE: React.CSSProperties = {
 	display: "inline-block",
-	animation: "marqueeScroll 12s linear infinite",
+	animation: "marqueeScroll 20s linear infinite",
 	color: "#ffff00",
 	fontFamily: "Comic Sans MS, cursive, monospace",
 	fontSize: 13,
@@ -74,7 +74,7 @@ const MARQUEE_INNER_STYLE: React.CSSProperties = {
 const FAKE_GUESTBOOK = [
 	{ name: "xX_CodeMonkey_Xx", msg: "OMFG COOOOOL PAGE!!!!! ★★★★★" },
 	{ name: "pizzaprincess1987", msg: "lol ur so nerdy i luv it!! signed ur bestie 4ever" },
-	{ name: "hackmaster5000", msg: "dude ur haskell skills = LEGENDARY. teach me senpai" },
+	{ name: "hackmaster5000", msg: "dude ur python skills = LEGENDARY. teach me senpai" },
 	{ name: "lemonfan_forever", msg: "first!!!! jk ur page is so fetch. keep coding!!" },
 ];
 
@@ -206,9 +206,9 @@ export function AboutApp() {
 						</div>
 						<InfoRow label="Name:" value="LEMONSAURUS" />
 						<InfoRow label="Job:" value="SOFTWARE ENGINEER" />
-						<InfoRow label="Location:" value="OSLO, NORWAY" />
-						<InfoRow label="Hobbies:" value="PIANO / GAMEDEV / COMMUNITY" />
-						<InfoRow label="Fave lang:" value="HASKELL (obv)" />
+						<InfoRow label="Location:" value="VESTBY, NORWAY" />
+						<InfoRow label="Hobbies:" value="PIANO / GAMING / GAMEDEV / COMMUNITY" />
+						<InfoRow label="Fave lang:" value="PYTHON (obv)" />
 						<InfoRow label="Status:" value="ONLINE AND CAFFEINATED" />
 					</div>
 				</div>

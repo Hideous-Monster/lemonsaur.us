@@ -740,7 +740,7 @@ export function KonamiEasterEgg() {
 		};
 	});
 
-	function cleanup() {
+	function _cleanup() {
 		cancelAnimationFrame(animRef.current);
 		const canvas = canvasRef.current;
 		if (canvas) canvas.remove();

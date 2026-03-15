@@ -224,12 +224,10 @@ const TETROMINOES: Record<TetrominoType, number[][][]> = {
 			[2, 1],
 		],
 	],
+	LEMON: [[[0, 0]], [[0, 0]], [[0, 0]], [[0, 0]]],
 };
 
 const PIECE_TYPES: TetrominoType[] = ["I", "O", "T", "S", "Z", "J", "L"];
-
-// Add LEMON shape to tetrominoes — a single 1x1 block
-TETROMINOES.LEMON = [[[0, 0]], [[0, 0]], [[0, 0]], [[0, 0]]];
 
 type Cell = { type: TetrominoType } | null;
 type Board = Cell[][];

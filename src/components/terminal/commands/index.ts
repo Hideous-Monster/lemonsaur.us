@@ -52,6 +52,7 @@ const COMMANDS: Record<string, () => CommandResult> = {
 			ln(" SYSTEM", "system"),
 			ln("  CLEAR    - CLEAR SCREEN", "output"),
 			ln("  HELP     - SHOW THIS LIST", "output"),
+			ln("  LS [-A]  - LIST FILES (HIDDEN TOO)", "output"),
 		],
 	}),
 
@@ -248,41 +249,79 @@ const ARG_COMMANDS: Record<string, (args: string) => CommandResult> = {
 
 	upgrade: (args) => {
 		const a = args.toLowerCase().trim();
+		const header = (t: string) =>
+			ln(`<span style="color:#ff5050;font-weight:bold">${t}</span>`, "rich");
+		const pink = (t: string) => ln(`<span style="color:#ff90a0">${t}</span>`, "rich");
+
 		if (a === "") {
 			return {
 				lines: [
 					ln("", "output"),
-					ln("╔══════════════════════════════════════════╗", "system"),
-					ln("║  ⚠  LEMON/95 UPGRADE UTILITY  ⚠        ║", "system"),
-					ln("╚══════════════════════════════════════════╝", "system"),
+					header("===== LEMON/95 UPGRADE UTILITY ====="),
 					ln("", "output"),
-					ln("WARNING: THIS WILL UPGRADE YOUR SYSTEM TO", "system"),
-					ln("LEMON/95 (BETA). THIS IS EXPERIMENTAL AND", "system"),
-					ln("MAY CAUSE IRREVERSIBLE DAMAGE INCLUDING:", "system"),
+					pink("WARNING: THIS WILL UPGRADE YOUR SYSTEM TO"),
+					pink("LEMON/95 (BETA). THIS IS EXPERIMENTAL AND"),
+					pink("MAY CAUSE IRREVERSIBLE DAMAGE INCLUDING:"),
 					ln("", "output"),
-					ln("  * TOTAL LOSS OF TERMINAL FUNCTIONALITY", "output"),
-					ln("  * SPONTANEOUS LEMON COMBUSTION", "output"),
-					ln("  * PERMANENT GUI DEPENDENCY", "output"),
-					ln("  * YOUR FILES MAY BECOME SENTIENT", "output"),
+					pink("  * TOTAL LOSS OF TERMINAL FUNCTIONALITY"),
+					pink("  * REPETITIVE STRAIN INJURY"),
+					pink("  * EYE STRAIN"),
+					pink("  * YOUR MIND MIGHT GET BLOWN STRAIGHT OUT OF YOUR ASS"),
 					ln("", "output"),
-					ln("TYPE 'UPGRADE YES' TO PROCEED.", "system"),
+					ln(
+						`<span style="color:#ff5050">TYPE '</span><span style="color:#e8e040">UPGRADE YES</span><span style="color:#ff5050">' TO PROCEED.</span>`,
+						"rich",
+					),
 					ln("", "output"),
 				],
 			};
 		}
 		if (a === "yes") {
+			// Start live-updating "vitals" after render
+			const vitalsId = `vitals-${Date.now()}`;
+			setTimeout(() => {
+				const el = document.getElementById(vitalsId);
+				if (!el) return;
+				const interval = setInterval(() => {
+					const bpm = 87 + Math.floor(Math.random() * 5) - 2;
+					const sys = 111 + Math.floor(Math.random() * 5) - 2;
+					const dia = 71 + Math.floor(Math.random() * 5) - 2;
+					el.innerHTML =
+						`<span style="color:#ff5050">&#x2764; ${bpm}BPM</span>` +
+						`&nbsp;&nbsp;&nbsp;` +
+						`<span style="color:#70b0ff">&#x1FA78; ${sys}/${dia}</span>`;
+				}, 1000);
+				// Clean up after 60s
+				setTimeout(() => clearInterval(interval), 60000);
+			}, 100);
+
 			return {
 				lines: [
 					ln("", "output"),
-					ln("ARE YOU REALLY SURE? THE LAST PERSON WHO", "system"),
-					ln("UPGRADED HASN'T BEEN SEEN SINCE.", "system"),
+					header("===== ARE YOU SURE? ====="),
 					ln("", "output"),
-					ln("THEIR COMPUTER NOW ONLY DISPLAYS LEMONS.", "system"),
+					pink("THE LAST PERSON WHO RAN THIS COMMAND HAS NOT"),
+					pink("BEEN SEEN FOR THREE YEARS. IT IS POSSIBLE THAT"),
+					pink("THEY DIED."),
 					ln("", "output"),
-					ln("THIS IS NOT COVERED BY WARRANTY.", "system"),
-					ln("LEMON MICROSYSTEMS ASSUMES NO LIABILITY.", "system"),
+					pink("WE CANNOT SAY FOR SURE, BECAUSE WE ABSOLUTELY DO"),
+					pink("NOT TRACK VITALITY DATA SUCH AS YOUR CURRENT HEARTBEAT"),
+					pink("AND BLOOD PRESSURE. THIS WOULD BE REALLY, REALLY, "),
+					pink("RIDICULOUSLY ILLEGAL AND SO, FOR THAT REASON, WE DO NOT"),
+					pink("TRACK DATA SUCH AS THIS:"),
 					ln("", "output"),
-					ln("TYPE 'UPGRADE YES REALLY' TO CONFIRM.", "system"),
+					ln(
+						`<span id="${vitalsId}"><span style="color:#ff5050">&#x2764; 89BPM</span>&nbsp;&nbsp;&nbsp;<span style="color:#70b0ff">&#x1FA78; 112/72</span></span>`,
+						"rich",
+					),
+					ln("", "output"),
+					pink("THIS IS NOT COVERED BY WARRANTY."),
+					pink("LEMON MICROSYSTEMS ASSUMES NO LIABILITY."),
+					ln("", "output"),
+					ln(
+						`<span style="color:#ff5050">TYPE '</span><span style="color:#e8e040">UPGRADE YES REALLY</span><span style="color:#ff5050">' TO CONFIRM.</span>`,
+						"rich",
+					),
 					ln("", "output"),
 				],
 			};
@@ -291,12 +330,21 @@ const ARG_COMMANDS: Record<string, (args: string) => CommandResult> = {
 			return {
 				lines: [
 					ln("", "output"),
-					ln("FINAL WARNING.", "system"),
+					header("===== FINAL WARNING ====="),
 					ln("", "output"),
-					ln("THERE IS NO GOING BACK.", "system"),
-					ln("WELL, ACTUALLY THERE IS. BUT STILL.", "system"),
+					pink("I FEEL LIKE YOU ARE NOT TAKING THIS SERIOUSLY."),
+					pink("THIS UPDATE IS, LIKE, SUPER DANGEROUS AND YOU"),
+					pink("SHOULD MAYBE CALL A FRIEND OR ASK YOUR LAWYER"),
+					pink("OR SOMETHING BEFORE YOU DO THIS? JUST A THOUGHT."),
 					ln("", "output"),
-					ln("TYPE 'UPGRADE YES REALLY DO IT' TO INSTALL.", "system"),
+					pink("LOOK IN THE TOP RIGHT - IS THAT YOUR HEARTBEAT?"),
+					pink("HOW DID THAT GET THERE? AND WHY IS IT SO HIGH?"),
+					pink("IS IT BECAUSE YOU ARE A LITTLE BIT NERVOUS?"),
+					ln("", "output"),
+					ln(
+						`<span style="color:#ff5050">TYPE '</span><span style="color:#e8e040">UPGRADE YES REALLY DO IT</span><span style="color:#ff5050">' TO INSTALL.</span>`,
+						"rich",
+					),
 					ln("", "output"),
 				],
 			};
@@ -305,8 +353,9 @@ const ARG_COMMANDS: Record<string, (args: string) => CommandResult> = {
 			return {
 				lines: [
 					ln("", "output"),
-					ln("INSTALLING LEMON/95...", "system"),
-					ln("DON'T SAY WE DIDN'T WARN YOU.", "system"),
+					header("===== INSTALLING LEMON/95 ====="),
+					ln("", "output"),
+					pink("DON'T SAY WE DIDN'T WARN YOU."),
 					ln("", "output"),
 				],
 				action: "upgrade",

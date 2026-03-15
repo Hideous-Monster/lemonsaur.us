@@ -79,9 +79,9 @@ function drawCrystalBall(canvas: HTMLCanvasElement, glowPhase: number) {
 
 	ctx.beginPath();
 	ctx.ellipse(cx, standY + standH * 0.4, standW * 0.7, standH * 0.35, 0, 0, Math.PI * 2);
-	ctx.fillStyle = "#3a1060";
+	ctx.fillStyle = "#cc4488";
 	ctx.fill();
-	ctx.strokeStyle = "#6030a0";
+	ctx.strokeStyle = "#ff66aa";
 	ctx.lineWidth = 1;
 	ctx.stroke();
 
@@ -91,9 +91,9 @@ function drawCrystalBall(canvas: HTMLCanvasElement, glowPhase: number) {
 	ctx.lineTo(cx - standW * 0.45, standY + standH * 0.4);
 	ctx.lineTo(cx + standW * 0.45, standY + standH * 0.4);
 	ctx.lineTo(cx + standW * 0.25, standY);
-	ctx.fillStyle = "#4a1880";
+	ctx.fillStyle = "#dd5599";
 	ctx.fill();
-	ctx.strokeStyle = "#6030a0";
+	ctx.strokeStyle = "#ff66aa";
 	ctx.lineWidth = 1;
 	ctx.stroke();
 }
@@ -179,26 +179,6 @@ export function FortuneApp() {
 					>
 						CLICK THE CRYSTAL BALL...
 					</div>
-				)}
-				{fortune && (
-					<button
-						type="button"
-						onClick={handleClick}
-						style={{
-							marginTop: 8,
-							alignSelf: "flex-start",
-							background: "#1a2a1a",
-							color: "#b8d850",
-							border: "1px solid #405030",
-							fontFamily: "monospace",
-							fontSize: 11,
-							padding: "4px 12px",
-							cursor: "pointer",
-							letterSpacing: "0.05em",
-						}}
-					>
-						ASK AGAIN
-					</button>
 				)}
 			</div>
 

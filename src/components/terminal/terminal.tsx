@@ -73,6 +73,8 @@ export function Terminal({ onUpgrade }: TerminalProps = {}) {
 	const [mode, setMode] = useState<TerminalMode>("terminal");
 	const [history, setHistory] = useState<string[]>([]);
 	const [historyIndex, setHistoryIndex] = useState(-1);
+	const [showVitals, setShowVitals] = useState(false);
+	const [vitals, setVitals] = useState({ bpm: 89, sys: 112, dia: 72 });
 	const inputRef = useRef<HTMLInputElement>(null);
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const router = useRouter();
@@ -97,6 +99,19 @@ export function Terminal({ onUpgrade }: TerminalProps = {}) {
 
 		return () => clearTimeout(timer);
 	}, [booting, bootIndex]);
+
+	// Vitals ticker — jitters around current base, preserves spikes
+	useEffect(() => {
+		if (!showVitals) return;
+		const interval = setInterval(() => {
+			setVitals((prev) => ({
+				bpm: prev.bpm + Math.floor(Math.random() * 5) - 2,
+				sys: prev.sys + Math.floor(Math.random() * 3) - 1,
+				dia: prev.dia + Math.floor(Math.random() * 3) - 1,
+			}));
+		}, 1000);
+		return () => clearInterval(interval);
+	}, [showVitals]);
 
 	// Auto-scroll to bottom when content changes
 	// biome-ignore lint/correctness/useExhaustiveDependencies: intentionally scroll on lines/input change
@@ -127,6 +142,17 @@ export function Terminal({ onUpgrade }: TerminalProps = {}) {
 			setLines((prev) => [...prev, makeBootLine(`> ${cmd.toUpperCase()}`)]);
 
 			const result = executeCommand(cmd);
+
+			// Start vitals tracking once user engages with upgrade
+			const cmdLower = cmd.trim().toLowerCase();
+			if (cmdLower.startsWith("upgrade yes")) {
+				setShowVitals(true);
+				localStorage.setItem("show-vitals", "1");
+				// Spike heartbeat on final warning
+				if (cmdLower.includes("really") && !cmdLower.includes("do it")) {
+					setVitals((v) => ({ ...v, bpm: 142 }));
+				}
+			}
 
 			if (result.action === "clear") {
 				setLines([]);
@@ -195,7 +221,7 @@ export function Terminal({ onUpgrade }: TerminalProps = {}) {
 				});
 			}
 		},
-		[input, booting, router],
+		[input, booting, router, onUpgrade],
 	);
 
 	const handleKeyDown = useCallback(
@@ -350,9 +376,18 @@ export function Terminal({ onUpgrade }: TerminalProps = {}) {
 		// biome-ignore lint/a11y/noStaticElementInteractions: terminal container acts as click target
 		<div
 			ref={scrollRef}
-			className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-4 font-pixel text-[10px] sm:text-xs"
+			className="relative min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-4 font-pixel text-[10px] sm:text-xs"
 			onClick={focusInput}
 		>
+			{showVitals && (
+				<div className="sticky top-0 z-10 float-right font-mono text-base leading-tight">
+					<span className="text-red-400">&#x2764; {vitals.bpm} BPM</span>
+					{"  "}
+					<span className="text-blue-300">
+						&#x1FA78; {vitals.sys}/{vitals.dia}
+					</span>
+				</div>
+			)}
 			{/* Rendered lines */}
 			{lines.map((line) => (
 				<div
