@@ -28,27 +28,27 @@ describe("filesystem", () => {
 
 		it("hides dotfiles by default", () => {
 			const lines = ls("");
-			expect(lines.some((l) => l.includes(".HIDDEN"))).toBe(false);
+			expect(lines.some((l) => l.includes(".KONAMI"))).toBe(false);
 		});
 
 		it("shows dotfiles with -a flag", () => {
 			const lines = ls("-a");
-			expect(lines.some((l) => l.includes(".HIDDEN"))).toBe(true);
+			expect(lines.some((l) => l.includes(".KONAMI"))).toBe(true);
 		});
 
 		it("shows dotfiles with -la flag", () => {
 			const lines = ls("-la");
-			expect(lines.some((l) => l.includes(".HIDDEN"))).toBe(true);
+			expect(lines.some((l) => l.includes(".KONAMI"))).toBe(true);
 		});
 
 		it("shows dotfiles with -al flag", () => {
 			const lines = ls("-al");
-			expect(lines.some((l) => l.includes(".HIDDEN"))).toBe(true);
+			expect(lines.some((l) => l.includes(".KONAMI"))).toBe(true);
 		});
 
 		it("shows dotfiles with -lla flag", () => {
 			const lines = ls("-lla");
-			expect(lines.some((l) => l.includes(".HIDDEN"))).toBe(true);
+			expect(lines.some((l) => l.includes(".KONAMI"))).toBe(true);
 		});
 
 		it("lists a subdirectory by path", () => {
@@ -150,14 +150,13 @@ describe("filesystem", () => {
 		});
 
 		it("reads hidden files", () => {
-			const lines = cat(".hidden");
-			expect(lines[0]).toContain("HIDDEN FILE");
+			const lines = cat(".konami");
+			expect(lines[0]).toContain("UP UP DOWN DOWN");
 		});
 
-		it("reads .egg-todos file with cryptic hints", () => {
-			const lines = cat(".egg-todos");
-			expect(lines.some((l) => l.includes("KONAMI"))).toBe(true);
-			expect(lines.some((l) => l.includes("UP UP DOWN"))).toBe(true);
+		it("reads .konami file with the code", () => {
+			const lines = cat(".konami");
+			expect(lines.some((l) => l.includes("UP UP DOWN DOWN"))).toBe(true);
 		});
 
 		it("reads .commands cheat sheet", () => {

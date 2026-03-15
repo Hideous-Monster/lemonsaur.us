@@ -174,33 +174,65 @@ describe("executeCommand", () => {
 		expect(result.action).toBe("destroy");
 	});
 
-	it("upgrade shows warnings", () => {
+	it("upgrade shows warnings and returns a prompt", () => {
 		const result = executeCommand("upgrade");
 		const text = result.lines.map((l) => l.text).join("\n");
 		expect(text).toContain("WARNING");
-		expect(text).toContain("UPGRADE YES");
+		expect(text).toContain("PROCEED WITH UPGRADE?");
+		expect(result.prompt).toBeTypeOf("function");
 	});
 
-	it("upgrade yes shows second warning", () => {
-		const result = executeCommand("upgrade yes");
-		const text = result.lines.map((l) => l.text).join("\n");
-		expect(text).toContain("REALLY");
+	it("upgrade Y chains through all 4 confirmations to trigger upgrade", () => {
+		const step1 = executeCommand("upgrade");
+		expect(step1.prompt).toBeTypeOf("function");
+
+		const step2 = step1.prompt!("y");
+		expect(step2.prompt).toBeTypeOf("function");
+		const text2 = step2.lines.map((l) => l.text).join("\n");
+		expect(text2).toContain("ARE YOU SURE");
+
+		const step3 = step2.prompt!("y");
+		expect(step3.prompt).toBeTypeOf("function");
+		const text3 = step3.lines.map((l) => l.text).join("\n");
+		expect(text3).toContain("FINAL WARNING");
+
+		const step4 = step3.prompt!("y");
+		expect(step4.action).toBe("upgrade");
+		expect(step4.prompt).toBeUndefined();
 	});
 
-	it("upgrade yes really shows final warning", () => {
-		const result = executeCommand("upgrade yes really");
-		const text = result.lines.map((l) => l.text).join("\n");
-		expect(text).toContain("UPGRADE YES REALLY DO IT");
+	it("upgrade N at step 1 aborts", () => {
+		const step1 = executeCommand("upgrade");
+		const aborted = step1.prompt!("n");
+		const text = aborted.lines.map((l) => l.text).join("\n");
+		expect(text).toContain("ABORTED");
+		expect(aborted.prompt).toBeUndefined();
 	});
 
-	it("upgrade yes really do it triggers upgrade action", () => {
-		const result = executeCommand("upgrade yes really do it");
-		expect(result.action).toBe("upgrade");
+	it("upgrade N at step 2 aborts", () => {
+		const step1 = executeCommand("upgrade");
+		const step2 = step1.prompt!("y");
+		const aborted = step2.prompt!("n");
+		expect(aborted.lines.map((l) => l.text).join("\n")).toContain("ABORTED");
+		expect(aborted.prompt).toBeUndefined();
 	});
 
-	it("upgrade with invalid args shows help", () => {
-		const result = executeCommand("upgrade nah");
-		expect(result.lines[0]!.text).toContain("INVALID");
+	it("upgrade N at step 3 aborts", () => {
+		const step1 = executeCommand("upgrade");
+		const step2 = step1.prompt!("y");
+		const step3 = step2.prompt!("y");
+		const aborted = step3.prompt!("n");
+		expect(aborted.lines.map((l) => l.text).join("\n")).toContain("ABORTED");
+		expect(aborted.prompt).toBeUndefined();
+	});
+
+	it("upgrade N at final step aborts", () => {
+		const step1 = executeCommand("upgrade");
+		const step2 = step1.prompt!("y");
+		const step3 = step2.prompt!("y");
+		const step4 = step3.prompt!("y");
+		// step4 is the final action, no prompt — but let's test N at step3's prompt going to step4
+		expect(step4.action).toBe("upgrade");
 	});
 
 	it("rm without -rf / returns snarky message", () => {

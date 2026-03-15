@@ -22,4 +22,6 @@ export interface CommandResult {
 		| "upgrade";
 	href?: string;
 	asyncLines?: () => Promise<TerminalLine[]>;
+	/** If set, the next user input is routed to this handler instead of the normal command parser. */
+	prompt?: (input: string) => CommandResult;
 }

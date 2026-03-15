@@ -77,6 +77,7 @@ export function Terminal({ onUpgrade }: TerminalProps = {}) {
 	const [vitals, setVitals] = useState({ bpm: 89, sys: 112, dia: 72 });
 	const inputRef = useRef<HTMLInputElement>(null);
 	const scrollRef = useRef<HTMLDivElement>(null);
+	const pendingPrompt = useRef<((input: string) => CommandResult) | null>(null);
 	const router = useRouter();
 
 	// Boot sequence — type out lines one by one
@@ -124,74 +125,28 @@ export function Terminal({ onUpgrade }: TerminalProps = {}) {
 		if (mode === "terminal") inputRef.current?.focus();
 	}, [mode]);
 
-	const handleSubmit = useCallback(
-		(e: React.FormEvent) => {
-			e.preventDefault();
-			if (booting) return;
-
-			const cmd = input;
-			setInput("");
-
-			// Save to history
-			if (cmd.trim()) {
-				setHistory((prev) => [...prev, cmd]);
-			}
-			setHistoryIndex(-1);
-
-			// Add the input line
-			setLines((prev) => [...prev, makeBootLine(`> ${cmd.toUpperCase()}`)]);
-
-			const result = executeCommand(cmd);
-
-			// Start vitals tracking once user engages with upgrade
-			const cmdLower = cmd.trim().toLowerCase();
-			if (cmdLower.startsWith("upgrade yes")) {
-				setShowVitals(true);
-				localStorage.setItem("show-vitals", "1");
-				// Spike heartbeat on final warning
-				if (cmdLower.includes("really") && !cmdLower.includes("do it")) {
-					setVitals((v) => ({ ...v, bpm: 142 }));
-				}
-			}
+	const processResult = useCallback(
+		(result: CommandResult) => {
+			// Store or clear the pending prompt for the next input
+			pendingPrompt.current = result.prompt ?? null;
 
 			if (result.action === "clear") {
 				setLines([]);
 				return;
 			}
 
-			if (result.action === "snake") {
-				setLines((prev) => [...prev, ...result.lines]);
-				setTimeout(() => setMode("snake"), 300);
-				return;
-			}
+			const modeActions: Record<string, TerminalMode> = {
+				snake: "snake",
+				matrix: "matrix",
+				hack: "hack",
+				doom: "doom",
+				tetris: "tetris",
+				pong: "pong",
+			};
 
-			if (result.action === "matrix") {
+			if (result.action && result.action in modeActions) {
 				setLines((prev) => [...prev, ...result.lines]);
-				setTimeout(() => setMode("matrix"), 300);
-				return;
-			}
-
-			if (result.action === "hack") {
-				setLines((prev) => [...prev, ...result.lines]);
-				setTimeout(() => setMode("hack"), 300);
-				return;
-			}
-
-			if (result.action === "doom") {
-				setLines((prev) => [...prev, ...result.lines]);
-				setTimeout(() => setMode("doom"), 300);
-				return;
-			}
-
-			if (result.action === "tetris") {
-				setLines((prev) => [...prev, ...result.lines]);
-				setTimeout(() => setMode("tetris"), 300);
-				return;
-			}
-
-			if (result.action === "pong") {
-				setLines((prev) => [...prev, ...result.lines]);
-				setTimeout(() => setMode("pong"), 300);
+				setTimeout(() => setMode(modeActions[result.action!]!), 300);
 				return;
 			}
 
@@ -221,7 +176,49 @@ export function Terminal({ onUpgrade }: TerminalProps = {}) {
 				});
 			}
 		},
-		[input, booting, router, onUpgrade],
+		[onUpgrade, router],
+	);
+
+	const handleSubmit = useCallback(
+		(e: React.FormEvent) => {
+			e.preventDefault();
+			if (booting) return;
+
+			const cmd = input;
+			setInput("");
+
+			// Save to history (skip single-char prompt responses)
+			if (cmd.trim() && !pendingPrompt.current) {
+				setHistory((prev) => [...prev, cmd]);
+			}
+			setHistoryIndex(-1);
+
+			// Add the input line
+			setLines((prev) => [...prev, makeBootLine(`> ${cmd.toUpperCase()}`)]);
+
+			// If there's a pending interactive prompt, route input there
+			if (pendingPrompt.current) {
+				const handler = pendingPrompt.current;
+				const result = handler(cmd);
+
+				// Start vitals on first Y of upgrade flow
+				if (result.prompt && !showVitals) {
+					setShowVitals(true);
+					localStorage.setItem("show-vitals", "1");
+				}
+				// Spike heartbeat on third confirmation
+				if (result.prompt && showVitals) {
+					setVitals((v) => ({ ...v, bpm: 142 }));
+				}
+
+				processResult(result);
+				return;
+			}
+
+			const result = executeCommand(cmd);
+			processResult(result);
+		},
+		[input, booting, showVitals, processResult],
 	);
 
 	const handleKeyDown = useCallback(

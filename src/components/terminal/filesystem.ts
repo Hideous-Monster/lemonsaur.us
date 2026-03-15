@@ -34,6 +34,8 @@ const FILESYSTEM: FsDir = {
 				"TYPE 'HELP' FOR AVAILABLE COMMANDS.",
 				"TYPE 'LS' TO BROWSE FILES.",
 				"TYPE 'NEOFETCH' FOR SYSTEM INFO.",
+				"",
+				"HINT: NOT ALL FILES ARE VISIBLE. TRY 'LS -A'.",
 			].join("\n"),
 		},
 		"ABOUT.TXT": {
@@ -159,26 +161,11 @@ const FILESYSTEM: FsDir = {
 				},
 			},
 		},
-		".HIDDEN": {
+		".KONAMI": {
 			type: "file",
 			size: "0.1K",
-			date: "1987-08-01",
-			content: "YOU FOUND THE HIDDEN FILE. HAVE A LEMON: 🍋",
-		},
-		".EGG-TODOS": {
-			type: "file",
-			size: "0.4K",
-			date: "2025-12-03",
-			content: [
-				"EASTER EGG TODO LIST (DO NOT SHIP THIS FILE)",
-				"",
-				"* HIDE SOMETHING COOL BEHIND THE KONAMI CODE..",
-				"  IF I COULD JUST REMEMBER WHAT IT WAS AGAIN?",
-				"  UP UP DOWN SOMETHING?",
-				"* MAKE THE SNAKE EAT ITSELF?? TOO DARK?",
-				"* MAYBE A SECRET GAME IF YOU TYPE THE RIGHT THING",
-				"* ASK CARL ABOUT THAT THING WITH THE LEMONS",
-			].join("\n"),
+			date: "1986-04-25",
+			content: "UP UP DOWN DOWN LEFT RIGHT LEFT RIGHT B A",
 		},
 		".COMMANDS": {
 			type: "file",
@@ -200,7 +187,8 @@ const FILESYSTEM: FsDir = {
 				"FORTUNE    WORDS OF WISDOM",
 				"NEOFETCH   SYSTEM INFO",
 				"CLEAR/CLS  CLEAR SCREEN",
-				"LS [-A]    LIST FILES (WITH HIDDEN)",
+				"LS         LIST FILES",
+				"LS -A      LIST FILES (INCLUDE HIDDEN)",
 				"CD         CHANGE DIRECTORY",
 				"CAT/NANO   READ A FILE",
 				"PWD        PRINT WORKING DIRECTORY",

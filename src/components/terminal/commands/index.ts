@@ -52,7 +52,10 @@ const COMMANDS: Record<string, () => CommandResult> = {
 			ln(" SYSTEM", "system"),
 			ln("  CLEAR    - CLEAR SCREEN", "output"),
 			ln("  HELP     - SHOW THIS LIST", "output"),
-			ln("  LS [-A]  - LIST FILES (HIDDEN TOO)", "output"),
+			ln("  LS       - LIST FILES", "output"),
+			ln("  LS -A    - LIST FILES (INCLUDE HIDDEN)", "output"),
+			ln("  CAT      - SHOW FILE CONTENTS", "output"),
+			ln("  CD       - CHANGE DIRECTORY", "output"),
 		],
 	}),
 
@@ -247,86 +250,35 @@ const ARG_COMMANDS: Record<string, (args: string) => CommandResult> = {
 		lines: [ln(args ? args.toUpperCase() : "", "output")],
 	}),
 
-	upgrade: (args) => {
-		const a = args.toLowerCase().trim();
+	upgrade: () => {
 		const header = (t: string) =>
 			ln(`<span style="color:#ff5050;font-weight:bold">${t}</span>`, "rich");
 		const pink = (t: string) => ln(`<span style="color:#ff90a0">${t}</span>`, "rich");
+		const yn = (msg: string) =>
+			ln(
+				`<span style="color:#ff5050">${msg} [</span><span style="color:#e8e040">Y</span><span style="color:#ff5050">/N]</span>`,
+				"rich",
+			);
+		const abort: CommandResult = {
+			lines: [ln("", "output"), pink("UPGRADE ABORTED. WISE CHOICE, PROBABLY."), ln("", "output")],
+		};
 
-		if (a === "") {
+		const step4 = (input: string): CommandResult => {
+			if (input.toLowerCase().trim() !== "y") return abort;
 			return {
 				lines: [
 					ln("", "output"),
-					header("===== LEMON/95 UPGRADE UTILITY ====="),
+					header("===== INSTALLING LEMON/95 ====="),
 					ln("", "output"),
-					pink("WARNING: THIS WILL UPGRADE YOUR SYSTEM TO"),
-					pink("LEMON/95 (BETA). THIS IS EXPERIMENTAL AND"),
-					pink("MAY CAUSE IRREVERSIBLE DAMAGE INCLUDING:"),
-					ln("", "output"),
-					pink("  * TOTAL LOSS OF TERMINAL FUNCTIONALITY"),
-					pink("  * REPETITIVE STRAIN INJURY"),
-					pink("  * EYE STRAIN"),
-					pink("  * YOUR MIND MIGHT GET BLOWN STRAIGHT OUT OF YOUR ASS"),
-					ln("", "output"),
-					ln(
-						`<span style="color:#ff5050">TYPE '</span><span style="color:#e8e040">UPGRADE YES</span><span style="color:#ff5050">' TO PROCEED.</span>`,
-						"rich",
-					),
+					pink("DON'T SAY WE DIDN'T WARN YOU."),
 					ln("", "output"),
 				],
+				action: "upgrade",
 			};
-		}
-		if (a === "yes") {
-			// Start live-updating "vitals" after render
-			const vitalsId = `vitals-${Date.now()}`;
-			setTimeout(() => {
-				const el = document.getElementById(vitalsId);
-				if (!el) return;
-				const interval = setInterval(() => {
-					const bpm = 87 + Math.floor(Math.random() * 5) - 2;
-					const sys = 111 + Math.floor(Math.random() * 5) - 2;
-					const dia = 71 + Math.floor(Math.random() * 5) - 2;
-					el.innerHTML =
-						`<span style="color:#ff5050">&#x2764; ${bpm}BPM</span>` +
-						`&nbsp;&nbsp;&nbsp;` +
-						`<span style="color:#70b0ff">&#x1FA78; ${sys}/${dia}</span>`;
-				}, 1000);
-				// Clean up after 60s
-				setTimeout(() => clearInterval(interval), 60000);
-			}, 100);
+		};
 
-			return {
-				lines: [
-					ln("", "output"),
-					header("===== ARE YOU SURE? ====="),
-					ln("", "output"),
-					pink("THE LAST PERSON WHO RAN THIS COMMAND HAS NOT"),
-					pink("BEEN SEEN FOR THREE YEARS. IT IS POSSIBLE THAT"),
-					pink("THEY DIED."),
-					ln("", "output"),
-					pink("WE CANNOT SAY FOR SURE, BECAUSE WE ABSOLUTELY DO"),
-					pink("NOT TRACK VITALITY DATA SUCH AS YOUR CURRENT HEARTBEAT"),
-					pink("AND BLOOD PRESSURE. THIS WOULD BE REALLY, REALLY, "),
-					pink("RIDICULOUSLY ILLEGAL AND SO, FOR THAT REASON, WE DO NOT"),
-					pink("TRACK DATA SUCH AS THIS:"),
-					ln("", "output"),
-					ln(
-						`<span id="${vitalsId}"><span style="color:#ff5050">&#x2764; 89BPM</span>&nbsp;&nbsp;&nbsp;<span style="color:#70b0ff">&#x1FA78; 112/72</span></span>`,
-						"rich",
-					),
-					ln("", "output"),
-					pink("THIS IS NOT COVERED BY WARRANTY."),
-					pink("LEMON MICROSYSTEMS ASSUMES NO LIABILITY."),
-					ln("", "output"),
-					ln(
-						`<span style="color:#ff5050">TYPE '</span><span style="color:#e8e040">UPGRADE YES REALLY</span><span style="color:#ff5050">' TO CONFIRM.</span>`,
-						"rich",
-					),
-					ln("", "output"),
-				],
-			};
-		}
-		if (a === "yes really") {
+		const step3 = (input: string): CommandResult => {
+			if (input.toLowerCase().trim() !== "y") return abort;
 			return {
 				lines: [
 					ln("", "output"),
@@ -341,28 +293,81 @@ const ARG_COMMANDS: Record<string, (args: string) => CommandResult> = {
 					pink("HOW DID THAT GET THERE? AND WHY IS IT SO HIGH?"),
 					pink("IS IT BECAUSE YOU ARE A LITTLE BIT NERVOUS?"),
 					ln("", "output"),
-					ln(
-						`<span style="color:#ff5050">TYPE '</span><span style="color:#e8e040">UPGRADE YES REALLY DO IT</span><span style="color:#ff5050">' TO INSTALL.</span>`,
-						"rich",
-					),
+					yn("PROCEED WITH INSTALLATION?"),
 					ln("", "output"),
 				],
+				prompt: step4,
 			};
-		}
-		if (a === "yes really do it") {
+		};
+
+		const step2 = (input: string): CommandResult => {
+			if (input.toLowerCase().trim() !== "y") return abort;
+
+			// Start live-updating "vitals" after render
+			const vitalsId = `vitals-${Date.now()}`;
+			setTimeout(() => {
+				const el = document.getElementById(vitalsId);
+				if (!el) return;
+				const interval = setInterval(() => {
+					const bpm = 87 + Math.floor(Math.random() * 5) - 2;
+					const sys = 111 + Math.floor(Math.random() * 5) - 2;
+					const dia = 71 + Math.floor(Math.random() * 5) - 2;
+					el.innerHTML =
+						`<span style="color:#ff5050">&#x2764; ${bpm}BPM</span>` +
+						`&nbsp;&nbsp;&nbsp;` +
+						`<span style="color:#70b0ff">&#x1FA78; ${sys}/${dia}</span>`;
+				}, 1000);
+				setTimeout(() => clearInterval(interval), 60000);
+			}, 100);
+
 			return {
 				lines: [
 					ln("", "output"),
-					header("===== INSTALLING LEMON/95 ====="),
+					header("===== ARE YOU SURE? ====="),
 					ln("", "output"),
-					pink("DON'T SAY WE DIDN'T WARN YOU."),
+					pink("THE LAST PERSON WHO RAN THIS COMMAND HAS NOT"),
+					pink("BEEN SEEN FOR THREE YEARS. IT IS POSSIBLE THAT"),
+					pink("THEY DIED."),
+					ln("", "output"),
+					pink("WE CANNOT SAY FOR SURE, BECAUSE WE ABSOLUTELY DO"),
+					pink("NOT TRACK VITALITY DATA SUCH AS YOUR CURRENT HEARTBEAT"),
+					pink("AND BLOOD PRESSURE. THIS WOULD BE REALLY, REALLY,"),
+					pink("RIDICULOUSLY ILLEGAL AND SO, FOR THAT REASON, WE DO NOT"),
+					pink("TRACK DATA SUCH AS THIS:"),
+					ln("", "output"),
+					ln(
+						`<span id="${vitalsId}"><span style="color:#ff5050">&#x2764; 89BPM</span>&nbsp;&nbsp;&nbsp;<span style="color:#70b0ff">&#x1FA78; 112/72</span></span>`,
+						"rich",
+					),
+					ln("", "output"),
+					pink("THIS IS NOT COVERED BY WARRANTY."),
+					pink("LEMON MICROSYSTEMS ASSUMES NO LIABILITY."),
+					ln("", "output"),
+					yn("DO YOU STILL WANT TO CONTINUE?"),
 					ln("", "output"),
 				],
-				action: "upgrade",
+				prompt: step3,
 			};
-		}
+		};
+
 		return {
-			lines: [ln("UPGRADE: INVALID ARGUMENT. TYPE 'UPGRADE' FOR OPTIONS.", "system")],
+			lines: [
+				ln("", "output"),
+				header("===== LEMON/95 UPGRADE UTILITY ====="),
+				ln("", "output"),
+				pink("WARNING: THIS WILL UPGRADE YOUR SYSTEM TO"),
+				pink("LEMON/95 (BETA). THIS IS EXPERIMENTAL AND"),
+				pink("MAY CAUSE IRREVERSIBLE DAMAGE INCLUDING:"),
+				ln("", "output"),
+				pink("  * TOTAL LOSS OF TERMINAL FUNCTIONALITY"),
+				pink("  * REPETITIVE STRAIN INJURY"),
+				pink("  * EYE STRAIN"),
+				pink("  * YOUR MIND MIGHT GET BLOWN STRAIGHT OUT OF YOUR ASS"),
+				ln("", "output"),
+				yn("PROCEED WITH UPGRADE?"),
+				ln("", "output"),
+			],
+			prompt: step2,
 		};
 	},
 
