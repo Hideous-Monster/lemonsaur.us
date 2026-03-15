@@ -86,7 +86,13 @@ function formatTime(date: Date): string {
 
 // ── LMN-style Sign In Screen ────────────────────────────────────────────────
 
-function SignInScreen({ onSignIn }: { onSignIn: (nick: string) => void }) {
+function SignInScreen({
+	onSignIn,
+	serverError,
+}: {
+	onSignIn: (nick: string) => void;
+	serverError?: string;
+}) {
 	const savedNick = typeof window !== "undefined" ? (localStorage.getItem("irc-nick") ?? "") : "";
 	const [value, setValue] = useState(savedNick);
 	const [error, setError] = useState("");
@@ -144,7 +150,7 @@ function SignInScreen({ onSignIn }: { onSignIn: (nick: string) => void }) {
 						gap: 12,
 					}}
 				>
-					<span style={{ fontSize: 32 }}>🍋</span>
+					<span style={{ fontSize: 32 }}>🦋</span>
 					<div>
 						<div
 							style={{
@@ -160,6 +166,22 @@ function SignInScreen({ onSignIn }: { onSignIn: (nick: string) => void }) {
 						<div style={{ color: "#fff8c0", fontSize: 11 }}>Powered by LemonNet</div>
 					</div>
 				</div>
+
+				{/* Server error banner */}
+				{serverError && (
+					<div
+						style={{
+							background: "#fff0f0",
+							borderBottom: "1px solid #ffcccc",
+							padding: "8px 16px",
+							fontSize: 12,
+							color: "#cc0000",
+							textAlign: "center",
+						}}
+					>
+						{serverError}
+					</div>
+				)}
 
 				{/* Form area */}
 				<div style={{ padding: "20px 20px 16px" }}>
@@ -273,7 +295,7 @@ function SigningInScreen({ nick }: { nick: string }) {
 				gap: 12,
 			}}
 		>
-			<span style={{ fontSize: 40 }}>🍋</span>
+			<span style={{ fontSize: 40 }}>🦋</span>
 			<div style={{ fontSize: 14, color: "#333" }}>
 				Signing in as <strong>{nick}</strong>...
 			</div>
@@ -326,6 +348,7 @@ export function MessengerApp() {
 	const [isTyping, setIsTyping] = useState(false);
 	const [chatFont, setChatFont] = useState("Tahoma");
 	const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+	const [connectError, setConnectError] = useState("");
 
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
@@ -366,6 +389,7 @@ export function MessengerApp() {
 				const data = await res.json();
 
 				if (!res.ok) {
+					setConnectError(data.error ?? "Connection failed. Please try again.");
 					setStage("sign-in");
 					return;
 				}
@@ -381,6 +405,7 @@ export function MessengerApp() {
 
 				setStage("chat");
 			} catch {
+				setConnectError("Could not reach LMN Messenger. Check your connection.");
 				setStage("sign-in");
 			}
 		}, 1800);
@@ -451,6 +476,7 @@ export function MessengerApp() {
 	}, []);
 
 	const handleSignIn = useCallback((chosenNick: string) => {
+		setConnectError("");
 		setNick(chosenNick);
 		setStage("signing-in");
 	}, []);
@@ -490,7 +516,8 @@ export function MessengerApp() {
 		[input, stage, nick, threadId, addMessage],
 	);
 
-	if (stage === "sign-in") return <SignInScreen onSignIn={handleSignIn} />;
+	if (stage === "sign-in")
+		return <SignInScreen onSignIn={handleSignIn} serverError={connectError} />;
 	if (stage === "signing-in") return <SigningInScreen nick={nick} />;
 
 	// ── Chat window ─────────────────────────────────────────────────────────

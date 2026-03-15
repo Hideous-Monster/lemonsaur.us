@@ -47,7 +47,7 @@ export async function POST(request: Request) {
 	const existing = sendRateLimit.get(sessionId);
 
 	// Max 1 message per 2 seconds
-	if (existing && now - existing.lastSent < 2000) {
+	if (process.env.NODE_ENV !== "development" && existing && now - existing.lastSent < 2000) {
 		return NextResponse.json(
 			{ error: "You are sending messages too fast. Please wait." },
 			{ status: 429 },

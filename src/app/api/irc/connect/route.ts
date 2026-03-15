@@ -9,7 +9,7 @@ const connectRateLimit = new Map<string, number>();
 // Clean up old entries every 10 minutes
 setInterval(
 	() => {
-		const cutoff = Date.now() - 5 * 60 * 1000;
+		const cutoff = Date.now() - 30 * 1000;
 		for (const [ip, ts] of connectRateLimit.entries()) {
 			if (ts < cutoff) connectRateLimit.delete(ip);
 		}
@@ -34,14 +34,14 @@ export async function POST(request: Request) {
 
 	const nick = body.nick.trim().slice(0, 32);
 
-	// Rate limiting: 1 connection per IP per 5 minutes
+	// Rate limiting: 1 connection per IP per 30 seconds
 	const headersList = await headers();
 	const ip = getClientIp(headersList);
 	const lastConnect = connectRateLimit.get(ip);
 	const now = Date.now();
 
-	if (lastConnect && now - lastConnect < 5 * 60 * 1000) {
-		const waitSeconds = Math.ceil((5 * 60 * 1000 - (now - lastConnect)) / 1000);
+	if (process.env.NODE_ENV !== "development" && lastConnect && now - lastConnect < 30 * 1000) {
+		const waitSeconds = Math.ceil((30 * 1000 - (now - lastConnect)) / 1000);
 		return NextResponse.json(
 			{ error: `Rate limited. Please wait ${waitSeconds} seconds before reconnecting.` },
 			{ status: 429 },
