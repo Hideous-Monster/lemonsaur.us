@@ -2,8 +2,8 @@ import type { TerminalLine } from "./types";
 
 let lineIdCounter = 100000;
 
-function ln(text: string, type: TerminalLine["type"]): TerminalLine {
-	return { id: lineIdCounter++, text, type };
+function ln(text: string, type: TerminalLine["type"], noWrap?: boolean): TerminalLine {
+	return { id: lineIdCounter++, text, type, noWrap };
 }
 
 // Escape HTML entities for safe rich rendering
@@ -309,7 +309,7 @@ export async function weatherCommand(args: string): Promise<TerminalLine[]> {
 		// Header
 		lines.push(ln("", "output"));
 		lines.push(ln(`  WEATHER REPORT: ${locationName}`, "system"));
-		lines.push(ln("  ════════════════════════════════════════", "system"));
+		lines.push(ln("  ════════════════════════════════════════", "system", true));
 		lines.push(ln("", "output"));
 
 		// Current weather with icon
@@ -335,7 +335,7 @@ export async function weatherCommand(args: string): Promise<TerminalLine[]> {
 		// Forecast
 		lines.push(ln("", "output"));
 		lines.push(ln("  3-DAY FORECAST:", "system"));
-		lines.push(ln("  ────────────────────────────────────────", "system"));
+		lines.push(ln("  ────────────────────────────────────────", "system", true));
 
 		const days = ["TODAY", "TOMORROW", "DAY AFTER"];
 		for (let i = 0; i < Math.min(3, data.daily.time.length); i++) {
@@ -351,7 +351,7 @@ export async function weatherCommand(args: string): Promise<TerminalLine[]> {
 			);
 		}
 
-		lines.push(ln("  ────────────────────────────────────────", "system"));
+		lines.push(ln("  ────────────────────────────────────────", "system", true));
 		lines.push(ln("", "output"));
 	} catch {
 		return [ln("WEATHER: FAILED TO FETCH DATA. CHECK YOUR CONNECTION.", "system")];

@@ -352,7 +352,7 @@ export function Terminal() {
 							? "whitespace-pre-wrap font-mono text-xs leading-none"
 							: line.type === "rich"
 								? "whitespace-pre overflow-hidden"
-								: line.type === "system"
+								: line.noWrap
 									? "whitespace-pre overflow-hidden"
 									: "whitespace-pre-wrap break-all"
 					}`}

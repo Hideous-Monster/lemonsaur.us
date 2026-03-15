@@ -4,6 +4,7 @@ export interface TerminalLine {
 	type: "input" | "output" | "system" | "logo" | "rich";
 	href?: string;
 	lemojiSrc?: string;
+	noWrap?: boolean;
 }
 
 export interface CommandResult {
