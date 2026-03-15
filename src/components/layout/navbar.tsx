@@ -9,11 +9,17 @@ import { ALL_LEMOJIS, lemojiPath } from "@/lib/lemoji";
 
 export function Navbar() {
 	const [lemoji, setLemoji] = useState<string | null>(null);
+	const [menuOpen, setMenuOpen] = useState(false);
 	const pathname = usePathname();
 
 	useEffect(() => {
 		setLemoji(ALL_LEMOJIS[Math.floor(Math.random() * ALL_LEMOJIS.length)]!);
 	}, []);
+
+	// Close menu on route change
+	useEffect(() => {
+		setMenuOpen(false);
+	}, [pathname]);
 
 	const handleHomeClick = useCallback(
 		(e: React.MouseEvent) => {
@@ -51,7 +57,8 @@ export function Navbar() {
 					<span className="font-pixel text-xs text-c64-yellow">LEMONSAURUS</span>
 				</Link>
 
-				<div className="flex items-center gap-5">
+				{/* Desktop nav */}
+				<div className="hidden items-center gap-5 sm:flex">
 					<Link
 						href="/blog"
 						className="font-pixel text-xs text-c64-text transition-colors hover:text-c64-white"
@@ -74,7 +81,42 @@ export function Navbar() {
 						</a>
 					))}
 				</div>
+
+				{/* Mobile hamburger */}
+				<button
+					type="button"
+					className="flex items-center justify-center sm:hidden"
+					onClick={() => setMenuOpen((prev) => !prev)}
+					aria-label={menuOpen ? "Close menu" : "Open menu"}
+					aria-expanded={menuOpen}
+				>
+					<span className="font-pixel text-lg text-c64-text">{menuOpen ? "✕" : "≡"}</span>
+				</button>
 			</div>
+
+			{/* Mobile dropdown */}
+			{menuOpen && (
+				<div className="flex flex-col gap-4 border-t-2 border-c64-dim py-4 sm:hidden">
+					<Link
+						href="/blog"
+						className="font-pixel text-xs text-c64-text transition-colors hover:text-c64-white"
+					>
+						BLOG
+					</Link>
+					{SOCIAL_LINKS.map((social) => (
+						<a
+							key={social.name}
+							href={social.url}
+							target="_blank"
+							rel="noopener noreferrer"
+							className="flex items-center gap-2 font-pixel text-xs text-c64-text transition-colors hover:text-c64-white"
+						>
+							<social.icon size={14} />
+							{social.name.toUpperCase()}
+						</a>
+					))}
+				</div>
+			)}
 		</nav>
 	);
 }

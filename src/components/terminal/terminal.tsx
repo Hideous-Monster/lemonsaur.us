@@ -346,13 +346,15 @@ export function Terminal() {
 						value={input}
 						onChange={(e) => setInput(e.target.value)}
 						onKeyDown={handleKeyDown}
-						className="absolute left-0 top-0 h-full w-0 opacity-0"
+						className="absolute inset-0 w-full caret-transparent text-transparent opacity-0 sm:opacity-0"
+						style={{ fontSize: "16px" }}
 						// biome-ignore lint/a11y/noAutofocus: terminal input must auto-focus
 						autoFocus
 						autoCapitalize="none"
 						autoComplete="off"
 						autoCorrect="off"
 						spellCheck={false}
+						enterKeyHint="go"
 						aria-label="Terminal input"
 					/>
 				</form>

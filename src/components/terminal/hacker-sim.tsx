@@ -518,10 +518,12 @@ export function HackerSim({ onExit }: HackerSimProps) {
 					].join("\n")}
 				</pre>
 				<div className="cursor-blink mt-4 text-center text-base tracking-[0.5em] text-green-400 sm:text-2xl">
-					ANY KEY TO HACK
+					<span className="hidden sm:inline">ANY KEY TO HACK</span>
+					<span className="sm:hidden">TAP TO HACK</span>
 				</div>
 				<div className="mt-6 text-[10px] tracking-wider text-green-700 sm:text-xs">
-					[ESC] disconnect · [F11] fullscreen
+					<span className="hidden sm:inline">[ESC] disconnect · [F11] fullscreen</span>
+					<span className="sm:hidden">TAP SCREEN TO HACK · [EXIT] TO LEAVE</span>
 				</div>
 			</div>
 		);
@@ -535,11 +537,9 @@ export function HackerSim({ onExit }: HackerSimProps) {
 			ref={containerRef}
 			className="flex flex-1 flex-col bg-[#0a0a0a]"
 			onClick={() => {
-				if (isFullscreen) {
-					document.exitFullscreen();
-				} else {
-					onExitRef.current();
-				}
+				// On mobile, taps simulate keypresses to generate hacker text
+				if (frozenRef.current) return;
+				handleKey(new KeyboardEvent("keydown", { key: "a" }));
 			}}
 		>
 			{/* Scanline overlay for CRT feel */}
@@ -548,7 +548,19 @@ export function HackerSim({ onExit }: HackerSimProps) {
 			{/* Fullscreen hint */}
 			<div className="flex items-center justify-between border-b border-green-900/50 px-4 py-1 text-[10px] text-green-700">
 				<span>HACKER MODE v1.337</span>
-				<span>[ESC] exit · [F11] fullscreen{isFullscreen ? " (active)" : ""}</span>
+				<span className="hidden sm:inline">
+					[ESC] exit · [F11] fullscreen{isFullscreen ? " (active)" : ""}
+				</span>
+				<button
+					type="button"
+					className="font-pixel text-green-500 sm:hidden"
+					onClick={(e) => {
+						e.stopPropagation();
+						onExitRef.current();
+					}}
+				>
+					[EXIT]
+				</button>
 			</div>
 
 			<div ref={scrollRef} className="flex-1 overflow-y-auto p-4 font-mono text-xs leading-relaxed">
