@@ -569,7 +569,7 @@ export function IrcClient({ onExit }: IrcClientProps) {
 			// Add to history
 			carlaHistoryRef.current = [
 				...carlaHistoryRef.current,
-				{ role: "user", content: userMessage },
+				{ role: "user" as const, content: userMessage },
 			].slice(-20);
 
 			try {
@@ -596,7 +596,7 @@ export function IrcClient({ onExit }: IrcClientProps) {
 
 				carlaHistoryRef.current = [
 					...carlaHistoryRef.current,
-					{ role: "assistant", content: reply },
+					{ role: "assistant" as const, content: reply },
 				].slice(-20);
 
 				addMessage({ type: "message", nick: "Carla", text: reply });

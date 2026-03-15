@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 const GEMINI_API_URL =
 	"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 const CARLA_SYSTEM_PROMPT = `You are Carla, a friendly assistant who works closely with lemonsaurus (also known as Lemon). You're chatting with someone on lemonsaurus's retro-themed personal website (lemonsaur.us), through an IRC-style and MSN Messenger-style chat interface.
 
@@ -59,6 +60,77 @@ interface GeminiContent {
 	parts: Array<{ text: string }>;
 }
 
+async function callGemini(apiKey: string, messages: ChatMessage[]): Promise<string | null> {
+	const contents: GeminiContent[] = messages.map((m) => ({
+		role: m.role === "assistant" ? "model" : "user",
+		parts: [{ text: m.content }],
+	}));
+
+	try {
+		const controller = new AbortController();
+		const timeout = setTimeout(() => controller.abort(), 10000);
+
+		const res = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				systemInstruction: { parts: [{ text: CARLA_SYSTEM_PROMPT }] },
+				contents,
+			}),
+			signal: controller.signal,
+		});
+
+		clearTimeout(timeout);
+
+		if (!res.ok) {
+			const err = await res.text().catch(() => "unknown");
+			console.error("Gemini API error:", res.status, err);
+			return null;
+		}
+
+		const data = await res.json();
+		return data?.candidates?.[0]?.content?.parts?.[0]?.text ?? null;
+	} catch (err) {
+		console.error("Gemini fetch error:", err);
+		return null;
+	}
+}
+
+async function callGroq(apiKey: string, messages: ChatMessage[]): Promise<string | null> {
+	try {
+		const controller = new AbortController();
+		const timeout = setTimeout(() => controller.abort(), 10000);
+
+		const res = await fetch(GROQ_API_URL, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				Authorization: `Bearer ${apiKey}`,
+			},
+			body: JSON.stringify({
+				model: "llama-3.1-8b-instant",
+				messages: [{ role: "system", content: CARLA_SYSTEM_PROMPT }, ...messages],
+				max_tokens: 300,
+			}),
+			signal: controller.signal,
+		});
+
+		clearTimeout(timeout);
+
+		if (!res.ok) {
+			const err = await res.text().catch(() => "unknown");
+			console.error("Groq API error:", res.status, err);
+			return null;
+		}
+
+		const data = await res.json();
+		return data?.choices?.[0]?.message?.content ?? null;
+	} catch (err) {
+		console.error("Groq fetch error:", err);
+		return null;
+	}
+}
+
 export async function POST(request: Request) {
 	const body = await request.json().catch(() => null);
 
@@ -93,54 +165,19 @@ export async function POST(request: Request) {
 		}
 	}
 
-	const apiKey = process.env.GEMINI_API_KEY;
-	if (!apiKey) {
+	const geminiKey = process.env.GEMINI_API_KEY;
+	const groqKey = process.env.GROQ_API_KEY;
+
+	if (!geminiKey && !groqKey) {
 		return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
 	}
 
-	// Convert from user/assistant to user/model format for Gemini
-	const contents: GeminiContent[] = messages.map((m) => ({
-		role: m.role === "assistant" ? "model" : "user",
-		parts: [{ text: m.content }],
-	}));
+	// Try Gemini first, fall back to Groq
+	const geminiReply = geminiKey ? await callGemini(geminiKey, messages) : null;
+	if (geminiReply) return NextResponse.json({ reply: geminiReply });
 
-	const geminiPayload = {
-		systemInstruction: {
-			parts: [{ text: CARLA_SYSTEM_PROMPT }],
-		},
-		contents,
-	};
+	const groqReply = groqKey ? await callGroq(groqKey, messages) : null;
+	if (groqReply) return NextResponse.json({ reply: groqReply });
 
-	try {
-		const controller = new AbortController();
-		const timeout = setTimeout(() => controller.abort(), 10000);
-
-		const res = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify(geminiPayload),
-			signal: controller.signal,
-		});
-
-		clearTimeout(timeout);
-
-		if (!res.ok) {
-			const err = await res.text().catch(() => "unknown error");
-			console.error("Gemini API error:", res.status, err);
-			return NextResponse.json({ error: "Failed to get a response" }, { status: 502 });
-		}
-
-		const data = await res.json();
-		const reply: string =
-			data?.candidates?.[0]?.content?.parts?.[0]?.text ??
-			"Sorry, I couldn't come up with a response right now!";
-
-		return NextResponse.json({ reply });
-	} catch (err) {
-		if (err instanceof Error && err.name === "AbortError") {
-			return NextResponse.json({ error: "Request timed out" }, { status: 504 });
-		}
-		console.error("Gemini fetch error:", err);
-		return NextResponse.json({ error: "Failed to get a response" }, { status: 502 });
-	}
+	return NextResponse.json({ error: "Failed to get a response" }, { status: 502 });
 }

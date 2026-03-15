@@ -555,7 +555,7 @@ export function MessengerApp() {
 		async (userMessage: string) => {
 			carlaHistoryRef.current = [
 				...carlaHistoryRef.current,
-				{ role: "user", content: userMessage },
+				{ role: "user" as const, content: userMessage },
 			].slice(-20);
 
 			// Show typing indicator briefly
@@ -586,7 +586,7 @@ export function MessengerApp() {
 
 				carlaHistoryRef.current = [
 					...carlaHistoryRef.current,
-					{ role: "assistant", content: reply },
+					{ role: "assistant" as const, content: reply },
 				].slice(-20);
 
 				setMessages((prev) => [
