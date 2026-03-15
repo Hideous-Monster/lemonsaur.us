@@ -13,6 +13,7 @@ interface LmnMessage {
 }
 
 type ConnectionStage = "sign-in" | "signing-in" | "chat";
+type LemonStatus = "online" | "idle" | "dnd" | "offline";
 
 const EMOJI_GRID = [
 	"😊",
@@ -84,14 +85,45 @@ function formatTime(date: Date): string {
 	return `${h}:${m}`;
 }
 
+// ── Status dot helper ────────────────────────────────────────────────────────
+
+function statusDotColor(status: LemonStatus): string {
+	switch (status) {
+		case "online":
+			return "#44dd44";
+		case "idle":
+			return "#e8c020";
+		case "dnd":
+			return "#ff4040";
+		default:
+			return "#888888";
+	}
+}
+
+function statusLabel(status: LemonStatus, carlaMode: boolean): string {
+	if (carlaMode) return "Available (covering for lemon)";
+	switch (status) {
+		case "online":
+			return "Online";
+		case "idle":
+			return "Away";
+		case "dnd":
+			return "Busy";
+		default:
+			return "Offline";
+	}
+}
+
 // ── LMN-style Sign In Screen ────────────────────────────────────────────────
 
 function SignInScreen({
 	onSignIn,
 	serverError,
+	carlaMode,
 }: {
 	onSignIn: (nick: string) => void;
 	serverError?: string;
+	carlaMode: boolean;
 }) {
 	const savedNick = typeof window !== "undefined" ? (localStorage.getItem("irc-nick") ?? "") : "";
 	const [value, setValue] = useState(savedNick);
@@ -150,7 +182,7 @@ function SignInScreen({
 						gap: 12,
 					}}
 				>
-					<span style={{ fontSize: 32 }}>🦋</span>
+					<span style={{ fontSize: 32 }}>{carlaMode ? "🦋" : "🦋"}</span>
 					<div>
 						<div
 							style={{
@@ -271,7 +303,7 @@ function SignInScreen({
 						textAlign: "center",
 					}}
 				>
-					lemonsaurus 🍋 is waiting for you
+					{carlaMode ? "Carla 🦋 is covering for lemon" : "lemonsaurus 🍋 is waiting for you"}
 				</div>
 			</div>
 		</div>
@@ -349,6 +381,8 @@ export function MessengerApp() {
 	const [chatFont, setChatFont] = useState("Tahoma");
 	const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 	const [connectError, setConnectError] = useState("");
+	const [lemonStatus, setLemonStatus] = useState<LemonStatus>("offline");
+	const [carlaMode, setCarlaMode] = useState(false);
 
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
@@ -356,9 +390,31 @@ export function MessengerApp() {
 	const lastPollTimeRef = useRef<string | null>(null);
 	const seenMessageIds = useRef<Set<string>>(new Set());
 	const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const carlaHistoryRef = useRef<Array<{ role: "user" | "assistant"; content: string }>>([]);
 
 	const addMessage = useCallback((msg: Omit<LmnMessage, "timestamp" | "id">) => {
 		setMessages((prev) => [...prev, { ...msg, id: ++msgCounter, timestamp: new Date() }]);
+	}, []);
+
+	// Check status once on mount
+	useEffect(() => {
+		async function checkStatus() {
+			try {
+				const res = await fetch("/api/irc/status");
+				if (res.ok) {
+					const data = await res.json();
+					const status: LemonStatus = data.status ?? "offline";
+					setLemonStatus(status);
+					setCarlaMode(status !== "online");
+				} else {
+					setCarlaMode(true);
+				}
+			} catch {
+				setCarlaMode(true);
+			}
+		}
+
+		checkStatus();
 	}, []);
 
 	// Auto-scroll
@@ -378,6 +434,20 @@ export function MessengerApp() {
 	useEffect(() => {
 		if (stage !== "signing-in" || !nick) return;
 
+		if (carlaMode) {
+			// Carla mode — skip Discord entirely
+			const timer = setTimeout(() => {
+				addMessage({ type: "system", text: "You have connected to LMN Messenger." });
+				addMessage({
+					type: "system",
+					text: "Carla 🦋 has joined the conversation.",
+				});
+				setStage("chat");
+			}, 1800);
+			return () => clearTimeout(timer);
+		}
+
+		// Discord mode
 		const timer = setTimeout(async () => {
 			try {
 				const res = await fetch("/api/irc/connect", {
@@ -411,11 +481,11 @@ export function MessengerApp() {
 		}, 1800);
 
 		return () => clearTimeout(timer);
-	}, [stage, nick, addMessage]);
+	}, [stage, nick, carlaMode, addMessage]);
 
-	// Poll for replies
+	// Poll for replies (Discord mode only)
 	useEffect(() => {
-		if (stage !== "chat" || !threadId) return;
+		if (stage !== "chat" || !threadId || carlaMode) return;
 
 		async function poll() {
 			try {
@@ -465,7 +535,7 @@ export function MessengerApp() {
 		return () => {
 			if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
 		};
-	}, [stage, threadId]);
+	}, [stage, threadId, carlaMode]);
 
 	// Cleanup on unmount
 	useEffect(() => {
@@ -481,15 +551,76 @@ export function MessengerApp() {
 		setStage("signing-in");
 	}, []);
 
+	const sendToCarla = useCallback(
+		async (userMessage: string) => {
+			carlaHistoryRef.current = [
+				...carlaHistoryRef.current,
+				{ role: "user", content: userMessage },
+			].slice(-20);
+
+			// Show typing indicator briefly
+			setIsTyping(true);
+
+			try {
+				const res = await fetch("/api/irc/chat", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						messages: carlaHistoryRef.current,
+						nick,
+					}),
+				});
+
+				setIsTyping(false);
+				const data = await res.json();
+
+				if (!res.ok) {
+					addMessage({
+						type: "system",
+						text: data.error ?? "Carla seems to be having trouble responding.",
+					});
+					return;
+				}
+
+				const reply: string = data.reply ?? "Sorry, I couldn't come up with a response!";
+
+				carlaHistoryRef.current = [
+					...carlaHistoryRef.current,
+					{ role: "assistant", content: reply },
+				].slice(-20);
+
+				setMessages((prev) => [
+					...prev,
+					{ id: ++msgCounter, type: "message", nick: "Carla", text: reply, timestamp: new Date() },
+				]);
+			} catch {
+				setIsTyping(false);
+				addMessage({
+					type: "system",
+					text: "Carla seems to be away too. Try again in a moment!",
+				});
+			}
+		},
+		[nick, addMessage],
+	);
+
 	const handleSubmit = useCallback(
 		(e: React.FormEvent) => {
 			e.preventDefault();
 			const trimmed = input.trim();
 			setInput("");
 
-			if (!trimmed || stage !== "chat" || !threadId) return;
+			if (!trimmed || stage !== "chat") return;
 
 			addMessage({ type: "message", nick, text: trimmed });
+
+			if (carlaMode) {
+				sendToCarla(trimmed);
+				return;
+			}
+
+			// Discord mode
+			if (!threadId) return;
 
 			if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
 			setIsTyping(true);
@@ -513,12 +644,20 @@ export function MessengerApp() {
 					});
 				});
 		},
-		[input, stage, nick, threadId, addMessage],
+		[input, stage, nick, threadId, carlaMode, addMessage, sendToCarla],
 	);
 
 	if (stage === "sign-in")
-		return <SignInScreen onSignIn={handleSignIn} serverError={connectError} />;
+		return (
+			<SignInScreen onSignIn={handleSignIn} serverError={connectError} carlaMode={carlaMode} />
+		);
 	if (stage === "signing-in") return <SigningInScreen nick={nick} />;
+
+	// Determine contact display values
+	const contactName = carlaMode ? "Carla" : "lemonsaurus";
+	const contactEmoji = carlaMode ? "🦋" : "🍋";
+	const contactDotColor = carlaMode ? "#ff70b0" : statusDotColor(lemonStatus);
+	const contactStatusLabel = statusLabel(lemonStatus, carlaMode);
 
 	// ── Chat window ─────────────────────────────────────────────────────────
 	return (
@@ -545,7 +684,7 @@ export function MessengerApp() {
 					gap: 10,
 				}}
 			>
-				<span style={{ fontSize: 22 }}>🍋</span>
+				<span style={{ fontSize: 22 }}>{contactEmoji}</span>
 				<div style={{ flex: 1 }}>
 					<div
 						style={{
@@ -559,7 +698,10 @@ export function MessengerApp() {
 						LMN Messenger
 					</div>
 					<div style={{ color: "#fff8c0", fontSize: 11 }}>
-						Chatting with <strong style={{ color: "#ffffff" }}>lemonsaurus 🍋</strong>
+						Chatting with{" "}
+						<strong style={{ color: "#ffffff" }}>
+							{contactName} {contactEmoji}
+						</strong>
 					</div>
 				</div>
 
@@ -580,15 +722,15 @@ export function MessengerApp() {
 							width: 8,
 							height: 8,
 							borderRadius: "50%",
-							background: "#44dd44",
-							boxShadow: "0 0 4px #44dd44",
+							background: contactDotColor,
+							boxShadow: `0 0 4px ${contactDotColor}`,
 							flexShrink: 0,
 						}}
 					/>
 					<span
 						style={{ color: "#ffffff", fontSize: 11, textShadow: "1px 1px 1px rgba(0,0,0,0.2)" }}
 					>
-						Online
+						{carlaMode ? "Available" : contactStatusLabel}
 					</span>
 				</div>
 			</div>
@@ -607,7 +749,7 @@ export function MessengerApp() {
 			>
 				<img
 					src="/images/lemon_portrait.avif"
-					alt="lemonsaurus"
+					alt={contactName}
 					style={{
 						width: 36,
 						height: 36,
@@ -623,14 +765,18 @@ export function MessengerApp() {
 						style={{
 							fontWeight: "bold",
 							fontSize: 13,
-							backgroundImage:
-								"linear-gradient(90deg, #ff5050, #ff9040, #e8e040, #40b848, #5090ff, #b860d0)",
-							WebkitBackgroundClip: "text",
-							WebkitTextFillColor: "transparent",
-							backgroundClip: "text",
+							...(carlaMode
+								? { color: "#ff70b0" }
+								: {
+										backgroundImage:
+											"linear-gradient(90deg, #ff5050, #ff9040, #e8e040, #40b848, #5090ff, #b860d0)",
+										WebkitBackgroundClip: "text",
+										WebkitTextFillColor: "transparent",
+										backgroundClip: "text",
+									}),
 						}}
 					>
-						lemonsaurus
+						{contactName} {contactEmoji}
 					</div>
 					<div style={{ fontSize: 11, color: "#888" }}>
 						<span
@@ -639,12 +785,12 @@ export function MessengerApp() {
 								width: 7,
 								height: 7,
 								borderRadius: "50%",
-								background: "#44bb44",
+								background: contactDotColor,
 								marginRight: 4,
 								verticalAlign: "middle",
 							}}
 						/>
-						Available
+						{contactStatusLabel}
 					</div>
 				</div>
 			</div>
@@ -680,32 +826,40 @@ export function MessengerApp() {
 					}
 
 					const isLemon = msg.nick === "lemonsaurus";
+					const isCarla = msg.nick === "Carla";
+					const isRemote = isLemon || isCarla;
 
 					return (
 						<div
 							key={msg.id}
 							style={{
 								marginBottom: 10,
-								textAlign: isLemon ? "right" : "left",
+								textAlign: isRemote ? "right" : "left",
 							}}
 						>
 							<div style={{ fontSize: 11, color: "#999", marginBottom: 1 }}>
-								{isLemon ? (
+								{isRemote ? (
 									<>
 										<span>{formatTime(msg.timestamp)} </span>
 										<strong>
-											<span
-												style={{
-													backgroundImage:
-														"linear-gradient(90deg, #ff5050, #ff9040, #e8e040, #40b848, #5090ff, #b860d0)",
-													WebkitBackgroundClip: "text",
-													WebkitTextFillColor: "transparent",
-													backgroundClip: "text",
-												}}
-											>
-												lemonsaurus
-											</span>{" "}
-											🍋
+											{isCarla ? (
+												<span style={{ color: "#ff70b0" }}>Carla 🦋</span>
+											) : (
+												<>
+													<span
+														style={{
+															backgroundImage:
+																"linear-gradient(90deg, #ff5050, #ff9040, #e8e040, #40b848, #5090ff, #b860d0)",
+															WebkitBackgroundClip: "text",
+															WebkitTextFillColor: "transparent",
+															backgroundClip: "text",
+														}}
+													>
+														lemonsaurus
+													</span>{" "}
+													🍋
+												</>
+											)}
 										</strong>
 									</>
 								) : (
@@ -725,10 +879,10 @@ export function MessengerApp() {
 									maxWidth: "85%",
 									padding: "4px 8px",
 									borderRadius: 4,
-									background: isLemon ? "#fff8d0" : "#f0f0f0",
-									borderLeft: isLemon ? "none" : "2px solid #ff8844",
-									borderRight: isLemon ? "2px solid #e8d020" : "none",
-									fontFamily: isLemon ? "Tahoma, sans-serif" : chatFont,
+									background: isRemote ? "#fff8d0" : "#f0f0f0",
+									borderLeft: isRemote ? "none" : "2px solid #ff8844",
+									borderRight: isRemote ? `2px solid ${isCarla ? "#ff70b0" : "#e8d020"}` : "none",
+									fontFamily: isRemote ? "Tahoma, sans-serif" : chatFont,
 								}}
 							>
 								{msg.text}
@@ -739,7 +893,7 @@ export function MessengerApp() {
 
 				{isTyping && (
 					<div style={{ color: "#888888", fontStyle: "italic", fontSize: 11, margin: "4px 0 0" }}>
-						lemonsaurus is typing...
+						{carlaMode ? "Carla is typing..." : "lemonsaurus is typing..."}
 					</div>
 				)}
 			</div>

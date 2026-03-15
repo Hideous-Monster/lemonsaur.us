@@ -14,6 +14,7 @@ interface IrcClientProps {
 }
 
 type ConnectionStage = "nick-select" | "intro" | "joining" | "chat";
+type LemonStatus = "online" | "idle" | "dnd" | "offline";
 
 const RAINBOW_NICK_STYLE = {
 	backgroundImage: "linear-gradient(90deg, #ff5050, #ff9040, #e8e040, #40b848, #5090ff, #b860d0)",
@@ -22,6 +23,8 @@ const RAINBOW_NICK_STYLE = {
 	backgroundClip: "text",
 	fontWeight: "bold" as const,
 };
+
+const CARLA_NICK_COLOR = "#ff70b0";
 
 const FONT_SIZE = "16px";
 
@@ -33,7 +36,50 @@ function NickSpan({ nick }: { nick: string }) {
 	if (nick === "@lemonsaurus") {
 		return <span style={RAINBOW_NICK_STYLE}>&lt;{nick}&gt;</span>;
 	}
+	if (nick === "Carla") {
+		return <span style={{ color: CARLA_NICK_COLOR, fontWeight: "bold" }}>&lt;{nick}&gt;</span>;
+	}
 	return <span style={{ color: "#70d0b0" }}>&lt;{nick}&gt;</span>;
+}
+
+// ── Status indicator ─────────────────────────────────────────────────────────
+
+function StatusIndicator({ status }: { status: LemonStatus }) {
+	const configs: Record<LemonStatus, { color: string; label: string }> = {
+		online: { color: "#44dd44", label: "lemonsaurus is online" },
+		idle: { color: "#e8c020", label: "lemonsaurus is idle" },
+		dnd: { color: "#ff4040", label: "lemonsaurus is busy" },
+		offline: { color: "#888888", label: "lemonsaurus is offline — chatting with Carla" },
+	};
+
+	const { color, label } = configs[status];
+
+	return (
+		<div
+			style={{
+				display: "flex",
+				alignItems: "center",
+				gap: 6,
+				padding: "3px 10px",
+				borderBottom: "1px solid #1a2a1a",
+				backgroundColor: "#060e06",
+				flexShrink: 0,
+			}}
+		>
+			<span
+				style={{
+					display: "inline-block",
+					width: 7,
+					height: 7,
+					borderRadius: "50%",
+					background: color,
+					boxShadow: `0 0 4px ${color}`,
+					flexShrink: 0,
+				}}
+			/>
+			<span style={{ color: "#688850", fontSize: 12 }}>{label}</span>
+		</div>
+	);
 }
 
 // ── Nick selection TUI ──────────────────────────────────────────────────────
@@ -247,6 +293,9 @@ export function IrcClient({ onExit }: IrcClientProps) {
 	const [stage, setStage] = useState<ConnectionStage>("nick-select");
 	const [nick, setNick] = useState("");
 	const [threadId, setThreadId] = useState<string | null>(null);
+	const [lemonStatus, setLemonStatus] = useState<LemonStatus>("offline");
+	const [carlaMode, setCarlaMode] = useState(false);
+	const [statusChecked, setStatusChecked] = useState(false);
 
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
@@ -255,9 +304,33 @@ export function IrcClient({ onExit }: IrcClientProps) {
 	const motdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const lastPollTimeRef = useRef<string | null>(null);
 	const seenMessageIds = useRef<Set<string>>(new Set());
+	const carlaHistoryRef = useRef<Array<{ role: "user" | "assistant"; content: string }>>([]);
 
 	const addMessage = useCallback((msg: Omit<IrcMessage, "timestamp">) => {
 		setMessages((prev) => [...prev, { ...msg, timestamp: new Date() }]);
+	}, []);
+
+	// Check status once on mount
+	useEffect(() => {
+		async function checkStatus() {
+			try {
+				const res = await fetch("/api/irc/status");
+				if (res.ok) {
+					const data = await res.json();
+					const status: LemonStatus = data.status ?? "offline";
+					setLemonStatus(status);
+					setCarlaMode(status !== "online");
+				} else {
+					setCarlaMode(true);
+				}
+			} catch {
+				setCarlaMode(true);
+			} finally {
+				setStatusChecked(true);
+			}
+		}
+
+		checkStatus();
 	}, []);
 
 	// Auto-scroll on new messages
@@ -280,7 +353,29 @@ export function IrcClient({ onExit }: IrcClientProps) {
 		function typeNextLine() {
 			const idx = motdIndexRef.current;
 			if (idx >= MOTD.length) {
-				// MOTD done — immediately start joining
+				// MOTD done — add Carla notice if she's covering, then start joining
+				if (carlaMode) {
+					setMessages((prev) => [
+						...prev,
+						{
+							type: "system",
+							text: "* lemonsaurus is currently away.",
+							timestamp: new Date(),
+							nick: JSON.stringify({ color: "#b8a030" }),
+						},
+						{
+							type: "system",
+							text: "* Carla (assistant) is here to help!",
+							timestamp: new Date(),
+							nick: JSON.stringify({ color: CARLA_NICK_COLOR }),
+						},
+						{
+							type: "system",
+							text: "",
+							timestamp: new Date(),
+						},
+					]);
+				}
 				setStage("joining");
 				return;
 			}
@@ -306,10 +401,9 @@ export function IrcClient({ onExit }: IrcClientProps) {
 		return () => {
 			if (motdTimerRef.current) clearTimeout(motdTimerRef.current);
 		};
-	}, [stage]);
+	}, [stage, carlaMode]);
 
 	// Start joining sequence after MOTD
-	// biome-ignore lint/correctness/useExhaustiveDependencies: nick is set before stage transitions
 	useEffect(() => {
 		if (stage !== "joining" || !nick) return;
 
@@ -323,7 +417,9 @@ export function IrcClient({ onExit }: IrcClientProps) {
 			},
 			{ text: "* Set by lemonsaurus on Mar 15 1995", color: "#688850" },
 			{ text: "" },
-			{ text: "* lemonsaurus is here (@lemonsaurus) [operator]", color: "#b8a030" },
+			carlaMode
+				? { text: "* Carla has joined #lemonsaurus", color: CARLA_NICK_COLOR }
+				: { text: "* lemonsaurus is here (@lemonsaurus) [operator]", color: "#b8a030" },
 			{ text: `* ${nick} has joined #lemonsaurus`, color: "#40b848" },
 			{ text: "" },
 		];
@@ -331,8 +427,12 @@ export function IrcClient({ onExit }: IrcClientProps) {
 		let i = 0;
 		function typeJoinLine() {
 			if (i >= joinLines.length) {
-				// Done — connect to Discord
-				connectToDiscord();
+				if (carlaMode) {
+					// Carla mode — go straight to chat, no Discord connect
+					setStage("chat");
+				} else {
+					connectToDiscord();
+				}
 				return;
 			}
 			const line = joinLines[i]!;
@@ -383,11 +483,11 @@ export function IrcClient({ onExit }: IrcClientProps) {
 		return () => {
 			if (motdTimerRef.current) clearTimeout(motdTimerRef.current);
 		};
-	}, [stage, nick, addMessage]);
+	}, [stage, nick, addMessage, carlaMode]);
 
-	// Start polling for replies once in chat
+	// Start polling for replies once in chat (Discord mode only)
 	useEffect(() => {
-		if (stage !== "chat" || !threadId) return;
+		if (stage !== "chat" || !threadId || carlaMode) return;
 
 		async function poll() {
 			try {
@@ -436,7 +536,7 @@ export function IrcClient({ onExit }: IrcClientProps) {
 		return () => {
 			if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
 		};
-	}, [stage, threadId]);
+	}, [stage, threadId, carlaMode]);
 
 	// Cleanup on unmount
 	useEffect(() => {
@@ -446,10 +546,69 @@ export function IrcClient({ onExit }: IrcClientProps) {
 		};
 	}, []);
 
-	const handleNickChosen = useCallback((chosenNick: string) => {
-		setNick(chosenNick);
-		setStage("intro");
-	}, []);
+	const handleNickChosen = useCallback(
+		(chosenNick: string) => {
+			setNick(chosenNick);
+			// Wait for status check before proceeding
+			if (statusChecked) {
+				setStage("intro");
+			} else {
+				// Status check should be near-instant, but handle the edge case
+				const waitForStatus = setInterval(() => {
+					// statusChecked will be updated by the time this runs
+					setStage("intro");
+					clearInterval(waitForStatus);
+				}, 100);
+			}
+		},
+		[statusChecked],
+	);
+
+	const sendToCarla = useCallback(
+		async (userMessage: string) => {
+			// Add to history
+			carlaHistoryRef.current = [
+				...carlaHistoryRef.current,
+				{ role: "user", content: userMessage },
+			].slice(-20);
+
+			try {
+				const res = await fetch("/api/irc/chat", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						messages: carlaHistoryRef.current,
+						nick,
+					}),
+				});
+
+				const data = await res.json();
+
+				if (!res.ok) {
+					addMessage({
+						type: "system",
+						text: `* Carla seems to be having trouble responding. (${data.error ?? "Unknown error"})`,
+					});
+					return;
+				}
+
+				const reply: string = data.reply ?? "Sorry, I couldn't come up with a response!";
+
+				carlaHistoryRef.current = [
+					...carlaHistoryRef.current,
+					{ role: "assistant", content: reply },
+				].slice(-20);
+
+				addMessage({ type: "message", nick: "Carla", text: reply });
+			} catch {
+				addMessage({
+					type: "system",
+					text: "* Carla seems to be away too. Try again in a moment!",
+				});
+			}
+		},
+		[nick, addMessage],
+	);
 
 	const handleSubmit = useCallback(
 		(e: React.FormEvent) => {
@@ -499,7 +658,13 @@ export function IrcClient({ onExit }: IrcClientProps) {
 			// Regular message — show optimistically
 			addMessage({ type: "message", nick, text: trimmed });
 
-			// Send to Discord
+			if (carlaMode) {
+				// Carla mode — send to AI
+				sendToCarla(trimmed);
+				return;
+			}
+
+			// Discord mode — send to thread
 			if (!threadId) return;
 
 			fetch("/api/irc/send", {
@@ -523,7 +688,7 @@ export function IrcClient({ onExit }: IrcClientProps) {
 					});
 				});
 		},
-		[input, stage, nick, threadId, addMessage, onExit],
+		[input, stage, nick, threadId, carlaMode, addMessage, onExit, sendToCarla],
 	);
 
 	// ── Nick selection screen ───────────────────────────────────────────────
@@ -546,6 +711,9 @@ export function IrcClient({ onExit }: IrcClientProps) {
 				overflow: "hidden",
 			}}
 		>
+			{/* Status indicator */}
+			<StatusIndicator status={lemonStatus} />
+
 			{/* Scrollable message area */}
 			<div
 				ref={scrollRef}
