@@ -680,27 +680,28 @@ export function MessengerApp() {
 					}
 
 					const isLemon = msg.nick === "lemonsaurus";
-					const displayNick = isLemon ? "lemonsaurus 🍋" : (msg.nick ?? nick);
 
 					return (
 						<div key={msg.id} style={{ marginBottom: 10 }}>
 							<div style={{ fontSize: 11, color: "#999", marginBottom: 1 }}>
-								<strong
-									style={
-										isLemon
-											? {
-													marginRight: 6,
-													backgroundImage:
-														"linear-gradient(90deg, #ff5050, #ff9040, #e8e040, #40b848, #5090ff, #b860d0)",
-													WebkitBackgroundClip: "text",
-													WebkitTextFillColor: "transparent",
-													backgroundClip: "text",
-												}
-											: { color: "#cc4400", marginRight: 6 }
-									}
-								>
-									{displayNick}
-								</strong>
+								{isLemon ? (
+									<strong style={{ marginRight: 6 }}>
+										<span
+											style={{
+												backgroundImage:
+													"linear-gradient(90deg, #ff5050, #ff9040, #e8e040, #40b848, #5090ff, #b860d0)",
+												WebkitBackgroundClip: "text",
+												WebkitTextFillColor: "transparent",
+												backgroundClip: "text",
+											}}
+										>
+											lemonsaurus
+										</span>{" "}
+										🍋
+									</strong>
+								) : (
+									<strong style={{ color: "#cc4400", marginRight: 6 }}>{msg.nick ?? nick}</strong>
+								)}
 								<span>{formatTime(msg.timestamp)}</span>
 							</div>
 							<div
