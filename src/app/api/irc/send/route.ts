@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
-// In-memory rate limit per session: sessionId -> { lastSent, count }
-const sendRateLimit = new Map<string, { lastSent: number; count: number }>();
+// In-memory rate limit per session: sessionId -> { lastSent, count, joinPosted }
+const sendRateLimit = new Map<string, { lastSent: number; count: number; joinPosted: boolean }>();
 
 // Clean up old entries periodically
 setInterval(
@@ -67,6 +67,19 @@ export async function POST(request: Request) {
 		return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
 	}
 
+	// Post join message on first message in this session
+	if (!existing?.joinPosted) {
+		await fetch(`${webhookUrl}?thread_id=${threadId}`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				content: `📥 **${nick}** has joined the chat`,
+				username: "LemonNET",
+				avatar_url: "https://lemonsaur.us/images/lemon87_bootup.png",
+			}),
+		}).catch((e) => console.error("Failed to post join message:", e));
+	}
+
 	const res = await fetch(`${webhookUrl}?thread_id=${threadId}`, {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
@@ -87,6 +100,7 @@ export async function POST(request: Request) {
 	sendRateLimit.set(sessionId, {
 		lastSent: now,
 		count: (existing?.count ?? 0) + 1,
+		joinPosted: true,
 	});
 
 	return NextResponse.json({ ok: true });

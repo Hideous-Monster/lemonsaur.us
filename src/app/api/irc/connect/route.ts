@@ -25,6 +25,19 @@ function getClientIp(headersList: Awaited<ReturnType<typeof headers>>): string {
 	);
 }
 
+async function isThreadActive(botToken: string, threadId: string): Promise<boolean> {
+	try {
+		const res = await fetch(`${DISCORD_API}/channels/${threadId}`, {
+			headers: { Authorization: `Bot ${botToken}` },
+		});
+		if (!res.ok) return false;
+		const thread = await res.json();
+		return !thread.archived && !thread.locked;
+	} catch {
+		return false;
+	}
+}
+
 export async function POST(request: Request) {
 	const body = await request.json().catch(() => null);
 
@@ -33,6 +46,8 @@ export async function POST(request: Request) {
 	}
 
 	const nick = body.nick.trim().slice(0, 32);
+	const existingThreadId: string | null =
+		typeof body.threadId === "string" && body.threadId.trim() ? body.threadId.trim() : null;
 
 	// Rate limiting: 1 connection per IP per 30 seconds
 	const headersList = await headers();
@@ -56,11 +71,23 @@ export async function POST(request: Request) {
 		return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
 	}
 
+	// Try to reuse an existing thread if one was provided
+	if (existingThreadId) {
+		const active = await isThreadActive(botToken, existingThreadId);
+		if (active) {
+			connectRateLimit.set(ip, now);
+			return NextResponse.json({
+				sessionId: `${ip}:${existingThreadId}`,
+				threadId: existingThreadId,
+			});
+		}
+	}
+
+	// Create a new forum thread
 	const now2 = new Date();
 	const dateStr = `${now2.toISOString().replace("T", " ").slice(0, 16)} UTC`;
 	const threadName = `IRC: ${nick} — ${dateStr}`;
 
-	// Create the forum thread
 	const threadRes = await fetch(`${DISCORD_API}/channels/${forumChannelId}/threads`, {
 		method: "POST",
 		headers: {
@@ -84,11 +111,9 @@ export async function POST(request: Request) {
 	const thread = await threadRes.json();
 	const threadId: string = thread.id;
 
-	// Record the rate limit timestamp now that we've successfully connected
 	connectRateLimit.set(ip, now);
 
 	// DM the owner about the new connection
-	// First, open a DM channel with the owner
 	const dmChannelRes = await fetch(`${DISCORD_API}/users/@me/channels`, {
 		method: "POST",
 		headers: {

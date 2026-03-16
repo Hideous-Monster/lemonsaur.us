@@ -397,6 +397,7 @@ export function MessengerApp() {
 	const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const carlaHistoryRef = useRef<Array<{ role: "user" | "assistant"; content: string }>>([]);
 	const cooldownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+	const hasSentMessageRef = useRef(false);
 	const [carlaThreadId, setCarlaThreadId] = useState<string | null>(null);
 
 	const addMessage = useCallback((msg: Omit<LmnMessage, "timestamp" | "id">) => {
@@ -442,8 +443,13 @@ export function MessengerApp() {
 		if (stage !== "signing-in" || !nick) return;
 
 		if (carlaMode) {
-			// Carla mode — skip Discord entirely
+			// Carla mode — restore saved thread and skip Discord connect
 			const timer = setTimeout(() => {
+				const savedThread = localStorage.getItem(`irc-carla-thread-${nick}`);
+				if (savedThread) {
+					setCarlaThreadId(savedThread);
+					lastPollTimeRef.current = new Date().toISOString();
+				}
 				addMessage({ type: "system", text: "You have connected to LMN Messenger." });
 				addMessage({
 					type: "system",
@@ -454,13 +460,14 @@ export function MessengerApp() {
 			return () => clearTimeout(timer);
 		}
 
-		// Discord mode
+		// Discord mode — pass saved threadId so the backend can reuse it
 		const timer = setTimeout(async () => {
 			try {
+				const savedThread = localStorage.getItem(`irc-thread-${nick}`);
 				const res = await fetch("/api/irc/connect", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ nick }),
+					body: JSON.stringify({ nick, threadId: savedThread }),
 				});
 
 				const data = await res.json();
@@ -472,6 +479,7 @@ export function MessengerApp() {
 				}
 
 				setThreadId(data.threadId);
+				localStorage.setItem(`irc-thread-${nick}`, data.threadId);
 				lastPollTimeRef.current = new Date().toISOString();
 
 				addMessage({ type: "system", text: "You have connected to LMN Messenger." });
@@ -583,6 +591,27 @@ export function MessengerApp() {
 		};
 	}, []);
 
+	// Send disconnect notification on unmount / tab close (only if user actually chatted)
+	useEffect(() => {
+		function sendDisconnect() {
+			if (!hasSentMessageRef.current) return;
+			const activeThreadId = carlaMode ? carlaThreadId : threadId;
+			if (!activeThreadId || !nick) return;
+			navigator.sendBeacon(
+				"/api/irc/disconnect",
+				new Blob([JSON.stringify({ threadId: activeThreadId, nick })], {
+					type: "application/json",
+				}),
+			);
+		}
+
+		window.addEventListener("beforeunload", sendDisconnect);
+		return () => {
+			window.removeEventListener("beforeunload", sendDisconnect);
+			sendDisconnect();
+		};
+	}, [nick, threadId, carlaThreadId, carlaMode]);
+
 	const handleSignIn = useCallback((chosenNick: string) => {
 		setConnectError("");
 		setNick(chosenNick);
@@ -620,9 +649,14 @@ export function MessengerApp() {
 				const reply: string = data.reply ?? "Sorry, I couldn't come up with a response!";
 
 				// Store thread ID for subsequent requests and polling
-				if (data.threadId && !carlaThreadId) {
-					setCarlaThreadId(data.threadId);
-					lastPollTimeRef.current = new Date().toISOString();
+				if (data.threadId) {
+					if (data.threadId !== carlaThreadId) {
+						setCarlaThreadId(data.threadId);
+						localStorage.setItem(`irc-carla-thread-${nick}`, data.threadId);
+					}
+					if (!lastPollTimeRef.current) {
+						lastPollTimeRef.current = new Date().toISOString();
+					}
 				}
 
 				carlaHistoryRef.current = [
@@ -657,7 +691,7 @@ export function MessengerApp() {
 				});
 			}
 		},
-		[nick, addMessage],
+		[nick, addMessage, carlaThreadId],
 	);
 
 	const startCooldown = useCallback(() => {
@@ -683,6 +717,7 @@ export function MessengerApp() {
 
 			if (!trimmed || stage !== "chat") return;
 
+			hasSentMessageRef.current = true;
 			addMessage({ type: "message", nick, text: trimmed });
 			startCooldown();
 

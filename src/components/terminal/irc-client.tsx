@@ -311,6 +311,7 @@ export function IrcClient({ onExit }: IrcClientProps) {
 	const seenMessageIds = useRef<Set<string>>(new Set());
 	const carlaHistoryRef = useRef<Array<{ role: "user" | "assistant"; content: string }>>([]);
 	const cooldownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+	const hasSentMessageRef = useRef(false);
 	const [carlaThreadId, setCarlaThreadId] = useState<string | null>(null);
 	const [carlaTyping, setCarlaTyping] = useState(false);
 
@@ -436,7 +437,12 @@ export function IrcClient({ onExit }: IrcClientProps) {
 		function typeJoinLine() {
 			if (i >= joinLines.length) {
 				if (carlaMode) {
-					// Carla mode — go straight to chat, no Discord connect
+					// Carla mode — restore saved thread, go straight to chat
+					const savedThread = localStorage.getItem(`irc-carla-thread-${nick}`);
+					if (savedThread) {
+						setCarlaThreadId(savedThread);
+						lastPollTimeRef.current = new Date().toISOString();
+					}
 					setStage("chat");
 				} else {
 					connectToDiscord();
@@ -459,10 +465,11 @@ export function IrcClient({ onExit }: IrcClientProps) {
 
 		async function connectToDiscord() {
 			try {
+				const savedThread = localStorage.getItem(`irc-thread-${nick}`);
 				const res = await fetch("/api/irc/connect", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ nick }),
+					body: JSON.stringify({ nick, threadId: savedThread }),
 				});
 
 				const data = await res.json();
@@ -476,6 +483,7 @@ export function IrcClient({ onExit }: IrcClientProps) {
 				}
 
 				setThreadId(data.threadId);
+				localStorage.setItem(`irc-thread-${nick}`, data.threadId);
 				lastPollTimeRef.current = new Date().toISOString();
 				setStage("chat");
 			} catch {
@@ -576,6 +584,27 @@ export function IrcClient({ onExit }: IrcClientProps) {
 		};
 	}, [stage, threadId, carlaMode, carlaThreadId]);
 
+	// Send disconnect notification on unmount / tab close (only if user actually chatted)
+	useEffect(() => {
+		function sendDisconnect() {
+			if (!hasSentMessageRef.current) return;
+			const activeThreadId = carlaMode ? carlaThreadId : threadId;
+			if (!activeThreadId || !nick) return;
+			navigator.sendBeacon(
+				"/api/irc/disconnect",
+				new Blob([JSON.stringify({ threadId: activeThreadId, nick })], {
+					type: "application/json",
+				}),
+			);
+		}
+
+		window.addEventListener("beforeunload", sendDisconnect);
+		return () => {
+			window.removeEventListener("beforeunload", sendDisconnect);
+			sendDisconnect();
+		};
+	}, [nick, threadId, carlaThreadId, carlaMode]);
+
 	// Cleanup on unmount
 	useEffect(() => {
 		return () => {
@@ -635,9 +664,14 @@ export function IrcClient({ onExit }: IrcClientProps) {
 				const reply: string = data.reply ?? "Sorry, I couldn't come up with a response!";
 
 				// Store thread ID for subsequent requests and polling
-				if (data.threadId && !carlaThreadId) {
-					setCarlaThreadId(data.threadId);
-					lastPollTimeRef.current = new Date().toISOString();
+				if (data.threadId) {
+					if (data.threadId !== carlaThreadId) {
+						setCarlaThreadId(data.threadId);
+						localStorage.setItem(`irc-carla-thread-${nick}`, data.threadId);
+					}
+					if (!lastPollTimeRef.current) {
+						lastPollTimeRef.current = new Date().toISOString();
+					}
 				}
 
 				carlaHistoryRef.current = [
@@ -661,7 +695,7 @@ export function IrcClient({ onExit }: IrcClientProps) {
 				});
 			}
 		},
-		[nick, addMessage],
+		[nick, addMessage, carlaThreadId],
 	);
 
 	const startCooldown = useCallback(() => {
@@ -725,6 +759,7 @@ export function IrcClient({ onExit }: IrcClientProps) {
 			}
 
 			// Regular message — show optimistically
+			hasSentMessageRef.current = true;
 			addMessage({ type: "message", nick, text: trimmed });
 			startCooldown();
 

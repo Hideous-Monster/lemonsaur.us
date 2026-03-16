@@ -10,12 +10,19 @@ const DISCORD_API = "https://discord.com/api/v10";
 // In-memory rate limit: IP -> { count, windowStart }
 const chatRateLimit = new Map<string, { count: number; windowStart: number }>();
 
+// Track which IP+thread combos have had a join message posted this session
+const carlaJoinPosted = new Map<string, number>();
+
 // Clean up stale entries every 5 minutes
 setInterval(
 	() => {
 		const cutoff = Date.now() - 60 * 1000;
 		for (const [ip, data] of chatRateLimit.entries()) {
 			if (data.windowStart < cutoff) chatRateLimit.delete(ip);
+		}
+		const joinCutoff = Date.now() - 60 * 60 * 1000;
+		for (const [key, ts] of carlaJoinPosted.entries()) {
+			if (ts < joinCutoff) carlaJoinPosted.delete(key);
 		}
 	},
 	5 * 60 * 1000,
@@ -107,6 +114,19 @@ async function callGroq(apiKey: string, messages: ChatMessage[]): Promise<string
 	} catch (err) {
 		console.error("Groq fetch error:", err);
 		return null;
+	}
+}
+
+async function isThreadActive(botToken: string, threadId: string): Promise<boolean> {
+	try {
+		const res = await fetch(`${DISCORD_API}/channels/${threadId}`, {
+			headers: { Authorization: `Bot ${botToken}` },
+		});
+		if (!res.ok) return false;
+		const thread = await res.json();
+		return !thread.archived && !thread.locked;
+	} catch {
+		return false;
 	}
 }
 
@@ -277,8 +297,16 @@ export async function POST(request: Request) {
 		// Get the user's message (last user message in the array)
 		const lastUserMessage = [...messages].reverse().find((m) => m.role === "user");
 
+		// Validate existing thread is still active, otherwise create a new one
+		if (outgoingThreadId) {
+			const active = await isThreadActive(botToken, outgoingThreadId);
+			if (!active) {
+				outgoingThreadId = null;
+			}
+		}
+
 		if (!outgoingThreadId) {
-			// First message — create thread and DM owner
+			// First message or thread expired — create thread and DM owner
 			outgoingThreadId = await createCarlaThread(nick, botToken, forumChannelId);
 			if (outgoingThreadId) {
 				dmOwner(botToken, ownerId, nick, outgoingThreadId).catch(() => {});
@@ -287,6 +315,16 @@ export async function POST(request: Request) {
 
 		if (outgoingThreadId) {
 			const threadId = outgoingThreadId;
+
+			// Post join message on first message to a reused thread
+			const headersList2 = await headers();
+			const joinKey = `${getClientIp(headersList2)}:${threadId}`;
+			if (!carlaJoinPosted.has(joinKey) && incomingThreadId) {
+				carlaJoinPosted.set(joinKey, Date.now());
+				await postToThread(threadId, "LemonNET", `📥 **${nick}** has joined the chat`);
+			}
+			carlaJoinPosted.set(joinKey, Date.now());
+
 			if (lastUserMessage) {
 				await postToThread(threadId, nick, lastUserMessage.content);
 			}
