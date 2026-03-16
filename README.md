@@ -1,8 +1,10 @@
-# lemonsaur.us 🍋🦕
+# lemonsaur.us 🍋
 
-Personal website of LEMONSAURUS — software engineer, music producer, dinosaur. Based in Oslo, Norway.
+Personal website of LEMONSAURUS — software engineer, music producer, gamedev. Based in Oslo, Norway.
 
 A retro-futuristic personal site inspired by the Commodore 64, featuring an interactive terminal homepage, an MDX-powered blog, and a custom emoji system called **lemoji**.
+
+oh yeah and also yes it can run doom.
 
 > `87K RAM SYSTEM. SOUND / CODE / STATIC.`
 
