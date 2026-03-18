@@ -1,6 +1,7 @@
 "use client";
 
 import type React from "react";
+import { CharacterCreator } from "@/components/character-creator/character-creator";
 import { PongGame } from "@/components/pong/pong-game";
 import { SnakeGame } from "@/components/snake/snake-game";
 import { TetrisGame } from "@/components/tetris/tetris-game";
@@ -41,6 +42,7 @@ const APP_MAP: Record<string, React.ComponentType> = {
 	neofetch: NeofetchApp,
 	blog: BlogApp,
 	messenger: MessengerApp,
+	create: CharacterCreator,
 };
 
 /**

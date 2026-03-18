@@ -154,14 +154,21 @@ export function AboutApp() {
 
 				{/* Profile layout */}
 				<div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-					{/* Portrait */}
+					{/* Portrait — click to open character creator */}
+					{/* biome-ignore lint/a11y/useKeyWithClickEvents: decorative click easter egg */}
+					{/* biome-ignore lint/a11y/noStaticElementInteractions: portrait click opens creator */}
 					<div
+						onClick={() =>
+							window.dispatchEvent(new CustomEvent("lemon95:open-app", { detail: "create" }))
+						}
 						style={{
 							flexShrink: 0,
 							border: "4px solid #ff00ff",
 							background: "#000",
 							padding: 2,
+							cursor: "pointer",
 						}}
+						title="Click to customize!"
 					>
 						<Image
 							src="/images/lemon_portrait.avif"

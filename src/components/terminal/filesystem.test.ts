@@ -159,10 +159,10 @@ describe("filesystem", () => {
 			expect(lines.some((l) => l.includes("UP UP DOWN DOWN"))).toBe(true);
 		});
 
-		it("reads .commands cheat sheet", () => {
-			const lines = cat(".commands");
-			expect(lines.some((l) => l.includes("CHEAT SHEET"))).toBe(true);
-			expect(lines.some((l) => l.includes("DOOM"))).toBe(true);
+		it("reads .hidden_commands file", () => {
+			const lines = cat(".hidden_commands");
+			expect(lines.some((l) => l.includes("NOT LISTED IN HELP"))).toBe(true);
+			expect(lines.some((l) => l.includes("SUDO"))).toBe(true);
 		});
 	});
 

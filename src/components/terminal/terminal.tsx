@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { CharacterCreator } from "@/components/character-creator/character-creator";
 import { PongGame } from "@/components/pong/pong-game";
 import { SnakeGame } from "@/components/snake/snake-game";
 import { DoomSim } from "@/components/terminal/doom-sim";
@@ -62,6 +63,7 @@ type TerminalMode =
 	| "tetris"
 	| "pong"
 	| "irc"
+	| "create"
 	| "destroyed";
 
 interface TerminalProps {
@@ -123,10 +125,22 @@ export function Terminal({ onUpgrade }: TerminalProps = {}) {
 		scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
 	}, [lines, input]);
 
-	// Focus input on click anywhere
-	const focusInput = useCallback(() => {
-		if (mode === "terminal") inputRef.current?.focus();
-	}, [mode]);
+	// Focus input on click anywhere, and handle data-action clicks
+	const focusInput = useCallback(
+		(e: React.MouseEvent) => {
+			const target = (e.target as HTMLElement).closest?.("[data-action]");
+			if (target) {
+				const action = target.getAttribute("data-action");
+				if (action === "create") {
+					setLines((prev) => [...prev, makeBootLine("LOADING CHARACTER CREATOR...", "system")]);
+					setTimeout(() => setMode("create"), 300);
+					return;
+				}
+			}
+			if (mode === "terminal") inputRef.current?.focus();
+		},
+		[mode],
+	);
 
 	const processResult = useCallback(
 		(result: CommandResult) => {
@@ -146,6 +160,7 @@ export function Terminal({ onUpgrade }: TerminalProps = {}) {
 				tetris: "tetris",
 				pong: "pong",
 				irc: "irc",
+				create: "create",
 			};
 
 			if (result.action && result.action in modeActions) {
@@ -322,6 +337,20 @@ export function Terminal({ onUpgrade }: TerminalProps = {}) {
 		]);
 		setTimeout(() => inputRef.current?.focus(), 50);
 	}, []);
+
+	const handleCreateExit = useCallback(() => {
+		setMode("terminal");
+		setLines((prev) => [...prev, makeBootLine("READY.", "system")]);
+		setTimeout(() => inputRef.current?.focus(), 50);
+	}, []);
+
+	if (mode === "create") {
+		return (
+			<div className="flex flex-1 overflow-hidden">
+				<CharacterCreator onExit={handleCreateExit} />
+			</div>
+		);
+	}
 
 	if (mode === "irc") {
 		return (

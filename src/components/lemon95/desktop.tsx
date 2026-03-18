@@ -24,6 +24,7 @@ const DESKTOP_APPS: DesktopApp[] = [
 	{ id: "neofetch", title: "Neofetch", icon: "🖥", defaultWidth: 550, defaultHeight: 450 },
 	{ id: "blog", title: "Blog", icon: "📰", defaultWidth: 900, defaultHeight: 650 },
 	{ id: "messenger", title: "LMN Messenger", icon: "🦋", defaultWidth: 500, defaultHeight: 550 },
+	{ id: "create", title: "Character Creator", icon: "🎨", defaultWidth: 700, defaultHeight: 520 },
 ];
 
 interface DesktopProps {
@@ -83,6 +84,17 @@ export function Desktop({ onShutDown }: DesktopProps) {
 		},
 		[openWindow],
 	);
+
+	// Listen for cross-app navigation events (e.g. portrait click → character creator)
+	useEffect(() => {
+		function handleOpenAppEvent(e: Event) {
+			const appId = (e as CustomEvent).detail as string;
+			const app = DESKTOP_APPS.find((a) => a.id === appId);
+			if (app) openWindow(app);
+		}
+		window.addEventListener("lemon95:open-app", handleOpenAppEvent);
+		return () => window.removeEventListener("lemon95:open-app", handleOpenAppEvent);
+	}, [openWindow]);
 
 	const handleTaskbarWindowClick = useCallback(
 		(id: string) => {

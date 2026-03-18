@@ -45,6 +45,7 @@ const COMMANDS: Record<string, () => CommandResult> = {
 			ln("  TETRIS   - PLAY TETRIS", "output"),
 			ln("", "output"),
 			ln(" FUN", "system"),
+			ln("  CREATE   - CHARACTER CREATOR", "output"),
 			ln("  FORTUNE  - WORDS OF WISDOM", "output"),
 			ln("  HACK     - HACKER MODE", "output"),
 			ln("  MATRIX   - THE ZEN OF DIGITAL RAIN", "output"),
@@ -59,6 +60,7 @@ const COMMANDS: Record<string, () => CommandResult> = {
 			ln("  LS -A    - LIST FILES (INCLUDE HIDDEN)", "output"),
 			ln("  CAT      - SHOW FILE CONTENTS", "output"),
 			ln("  CD       - CHANGE DIRECTORY", "output"),
+			ln("  UPGRADE  - UPGRADE TO LEMON/95", "output"),
 		],
 	}),
 
@@ -90,8 +92,8 @@ const COMMANDS: Record<string, () => CommandResult> = {
 					`I EVEN MADE THIS SITE!<br><br>` +
 					`TYPE 'LINKS' TO SEE SOME OTHER STUFF I MADE!` +
 					`</div>` +
-					`<div class="portrait-crt" style="flex-shrink:0;width:130px;height:130px;border:3px double #e8e040;padding:3px;background:#0a140a;overflow:hidden">` +
-					`<img src="/images/lemon_portrait.avif" alt="LEMONSAURUS" style="width:100%;height:100%;object-fit:cover;image-rendering:pixelated" />` +
+					`<div class="portrait-crt" style="flex-shrink:0;width:130px;height:130px;border:3px double #e8e040;padding:3px;background:#0a140a;overflow:hidden;cursor:pointer" data-action="create" title="Click to customize!">` +
+					`<img src="/images/lemon_portrait.avif" alt="LEMONSAURUS" style="width:100%;height:100%;object-fit:cover;image-rendering:pixelated;pointer-events:none" />` +
 					`<div class="portrait-scan ps1"></div><div class="portrait-scan ps2"></div><div class="portrait-scan ps3"></div>` +
 					`</div>` +
 					`</div>`,
@@ -139,6 +141,11 @@ const COMMANDS: Record<string, () => CommandResult> = {
 			],
 		};
 	},
+
+	create: () => ({
+		lines: [ln("LOADING CHARACTER CREATOR...", "system")],
+		action: "create",
+	}),
 
 	snake: () =>
 		isMobile()

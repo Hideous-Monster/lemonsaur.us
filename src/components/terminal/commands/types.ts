@@ -20,7 +20,8 @@ export interface CommandResult {
 		| "tetris"
 		| "pong"
 		| "upgrade"
-		| "irc";
+		| "irc"
+		| "create";
 	href?: string;
 	asyncLines?: () => Promise<TerminalLine[]>;
 	/** If set, the next user input is routed to this handler instead of the normal command parser. */

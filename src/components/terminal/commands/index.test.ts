@@ -50,6 +50,12 @@ describe("executeCommand", () => {
 		}
 	});
 
+	it("create returns create action", () => {
+		const result = executeCommand("create");
+		expect(result.action).toBe("create");
+		expect(result.lines.length).toBeGreaterThan(0);
+	});
+
 	it("snake returns snake action", () => {
 		const result = executeCommand("snake");
 		expect(result.action).toBe("snake");
