@@ -99,7 +99,10 @@ interface FloatingPortraitProps {
 export function FloatingPortrait({ onClose }: FloatingPortraitProps) {
 	const [config, setConfig] = useState<CharacterConfig>(loadConfig);
 	const [showControls, setShowControls] = useState(false);
-	const [pos, setPos] = useState({ x: 100, y: 60 });
+	const [pos, setPos] = useState(() => ({
+		x: typeof window !== "undefined" ? Math.round((window.innerWidth - 360) / 2) : 100,
+		y: typeof window !== "undefined" ? Math.round((window.innerHeight - 540) / 2 - 16) : 60,
+	}));
 	const dragRef = useRef<{
 		startX: number;
 		startY: number;
@@ -169,10 +172,10 @@ export function FloatingPortrait({ onClose }: FloatingPortraitProps) {
 				onPointerUp={handlePointerUp}
 				style={{
 					position: "relative",
-					width: 180,
-					height: 270,
+					width: 360,
+					height: 540,
 					overflow: "hidden",
-					filter: "drop-shadow(4px 6px 12px rgba(0,0,0,0.5))",
+					filter: "drop-shadow(6px 8px 16px rgba(0,0,0,0.5))",
 				}}
 			>
 				{layers.map((src, i) => (
@@ -201,36 +204,37 @@ export function FloatingPortrait({ onClose }: FloatingPortraitProps) {
 					style={{
 						position: "absolute",
 						top: 0,
-						left: 190,
-						background: "#c0c0c0",
-						border: "2px outset #ffffff",
-						padding: "6px 8px",
-						fontFamily: "'Tahoma', 'Segoe UI', Arial, sans-serif",
-						fontSize: 11,
+						left: 370,
+						background: "#0a140a",
+						border: "2px solid #e8e040",
+						padding: "12px 14px",
+						fontFamily: "'Courier New', Courier, monospace",
+						fontSize: 15,
+						color: "#40b848",
 						display: "flex",
 						flexDirection: "column",
-						gap: 3,
+						gap: 6,
 						whiteSpace: "nowrap",
 						zIndex: 1000,
 					}}
 				>
 					{CATEGORIES.map((cat) => (
 						<div key={cat.key} style={{ display: "flex", alignItems: "center", gap: 4 }}>
-							<span style={{ width: 42, color: "#333", fontWeight: "bold" }}>{cat.label}:</span>
-							<button type="button" onClick={() => cycle(cat.key, cat.len, -1)} style={win95Btn}>
+							<span style={{ width: 60, color: "#4a6a4a", fontWeight: "bold" }}>{cat.label}:</span>
+							<button type="button" onClick={() => cycle(cat.key, cat.len, -1)} style={retroBtn}>
 								◄
 							</button>
-							<span style={{ width: 90, textAlign: "center", fontSize: 10 }}>
+							<span style={{ width: 130, textAlign: "center", fontSize: 14, color: "#e8e040" }}>
 								{getLabelForKey(cat.key, config[cat.key])}
 							</span>
-							<button type="button" onClick={() => cycle(cat.key, cat.len, 1)} style={win95Btn}>
+							<button type="button" onClick={() => cycle(cat.key, cat.len, 1)} style={retroBtn}>
 								►
 							</button>
 						</div>
 					))}
 					<div
 						style={{
-							borderTop: "1px solid #808080",
+							borderTop: "1px solid #4a6a4a",
 							marginTop: 2,
 							paddingTop: 4,
 							display: "flex",
@@ -239,7 +243,7 @@ export function FloatingPortrait({ onClose }: FloatingPortraitProps) {
 					>
 						<button
 							type="button"
-							style={{ ...win95Btn, flex: 1, fontSize: 10 }}
+							style={{ ...retroBtn, flex: 1, fontSize: 14 }}
 							onClick={() =>
 								setConfig({
 									features: Math.floor(Math.random() * FEATURES.length),
@@ -252,7 +256,7 @@ export function FloatingPortrait({ onClose }: FloatingPortraitProps) {
 						>
 							Random
 						</button>
-						<button type="button" style={{ ...win95Btn, flex: 1, fontSize: 10 }} onClick={onClose}>
+						<button type="button" style={{ ...retroBtn, flex: 1, fontSize: 14 }} onClick={onClose}>
 							Close
 						</button>
 					</div>
@@ -262,12 +266,13 @@ export function FloatingPortrait({ onClose }: FloatingPortraitProps) {
 	);
 }
 
-const win95Btn: React.CSSProperties = {
-	background: "#c0c0c0",
-	border: "2px outset #ffffff",
-	fontFamily: "'Tahoma', 'Segoe UI', Arial, sans-serif",
-	fontSize: 11,
+const retroBtn: React.CSSProperties = {
+	background: "none",
+	border: "1px solid #40b848",
+	color: "#40b848",
+	fontFamily: "'Courier New', Courier, monospace",
+	fontSize: 14,
 	cursor: "pointer",
-	padding: "1px 6px",
-	lineHeight: 1.2,
+	padding: "3px 10px",
+	lineHeight: 1.3,
 };
