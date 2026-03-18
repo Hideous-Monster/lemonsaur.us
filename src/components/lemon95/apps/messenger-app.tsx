@@ -854,9 +854,17 @@ export function MessengerApp() {
 					gap: 10,
 				}}
 			>
+				{/* biome-ignore lint/performance/noImgElement: avif with pixelated rendering needs img, not Next Image */}
+				{/* biome-ignore lint/a11y/useKeyWithClickEvents: decorative easter egg click, not a key nav target */}
 				<img
 					src={carlaMode ? "/images/carla_avatar.avif" : "/images/lemon_portrait.avif"}
 					alt={contactName}
+					onClick={
+						carlaMode
+							? undefined
+							: () =>
+									window.dispatchEvent(new CustomEvent("lemon95:open-app", { detail: "create" }))
+					}
 					style={{
 						width: 36,
 						height: 36,
@@ -865,7 +873,9 @@ export function MessengerApp() {
 						objectFit: "cover",
 						imageRendering: "pixelated",
 						flexShrink: 0,
+						cursor: carlaMode ? "default" : "pointer",
 					}}
+					title={carlaMode ? undefined : "Click to customize!"}
 				/>
 				<div>
 					<div
