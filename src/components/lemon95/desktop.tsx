@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { FloatingPortrait } from "@/components/character-creator/floating-portrait";
 import { AppPlaceholder } from "./app-placeholder";
 import { getAppComponent } from "./apps";
 import { DesktopIcon } from "./desktop-icon";
@@ -44,6 +45,7 @@ export function Desktop({ onShutDown }: DesktopProps) {
 	} = useWindowManager();
 
 	const [startMenuOpen, setStartMenuOpen] = useState(false);
+	const [showFloatingPortrait, setShowFloatingPortrait] = useState(false);
 
 	// Vitals display — persisted from upgrade command
 	const [showVitals] = useState(
@@ -80,6 +82,10 @@ export function Desktop({ onShutDown }: DesktopProps) {
 
 	const handleOpenApp = useCallback(
 		(app: DesktopApp) => {
+			if (app.id === "create") {
+				setShowFloatingPortrait(true);
+				return;
+			}
 			openWindow(app);
 		},
 		[openWindow],
@@ -89,6 +95,10 @@ export function Desktop({ onShutDown }: DesktopProps) {
 	useEffect(() => {
 		function handleOpenAppEvent(e: Event) {
 			const appId = (e as CustomEvent).detail as string;
+			if (appId === "create") {
+				setShowFloatingPortrait(true);
+				return;
+			}
 			const app = DESKTOP_APPS.find((a) => a.id === appId);
 			if (app) openWindow(app);
 		}
@@ -208,6 +218,9 @@ export function Desktop({ onShutDown }: DesktopProps) {
 					})()}
 				</Win95Window>
 			))}
+
+			{/* Floating character portrait */}
+			{showFloatingPortrait && <FloatingPortrait onClose={() => setShowFloatingPortrait(false)} />}
 
 			{/* Start menu (renders above taskbar) */}
 			{startMenuOpen && (
