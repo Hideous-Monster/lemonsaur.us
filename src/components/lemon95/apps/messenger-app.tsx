@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { track } from "@/lib/telemetry";
 
 let msgCounter = 0;
 
@@ -617,6 +618,8 @@ export function MessengerApp() {
 		setConnectError("");
 		setNick(chosenNick);
 		setStage("signing-in");
+		track("chat_opened", { surface: "messenger" });
+		track("identify", { nick: chosenNick });
 	}, []);
 
 	const sendToCarla = useCallback(

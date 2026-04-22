@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { track } from "@/lib/telemetry";
 
 interface IrcMessage {
 	type: "system" | "message" | "action";
@@ -618,6 +619,8 @@ export function IrcClient({ onExit }: IrcClientProps) {
 	const handleNickChosen = useCallback(
 		(chosenNick: string) => {
 			setNick(chosenNick);
+			track("chat_opened", { surface: "irc" });
+			track("identify", { nick: chosenNick });
 			// Wait for status check before proceeding
 			if (statusChecked) {
 				setStage("intro");
@@ -757,6 +760,7 @@ export function IrcClient({ onExit }: IrcClientProps) {
 					addMessage({ type: "system", text: `* ${nick} is now known as ${newNick}` });
 					setNick(newNick);
 					localStorage.setItem("irc-nick", newNick);
+					track("identify", { nick: newNick });
 					return;
 				}
 

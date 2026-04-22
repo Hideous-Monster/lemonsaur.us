@@ -20,6 +20,7 @@ import {
 	type TerminalLine,
 } from "./commands";
 import { tabComplete } from "./filesystem";
+import { track } from "@/lib/telemetry";
 
 // ROYGBIV
 const RAINBOW = [
@@ -232,6 +233,11 @@ export function Terminal({ onUpgrade }: TerminalProps = {}) {
 
 				processResult(result);
 				return;
+			}
+
+			const normalized = cmd.trim().split(/\s+/)[0]?.toLowerCase();
+			if (normalized) {
+				track("command_run", { name: normalized });
 			}
 
 			const result = executeCommand(cmd);

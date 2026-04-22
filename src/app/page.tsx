@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Desktop } from "@/components/lemon95/desktop";
 import { Terminal } from "@/components/terminal/terminal";
+import { track } from "@/lib/telemetry";
 
 type OSMode = "lemon87" | "lemon95" | "upgrading";
 
@@ -203,11 +204,13 @@ export default function HomePage() {
 	const [mode, setMode] = useState<OSMode>("lemon87");
 
 	useEffect(() => {
+		track("session_start");
 		const stored = localStorage.getItem(STORAGE_KEY);
 		if (stored === "lemon95") setMode("lemon95");
 	}, []);
 
 	const handleUpgrade = useCallback(() => {
+		track("lemon95_upgrade");
 		setMode("upgrading");
 	}, []);
 

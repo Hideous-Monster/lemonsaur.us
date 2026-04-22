@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { track } from "@/lib/telemetry";
 
 interface DoomSimProps {
 	onExit: () => void;
@@ -57,6 +58,15 @@ export function DoomSim({ onExit }: DoomSimProps) {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	const onExitRef = useRef(onExit);
 	onExitRef.current = onExit;
+
+	// Track DOOM session duration
+	useEffect(() => {
+		const start = Date.now();
+		return () => {
+			const durationSeconds = Math.round((Date.now() - start) / 1000);
+			track("doom_exit", { durationSeconds });
+		};
+	}, []);
 
 	// Auto-scroll during loading
 	// biome-ignore lint/correctness/useExhaustiveDependencies: intentionally scroll on lines change
