@@ -388,6 +388,7 @@ export function MessengerApp() {
 	const [lemonStatus, setLemonStatus] = useState<LemonStatus>("offline");
 	const [carlaMode, setCarlaMode] = useState(false);
 	const [cooldownSeconds, setCooldownSeconds] = useState<number>(0);
+	const [isKicked, setIsKicked] = useState(false);
 
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
@@ -647,6 +648,9 @@ export function MessengerApp() {
 				}
 
 				const reply: string = data.reply ?? "Sorry, I couldn't come up with a response!";
+				const wasKicked: boolean = data.kicked === true;
+				const kickReason: string | null =
+					typeof data.kickReason === "string" ? data.kickReason : null;
 
 				// Store thread ID for subsequent requests and polling
 				if (data.threadId) {
@@ -672,16 +676,30 @@ export function MessengerApp() {
 				if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
 				typingTimerRef.current = setTimeout(() => {
 					setIsTyping(false);
-					setMessages((prev) => [
-						...prev,
-						{
-							id: ++msgCounter,
-							type: "message",
-							nick: "Carla",
-							text: reply,
-							timestamp: new Date(),
-						},
-					]);
+					setMessages((prev) => {
+						const next = [
+							...prev,
+							{
+								id: ++msgCounter,
+								type: "message" as const,
+								nick: "Carla",
+								text: reply,
+								timestamp: new Date(),
+							},
+						];
+						if (wasKicked) {
+							next.push({
+								id: ++msgCounter,
+								type: "system" as const,
+								text: `* You have been kicked from the channel by Carla 🐍 (${kickReason ?? "no reason given"})`,
+								timestamp: new Date(),
+							});
+						}
+						return next;
+					});
+					if (wasKicked) {
+						setIsKicked(true);
+					}
 				}, delayMs);
 			} catch {
 				setIsTyping(false);
@@ -715,7 +733,7 @@ export function MessengerApp() {
 			const trimmed = input.trim();
 			setInput("");
 
-			if (!trimmed || stage !== "chat") return;
+			if (!trimmed || stage !== "chat" || isKicked) return;
 
 			hasSentMessageRef.current = true;
 			addMessage({ type: "message", nick, text: trimmed });
@@ -751,7 +769,7 @@ export function MessengerApp() {
 					});
 				});
 		},
-		[input, stage, nick, threadId, carlaMode, addMessage, sendToCarla, startCooldown],
+		[input, stage, nick, threadId, carlaMode, addMessage, sendToCarla, startCooldown, isKicked],
 	);
 
 	if (stage === "sign-in")
@@ -1145,7 +1163,7 @@ export function MessengerApp() {
 					value={input}
 					onChange={(e) => setInput(e.target.value)}
 					onMouseDown={(e) => e.stopPropagation()}
-					disabled={cooldownSeconds > 0}
+					disabled={cooldownSeconds > 0 || isKicked}
 					maxLength={MAX_MESSAGE_LENGTH}
 					style={{
 						border: "none",
@@ -1154,15 +1172,15 @@ export function MessengerApp() {
 						padding: "8px 12px",
 						fontSize: 13,
 						fontFamily: chatFont,
-						background: cooldownSeconds > 0 ? "#f8f8f0" : "#ffffff",
-						color: cooldownSeconds > 0 ? "#aaa" : "#111111",
-						cursor: cooldownSeconds > 0 ? "not-allowed" : "text",
+						background: cooldownSeconds > 0 || isKicked ? "#f8f8f0" : "#ffffff",
+						color: cooldownSeconds > 0 || isKicked ? "#aaa" : "#111111",
+						cursor: cooldownSeconds > 0 || isKicked ? "not-allowed" : "text",
 					}}
 					autoComplete="off"
 					autoCorrect="off"
 					autoCapitalize="off"
 					spellCheck={false}
-					placeholder="Type a message..."
+					placeholder={isKicked ? "You have been kicked from the channel." : "Type a message..."}
 					aria-label="Message input"
 				/>
 				<div
@@ -1188,25 +1206,26 @@ export function MessengerApp() {
 					</div>
 					<button
 						type="submit"
-						disabled={!input.trim() || cooldownSeconds > 0}
+						disabled={!input.trim() || cooldownSeconds > 0 || isKicked}
 						style={{
 							background:
-								cooldownSeconds > 0
+								cooldownSeconds > 0 || isKicked
 									? "linear-gradient(180deg, #e8e8e8 0%, #d8d8d8 100%)"
 									: "linear-gradient(180deg, #f8e850 0%, #e0c820 100%)",
-							border: `1px solid ${cooldownSeconds > 0 ? "#cccccc" : "#b0a020"}`,
+							border: `1px solid ${cooldownSeconds > 0 || isKicked ? "#cccccc" : "#b0a020"}`,
 							borderRadius: 3,
 							fontSize: 13,
 							fontFamily: "Tahoma, 'Segoe UI', Arial, sans-serif",
 							fontWeight: "bold",
 							padding: "4px 20px",
-							cursor: input.trim() && cooldownSeconds === 0 ? "pointer" : "default",
-							color: input.trim() && cooldownSeconds === 0 ? "#333" : "#999",
+							cursor:
+								input.trim() && cooldownSeconds === 0 && !isKicked ? "pointer" : "default",
+							color: input.trim() && cooldownSeconds === 0 && !isKicked ? "#333" : "#999",
 							boxShadow: "inset 0 1px 0 rgba(255,255,255,0.6)",
 							minWidth: 60,
 						}}
 					>
-						{cooldownSeconds > 0 ? `${cooldownSeconds}s` : "Send"}
+						{isKicked ? "Kicked" : cooldownSeconds > 0 ? `${cooldownSeconds}s` : "Send"}
 					</button>
 				</div>
 			</form>

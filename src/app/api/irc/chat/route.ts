@@ -13,6 +13,8 @@ const chatRateLimit = new Map<string, { count: number; windowStart: number }>();
 // Track which IP+thread combos have had a join message posted this session
 const carlaJoinPosted = new Map<string, number>();
 
+const KICK_TOKEN_RE = /\[KICK(?::\s*([^\]]*))?\]\s*$/i;
+
 // Clean up stale entries every 5 minutes
 setInterval(
 	() => {
@@ -244,13 +246,14 @@ export async function POST(request: Request) {
 		return NextResponse.json({ error: "messages must not be empty" }, { status: 400 });
 	}
 
+	const headersListEarly = await headers();
+	const clientIp = getClientIp(headersListEarly);
+
 	// Rate limiting: max 10 messages per minute per IP (skip in dev)
 	if (process.env.NODE_ENV !== "development") {
-		const headersList = await headers();
-		const ip = getClientIp(headersList);
 		const now = Date.now();
 		const windowMs = 60 * 1000;
-		const existing = chatRateLimit.get(ip);
+		const existing = chatRateLimit.get(clientIp);
 
 		if (existing && now - existing.windowStart < windowMs) {
 			if (existing.count >= 10) {
@@ -259,9 +262,12 @@ export async function POST(request: Request) {
 					{ status: 429 },
 				);
 			}
-			chatRateLimit.set(ip, { count: existing.count + 1, windowStart: existing.windowStart });
+			chatRateLimit.set(clientIp, {
+				count: existing.count + 1,
+				windowStart: existing.windowStart,
+			});
 		} else {
-			chatRateLimit.set(ip, { count: 1, windowStart: now });
+			chatRateLimit.set(clientIp, { count: 1, windowStart: now });
 		}
 	}
 
@@ -284,6 +290,16 @@ export async function POST(request: Request) {
 	// Strip wrapping quotes that LLMs sometimes add
 	if (reply.startsWith('"') && reply.endsWith('"')) {
 		reply = reply.slice(1, -1);
+	}
+
+	// Check for kick token at end of reply. If present, strip it before sending to the client.
+	let kicked = false;
+	let kickReason: string | null = null;
+	const kickMatch = reply.match(KICK_TOKEN_RE);
+	if (kickMatch) {
+		kicked = true;
+		kickReason = (kickMatch[1] ?? "").trim() || "no reason given";
+		reply = reply.replace(KICK_TOKEN_RE, "").trimEnd();
 	}
 
 	// Log to Discord (fire-and-forget, best effort)
@@ -317,8 +333,7 @@ export async function POST(request: Request) {
 			const threadId = outgoingThreadId;
 
 			// Post join message on first message to a reused thread
-			const headersList2 = await headers();
-			const joinKey = `${getClientIp(headersList2)}:${threadId}`;
+			const joinKey = `${clientIp}:${threadId}`;
 			if (!carlaJoinPosted.has(joinKey) && incomingThreadId) {
 				carlaJoinPosted.set(joinKey, Date.now());
 				await postToThread(threadId, "LemonNET", `📥 **${nick}** has joined the chat`);
@@ -329,8 +344,15 @@ export async function POST(request: Request) {
 				await postToThread(threadId, nick, lastUserMessage.content);
 			}
 			await postToThread(threadId, "Carla", reply);
+			if (kicked) {
+				await postToThread(
+					threadId,
+					"LemonNET",
+					`🔨 **${nick}** was kicked by Carla (reason: ${kickReason})`,
+				);
+			}
 		}
 	}
 
-	return NextResponse.json({ reply, threadId: outgoingThreadId });
+	return NextResponse.json({ reply, threadId: outgoingThreadId, kicked, kickReason });
 }

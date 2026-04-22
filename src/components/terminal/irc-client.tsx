@@ -301,6 +301,7 @@ export function IrcClient({ onExit }: IrcClientProps) {
 	const [carlaMode, setCarlaMode] = useState(false);
 	const [statusChecked, setStatusChecked] = useState(false);
 	const [cooldownSeconds, setCooldownSeconds] = useState<number>(0);
+	const [isKicked, setIsKicked] = useState(false);
 
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
@@ -662,6 +663,9 @@ export function IrcClient({ onExit }: IrcClientProps) {
 				}
 
 				const reply: string = data.reply ?? "Sorry, I couldn't come up with a response!";
+				const wasKicked: boolean = data.kicked === true;
+				const kickReason: string | null =
+					typeof data.kickReason === "string" ? data.kickReason : null;
 
 				// Store thread ID for subsequent requests and polling
 				if (data.threadId) {
@@ -687,6 +691,13 @@ export function IrcClient({ onExit }: IrcClientProps) {
 				setTimeout(() => {
 					setCarlaTyping(false);
 					addMessage({ type: "message", nick: "Carla", text: reply });
+					if (wasKicked) {
+						setIsKicked(true);
+						addMessage({
+							type: "system",
+							text: `* ${nick} was kicked from #lemonsaurus by Carla (${kickReason ?? "no reason given"})`,
+						});
+					}
 				}, delayMs);
 			} catch {
 				addMessage({
@@ -719,7 +730,7 @@ export function IrcClient({ onExit }: IrcClientProps) {
 			const trimmed = input.trim();
 			setInput("");
 
-			if (!trimmed || stage !== "chat") return;
+			if (!trimmed || stage !== "chat" || isKicked) return;
 
 			// IRC slash commands
 			if (trimmed.startsWith("/")) {
@@ -793,7 +804,18 @@ export function IrcClient({ onExit }: IrcClientProps) {
 					});
 				});
 		},
-		[input, stage, nick, threadId, carlaMode, addMessage, onExit, sendToCarla, startCooldown],
+		[
+			input,
+			stage,
+			nick,
+			threadId,
+			carlaMode,
+			addMessage,
+			onExit,
+			sendToCarla,
+			startCooldown,
+			isKicked,
+		],
 	);
 
 	// ── Nick selection screen ───────────────────────────────────────────────
@@ -892,27 +914,30 @@ export function IrcClient({ onExit }: IrcClientProps) {
 							}}
 						>
 							[#lemonsaurus]
-							{cooldownSeconds > 0 && (
+							{isKicked ? (
+								<span style={{ color: "#a04040", marginLeft: 4 }}>(kicked)</span>
+							) : cooldownSeconds > 0 ? (
 								<span style={{ color: "#405030", marginLeft: 4 }}>({cooldownSeconds}s)</span>
-							)}{" "}
+							) : null}{" "}
 						</span>
 						<input
 							ref={inputRef}
 							type="text"
 							value={input}
 							onChange={(e) => setInput(e.target.value)}
-							disabled={cooldownSeconds > 0}
+							disabled={cooldownSeconds > 0 || isKicked}
 							maxLength={MAX_MESSAGE_LENGTH}
+							placeholder={isKicked ? "you have been kicked from the channel" : undefined}
 							style={{
 								flex: 1,
 								background: "transparent",
 								border: "none",
 								outline: "none",
-								color: cooldownSeconds > 0 ? "#405030" : "#e8e040",
+								color: cooldownSeconds > 0 || isKicked ? "#405030" : "#e8e040",
 								fontFamily: "monospace",
 								fontSize: FONT_SIZE,
 								caretColor: "#e8e040",
-								cursor: cooldownSeconds > 0 ? "not-allowed" : "text",
+								cursor: cooldownSeconds > 0 || isKicked ? "not-allowed" : "text",
 							}}
 							autoComplete="off"
 							autoCorrect="off"
