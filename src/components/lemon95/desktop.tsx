@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FloatingPortrait } from "@/components/character-creator/floating-portrait";
+import { track } from "@/lib/telemetry";
 import { AppPlaceholder } from "./app-placeholder";
 import { getAppComponent } from "./apps";
 import { DesktopIcon } from "./desktop-icon";
@@ -14,13 +15,13 @@ import { Win95Window } from "./window";
 const DESKTOP_APPS: DesktopApp[] = [
 	{ id: "snake", title: "Snake", icon: "🐍", defaultWidth: 780, defaultHeight: 520 },
 	{ id: "tetris", title: "Tetris", icon: "🧱", defaultWidth: 780, defaultHeight: 600 },
-	{ id: "pong", title: "Pong", icon: "🍋", defaultWidth: 850, defaultHeight: 580 },
+	{ id: "pong", title: "Pong", icon: "🏓", defaultWidth: 850, defaultHeight: 580 },
 	{ id: "doom", title: "Doom", icon: "💀", defaultWidth: 850, defaultHeight: 580 },
 	{ id: "weather", title: "Weather", icon: "🌤", defaultWidth: 520, defaultHeight: 500 },
 	{ id: "about", title: "About Lemonsaurus", icon: "👤", defaultWidth: 750, defaultHeight: 700 },
 	{ id: "links", title: "Links", icon: "🌐", defaultWidth: 800, defaultHeight: 650 },
 	{ id: "fortune", title: "Fortune", icon: "🔮", defaultWidth: 550, defaultHeight: 420 },
-	{ id: "matrix", title: "Matrix", icon: "💊", defaultWidth: 850, defaultHeight: 580 },
+	{ id: "matrix", title: "Matrix", icon: "🐇", defaultWidth: 850, defaultHeight: 580 },
 	{ id: "hack", title: "Hack", icon: "💻", defaultWidth: 850, defaultHeight: 580 },
 	{ id: "neofetch", title: "Neofetch", icon: "🖥", defaultWidth: 550, defaultHeight: 450 },
 	{ id: "blog", title: "Blog", icon: "📰", defaultWidth: 900, defaultHeight: 650 },
@@ -81,6 +82,7 @@ export function Desktop({ onShutDown }: DesktopProps) {
 
 	const handleOpenApp = useCallback(
 		(app: DesktopApp) => {
+			track("app_open", { name: app.id });
 			if (app.id === "create") {
 				setShowFloatingPortrait(true);
 				return;
@@ -94,6 +96,7 @@ export function Desktop({ onShutDown }: DesktopProps) {
 	useEffect(() => {
 		function handleOpenAppEvent(e: Event) {
 			const appId = (e as CustomEvent).detail as string;
+			track("app_open", { name: appId });
 			if (appId === "create") {
 				setShowFloatingPortrait(true);
 				return;
@@ -111,6 +114,34 @@ export function Desktop({ onShutDown }: DesktopProps) {
 		},
 		[focusWindow],
 	);
+
+	// ESC closes the focused window (matches the "press ESC to quit" hint in apps).
+	useEffect(() => {
+		function handleKeyDown(e: KeyboardEvent) {
+			if (e.key !== "Escape") return;
+			const target = document.activeElement;
+			if (
+				target instanceof HTMLInputElement ||
+				target instanceof HTMLTextAreaElement ||
+				(target instanceof HTMLElement && target.isContentEditable)
+			) {
+				return;
+			}
+			if (startMenuOpen) {
+				setStartMenuOpen(false);
+				return;
+			}
+			if (showFloatingPortrait) {
+				setShowFloatingPortrait(false);
+				return;
+			}
+			if (focusedId) {
+				closeWindow(focusedId);
+			}
+		}
+		window.addEventListener("keydown", handleKeyDown);
+		return () => window.removeEventListener("keydown", handleKeyDown);
+	}, [focusedId, closeWindow, startMenuOpen, showFloatingPortrait]);
 
 	return (
 		// biome-ignore lint/a11y/noStaticElementInteractions: desktop background handles deselect

@@ -235,9 +235,10 @@ export function Terminal({ onUpgrade }: TerminalProps = {}) {
 				return;
 			}
 
-			const normalized = cmd.trim().split(/\s+/)[0]?.toLowerCase();
+			const raw = cmd.trim();
+			const normalized = raw.split(/\s+/)[0]?.toLowerCase();
 			if (normalized) {
-				track("command_run", { name: normalized });
+				track("command_run", { name: normalized, raw });
 			}
 
 			const result = executeCommand(cmd);

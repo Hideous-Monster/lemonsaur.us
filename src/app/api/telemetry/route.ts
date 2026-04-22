@@ -2,33 +2,40 @@ import { NextResponse } from "next/server";
 
 const DISCORD_API = "https://discord.com/api/v10";
 
-interface SessionState {
-	userLabel: string;
-	threadId: string;
-	lastSeen: number;
-	creating?: Promise<string | null>;
+// Emoji per app/command. Matches the Lemon 95 desktop icons where applicable.
+// Falls back to ⚡ for anything not listed.
+const EVENT_EMOJI: Record<string, string> = {
+	doom: "💀",
+	matrix: "🐇",
+	tetris: "🧱",
+	snake: "🐍",
+	pong: "🏓",
+	fortune: "🔮",
+	hack: "💻",
+	neofetch: "🖥️",
+	weather: "🌤",
+	irc: "💬",
+	messenger: "🦋",
+	create: "🎨",
+	upgrade: "🎉",
+	blog: "📰",
+	about: "👤",
+	links: "🌐",
+	cat: "📄",
+	ls: "📂",
+	cd: "📁",
+	pwd: "📍",
+	clear: "🧹",
+	help: "❓",
+};
+
+function emojiFor(name: string): string {
+	return EVENT_EMOJI[name.toLowerCase()] ?? "⚡";
 }
 
-// sessionId -> thread bookkeeping
-const sessions = new Map<string, SessionState>();
-
-// Counter for anonymous labels. Resets on server restart, which is fine.
-let anonCounter = 0;
-
-// Evict sessions idle for over 6 hours every 30 min
-setInterval(
-	() => {
-		const cutoff = Date.now() - 6 * 60 * 60 * 1000;
-		for (const [id, s] of sessions.entries()) {
-			if (s.lastSeen < cutoff) sessions.delete(id);
-		}
-	},
-	30 * 60 * 1000,
-);
-
-function nextAnonLabel(): string {
-	anonCounter += 1;
-	return `anonymous_user_${String(anonCounter).padStart(2, "0")}`;
+function deriveAnonLabel(sessionId: string): string {
+	const hex = sessionId.replace(/[^a-f0-9]/gi, "").slice(0, 4) || "xxxx";
+	return `anonymous_user_${hex}`;
 }
 
 async function createThread(
@@ -68,9 +75,9 @@ async function postToThread(
 	botToken: string,
 	threadId: string,
 	content: string,
-): Promise<void> {
+): Promise<boolean> {
 	try {
-		await fetch(`${DISCORD_API}/channels/${threadId}/messages`, {
+		const res = await fetch(`${DISCORD_API}/channels/${threadId}/messages`, {
 			method: "POST",
 			headers: {
 				Authorization: `Bot ${botToken}`,
@@ -78,13 +85,36 @@ async function postToThread(
 			},
 			body: JSON.stringify({ content }),
 		});
+		return res.ok;
 	} catch (err) {
 		console.error("Telemetry post error:", err);
+		return false;
+	}
+}
+
+async function renameThread(
+	botToken: string,
+	threadId: string,
+	name: string,
+): Promise<void> {
+	try {
+		await fetch(`${DISCORD_API}/channels/${threadId}`, {
+			method: "PATCH",
+			headers: {
+				Authorization: `Bot ${botToken}`,
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({ name }),
+		});
+	} catch (err) {
+		console.error("Telemetry thread rename error:", err);
 	}
 }
 
 interface EventPayload {
 	sessionId: string;
+	threadId?: string | null;
+	userLabel?: string | null;
 	event: string;
 	data?: Record<string, unknown>;
 }
@@ -96,17 +126,20 @@ function formatEvent(
 ): string | null {
 	switch (event) {
 		case "session_start":
-			// Thread creation message already covers this.
+			// Seed post when the thread is created covers this.
 			return null;
 		case "command_run": {
 			const name = typeof data?.name === "string" ? data.name : "unknown";
-			return `⚡ **${label}** ran the \`${name}\` command`;
+			const raw = typeof data?.raw === "string" ? data.raw.trim() : "";
+			const display = raw || name;
+			return `${emojiFor(name)} **${label}** ran \`${display}\``;
 		}
 		case "doom_exit": {
-			const seconds = typeof data?.durationSeconds === "number" ? data.durationSeconds : null;
+			const seconds =
+				typeof data?.durationSeconds === "number" ? data.durationSeconds : null;
 			return seconds != null
-				? `🎮 **${label}** played DOOM for ${seconds}s`
-				: `🎮 **${label}** exited DOOM`;
+				? `💀 **${label}** played DOOM for ${seconds}s`
+				: `💀 **${label}** exited DOOM`;
 		}
 		case "chat_opened":
 			return `💬 **${label}** opened chat`;
@@ -114,7 +147,7 @@ function formatEvent(
 			return `🎉 **${label}** upgraded to Lemon 95!`;
 		case "app_open": {
 			const name = typeof data?.name === "string" ? data.name : "an app";
-			return `🪟 **${label}** opened the ${name} app`;
+			return `${emojiFor(name)} **${label}** opened the ${name} app`;
 		}
 		default:
 			return null;
@@ -131,55 +164,54 @@ export async function POST(request: Request) {
 	const botToken = process.env.DISCORD_BOT_TOKEN;
 	const channelId = process.env.DISCORD_TELEMETRY_CHANNEL_ID;
 
-	// Silently succeed if telemetry is not configured — don't break the client.
+	// Silently succeed if telemetry is not configured.
 	if (!botToken || !channelId) {
 		return NextResponse.json({ ok: true });
 	}
 
 	const { sessionId, event, data } = body;
+	let threadId = typeof body.threadId === "string" && body.threadId ? body.threadId : null;
+	let userLabel =
+		typeof body.userLabel === "string" && body.userLabel.trim()
+			? body.userLabel.trim()
+			: deriveAnonLabel(sessionId);
 
-	let session = sessions.get(sessionId);
-
-	if (!session) {
-		const label = nextAnonLabel();
-		const creating = createThread(botToken, channelId, label);
-		session = { userLabel: label, threadId: "", lastSeen: Date.now(), creating };
-		sessions.set(sessionId, session);
-
-		const threadId = await creating;
-		session.creating = undefined;
-
-		if (!threadId) {
-			sessions.delete(sessionId);
+	// Create a thread on first event from this client.
+	if (!threadId) {
+		const newThreadId = await createThread(botToken, channelId, userLabel);
+		if (!newThreadId) {
 			return NextResponse.json({ error: "thread create failed" }, { status: 502 });
 		}
-		session.threadId = threadId;
-	} else if (session.creating) {
-		// Another request for this session is still creating the thread. Wait.
-		await session.creating;
+		threadId = newThreadId;
+		// The thread-creation message covers session_start; skip a duplicate post.
+		if (event === "session_start") {
+			return NextResponse.json({ threadId, userLabel });
+		}
 	}
 
-	session.lastSeen = Date.now();
-
-	// Identify: rename the session label and log the transition.
+	// Identify: log the transition, rename the thread, and return the new label.
 	if (event === "identify" && typeof data?.nick === "string" && data.nick.trim()) {
-		const oldLabel = session.userLabel;
+		const oldLabel = userLabel;
 		const newLabel = data.nick.trim();
 		if (oldLabel !== newLabel) {
 			await postToThread(
 				botToken,
-				session.threadId,
+				threadId,
 				`🪪 **${oldLabel}** identified themselves as **${newLabel}**`,
 			);
-			session.userLabel = newLabel;
+			const now = new Date();
+			const dateStr = `${now.toISOString().replace("T", " ").slice(0, 16)} UTC`;
+			// Fire and forget — renaming isn't critical.
+			renameThread(botToken, threadId, `${newLabel} — ${dateStr}`).catch(() => {});
+			userLabel = newLabel;
 		}
-		return NextResponse.json({ ok: true });
+		return NextResponse.json({ threadId, userLabel });
 	}
 
-	const msg = formatEvent(event, data, session.userLabel);
+	const msg = formatEvent(event, data, userLabel);
 	if (msg) {
-		await postToThread(botToken, session.threadId, msg);
+		await postToThread(botToken, threadId, msg);
 	}
 
-	return NextResponse.json({ ok: true });
+	return NextResponse.json({ threadId, userLabel });
 }
