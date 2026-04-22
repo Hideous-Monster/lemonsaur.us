@@ -33,6 +33,14 @@ function emojiFor(name: string): string {
 	return EVENT_EMOJI[name.toLowerCase()] ?? "⚡";
 }
 
+function titleCase(s: string): string {
+	return s
+		.split(/[\s_-]+/)
+		.filter(Boolean)
+		.map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+		.join(" ");
+}
+
 function deriveAnonLabel(sessionId: string): string {
 	const hex = sessionId.replace(/[^a-f0-9]/gi, "").slice(0, 4) || "xxxx";
 	return `anonymous_user_${hex}`;
@@ -122,7 +130,6 @@ interface EventPayload {
 function formatEvent(
 	event: string,
 	data: Record<string, unknown> | undefined,
-	label: string,
 ): string | null {
 	switch (event) {
 		case "session_start":
@@ -132,22 +139,24 @@ function formatEvent(
 			const name = typeof data?.name === "string" ? data.name : "unknown";
 			const raw = typeof data?.raw === "string" ? data.raw.trim() : "";
 			const display = raw || name;
-			return `${emojiFor(name)} **${label}** ran \`${display}\``;
+			return `- ${emojiFor(name)} ran \`${display}\``;
 		}
 		case "doom_exit": {
 			const seconds =
 				typeof data?.durationSeconds === "number" ? data.durationSeconds : null;
 			return seconds != null
-				? `💀 **${label}** played DOOM for ${seconds}s`
-				: `💀 **${label}** exited DOOM`;
+				? `- 💀 played DOOM for ${seconds}s`
+				: `- 💀 exited DOOM`;
 		}
 		case "chat_opened":
-			return `💬 **${label}** opened chat`;
+			return `- 💬 opened chat`;
 		case "lemon95_upgrade":
-			return `🎉 **${label}** upgraded to Lemon 95!`;
+			return `- 🎉 upgraded to Lemon 95!`;
 		case "app_open": {
 			const name = typeof data?.name === "string" ? data.name : "an app";
-			return `${emojiFor(name)} **${label}** opened the ${name} app`;
+			const title =
+				typeof data?.title === "string" && data.title ? data.title : titleCase(name);
+			return `- ${emojiFor(name)} opened **${title}**`;
 		}
 		default:
 			return null;
@@ -197,7 +206,7 @@ export async function POST(request: Request) {
 			await postToThread(
 				botToken,
 				threadId,
-				`🪪 **${oldLabel}** identified themselves as **${newLabel}**`,
+				`- 🪪 identified as **${newLabel}**`,
 			);
 			const now = new Date();
 			const dateStr = `${now.toISOString().replace("T", " ").slice(0, 16)} UTC`;
@@ -208,7 +217,7 @@ export async function POST(request: Request) {
 		return NextResponse.json({ threadId, userLabel });
 	}
 
-	const msg = formatEvent(event, data, userLabel);
+	const msg = formatEvent(event, data);
 	if (msg) {
 		await postToThread(botToken, threadId, msg);
 	}

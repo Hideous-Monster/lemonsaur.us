@@ -6,11 +6,13 @@ import { DoomSim } from "@/components/terminal/doom-sim";
 const noop = () => {};
 
 export function DoomApp() {
-	// When this component unmounts (window closed), reload to kill WASM/audio
+	// When this component unmounts (window closed), reload to kill WASM/audio.
+	// Small delay so DoomSim's cleanup telemetry fetch initiates before the
+	// reload cancels any in-flight work.
 	useEffect(() => {
 		return () => {
 			// Emscripten doesn't support clean shutdown — reload the page
-			window.location.reload();
+			setTimeout(() => window.location.reload(), 150);
 		};
 	}, []);
 

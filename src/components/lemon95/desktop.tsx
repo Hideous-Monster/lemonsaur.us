@@ -82,7 +82,7 @@ export function Desktop({ onShutDown }: DesktopProps) {
 
 	const handleOpenApp = useCallback(
 		(app: DesktopApp) => {
-			track("app_open", { name: app.id });
+			track("app_open", { name: app.id, title: app.title });
 			if (app.id === "create") {
 				setShowFloatingPortrait(true);
 				return;
@@ -96,12 +96,12 @@ export function Desktop({ onShutDown }: DesktopProps) {
 	useEffect(() => {
 		function handleOpenAppEvent(e: Event) {
 			const appId = (e as CustomEvent).detail as string;
-			track("app_open", { name: appId });
+			const app = DESKTOP_APPS.find((a) => a.id === appId);
+			track("app_open", { name: appId, title: app?.title ?? appId });
 			if (appId === "create") {
 				setShowFloatingPortrait(true);
 				return;
 			}
-			const app = DESKTOP_APPS.find((a) => a.id === appId);
 			if (app) openWindow(app);
 		}
 		window.addEventListener("lemon95:open-app", handleOpenAppEvent);
