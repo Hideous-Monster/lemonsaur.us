@@ -16,7 +16,7 @@ export default defineConfig({
 		include: ["src/**/*.{test,spec}.{ts,tsx}"],
 		css: false,
 		coverage: {
-			provider: "v8",
+			provider: "istanbul",
 			exclude: ["src/components/snake/**", "src/components/games/**"],
 			thresholds: {
 				statements: 90,
