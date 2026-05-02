@@ -85,7 +85,7 @@ export async function POST(request: Request) {
 		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify({
 			content: message,
-			username: nick.slice(0, 32),
+			username: nick.slice(0, 60),
 			avatar_url: "https://lemonsaur.us/images/lemon87_bootup.png",
 		}),
 	});

@@ -10,6 +10,7 @@ import { HackerSim } from "@/components/terminal/hacker-sim";
 import { IrcClient } from "@/components/terminal/irc-client";
 import { MatrixRain } from "@/components/terminal/matrix-rain";
 import { TetrisGame } from "@/components/tetris/tetris-game";
+import { track } from "@/lib/telemetry";
 import {
 	BOOT_LINES,
 	COMMAND_NAMES,
@@ -20,7 +21,6 @@ import {
 	type TerminalLine,
 } from "./commands";
 import { tabComplete } from "./filesystem";
-import { track } from "@/lib/telemetry";
 
 // ROYGBIV
 const RAINBOW = [

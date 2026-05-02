@@ -45,7 +45,7 @@ export async function POST(request: Request) {
 		return NextResponse.json({ error: "nick is required" }, { status: 400 });
 	}
 
-	const nick = body.nick.trim().slice(0, 32);
+	const nick = body.nick.trim().slice(0, 60);
 	const existingThreadId: string | null =
 		typeof body.threadId === "string" && body.threadId.trim() ? body.threadId.trim() : null;
 

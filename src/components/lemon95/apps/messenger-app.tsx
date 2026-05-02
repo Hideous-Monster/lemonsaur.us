@@ -1,7 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { generateGuestName } from "@/lib/guest-name";
 import { track } from "@/lib/telemetry";
+
+const NICK_REGEX = /^[\p{L}\p{N} '"\-.,()]{1,60}$/u;
 
 let msgCounter = 0;
 
@@ -126,12 +129,13 @@ function SignInScreen({
 	serverError?: string;
 	carlaMode: boolean;
 }) {
-	const savedNick = typeof window !== "undefined" ? (localStorage.getItem("irc-nick") ?? "") : "";
-	const [value, setValue] = useState(savedNick);
+	const [value, setValue] = useState("");
 	const [error, setError] = useState("");
 	const inputRef = useRef<HTMLInputElement>(null);
 
 	useEffect(() => {
+		const saved = localStorage.getItem("irc-nick") ?? "";
+		setValue(saved || generateGuestName());
 		setTimeout(() => inputRef.current?.focus(), 50);
 	}, []);
 
@@ -142,8 +146,8 @@ function SignInScreen({
 			setError("Please enter a display name.");
 			return;
 		}
-		if (!/^[a-zA-Z0-9_]{1,16}$/.test(trimmed)) {
-			setError("1-16 characters, letters/numbers/underscores only.");
+		if (!NICK_REGEX.test(trimmed)) {
+			setError("1-60 chars: letters, numbers, spaces, ' \" - . , ( )");
 			return;
 		}
 		localStorage.setItem("irc-nick", trimmed);
@@ -239,7 +243,7 @@ function SignInScreen({
 								setValue(e.target.value);
 								setError("");
 							}}
-							maxLength={16}
+							maxLength={60}
 							style={{
 								width: "100%",
 								border: "1px solid #c8b040",
@@ -256,7 +260,7 @@ function SignInScreen({
 							spellCheck={false}
 							// biome-ignore lint/a11y/noAutofocus: sign-in input must auto-focus
 							autoFocus
-							placeholder="e.g. coolperson87"
+							placeholder="e.g. Boris The Knife"
 							aria-label="Display name"
 						/>
 
@@ -1221,8 +1225,7 @@ export function MessengerApp() {
 							fontFamily: "Tahoma, 'Segoe UI', Arial, sans-serif",
 							fontWeight: "bold",
 							padding: "4px 20px",
-							cursor:
-								input.trim() && cooldownSeconds === 0 && !isKicked ? "pointer" : "default",
+							cursor: input.trim() && cooldownSeconds === 0 && !isKicked ? "pointer" : "default",
 							color: input.trim() && cooldownSeconds === 0 && !isKicked ? "#333" : "#999",
 							boxShadow: "inset 0 1px 0 rgba(255,255,255,0.6)",
 							minWidth: 60,

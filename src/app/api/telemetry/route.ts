@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { generateGuestName } from "@/lib/guest-name";
 
 const DISCORD_API = "https://discord.com/api/v10";
 
@@ -42,8 +43,7 @@ function titleCase(s: string): string {
 }
 
 function deriveAnonLabel(sessionId: string): string {
-	const hex = sessionId.replace(/[^a-f0-9]/gi, "").slice(0, 4) || "xxxx";
-	return `anonymous_user_${hex}`;
+	return generateGuestName(sessionId);
 }
 
 async function createThread(
@@ -79,11 +79,7 @@ async function createThread(
 	}
 }
 
-async function postToThread(
-	botToken: string,
-	threadId: string,
-	content: string,
-): Promise<boolean> {
+async function postToThread(botToken: string, threadId: string, content: string): Promise<boolean> {
 	try {
 		const res = await fetch(`${DISCORD_API}/channels/${threadId}/messages`, {
 			method: "POST",
@@ -100,11 +96,7 @@ async function postToThread(
 	}
 }
 
-async function renameThread(
-	botToken: string,
-	threadId: string,
-	name: string,
-): Promise<void> {
+async function renameThread(botToken: string, threadId: string, name: string): Promise<void> {
 	try {
 		await fetch(`${DISCORD_API}/channels/${threadId}`, {
 			method: "PATCH",
@@ -127,10 +119,7 @@ interface EventPayload {
 	data?: Record<string, unknown>;
 }
 
-function formatEvent(
-	event: string,
-	data: Record<string, unknown> | undefined,
-): string | null {
+function formatEvent(event: string, data: Record<string, unknown> | undefined): string | null {
 	switch (event) {
 		case "session_start":
 			// Seed post when the thread is created covers this.
@@ -142,11 +131,8 @@ function formatEvent(
 			return `- ${emojiFor(name)} ran \`${display}\``;
 		}
 		case "doom_exit": {
-			const seconds =
-				typeof data?.durationSeconds === "number" ? data.durationSeconds : null;
-			return seconds != null
-				? `- 💀 played DOOM for ${seconds}s`
-				: `- 💀 exited DOOM`;
+			const seconds = typeof data?.durationSeconds === "number" ? data.durationSeconds : null;
+			return seconds != null ? `- 💀 played DOOM for ${seconds}s` : `- 💀 exited DOOM`;
 		}
 		case "chat_opened":
 			return `- 💬 opened chat`;
@@ -154,8 +140,7 @@ function formatEvent(
 			return `- 🎉 upgraded to Lemon 95!`;
 		case "app_open": {
 			const name = typeof data?.name === "string" ? data.name : "an app";
-			const title =
-				typeof data?.title === "string" && data.title ? data.title : titleCase(name);
+			const title = typeof data?.title === "string" && data.title ? data.title : titleCase(name);
 			return `- ${emojiFor(name)} opened **${title}**`;
 		}
 		default:
@@ -203,11 +188,7 @@ export async function POST(request: Request) {
 		const oldLabel = userLabel;
 		const newLabel = data.nick.trim();
 		if (oldLabel !== newLabel) {
-			await postToThread(
-				botToken,
-				threadId,
-				`- 🪪 identified as **${newLabel}**`,
-			);
+			await postToThread(botToken, threadId, `- 🪪 identified as **${newLabel}**`);
 			const now = new Date();
 			const dateStr = `${now.toISOString().replace("T", " ").slice(0, 16)} UTC`;
 			// Fire and forget — renaming isn't critical.

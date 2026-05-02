@@ -1,7 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { generateGuestName } from "@/lib/guest-name";
 import { track } from "@/lib/telemetry";
+
+const NICK_REGEX = /^[\p{L}\p{N} '"\-.,()]{1,60}$/u;
 
 interface IrcMessage {
 	type: "system" | "message" | "action";
@@ -92,12 +95,13 @@ function NickSelectScreen({
 	onChoose: (nick: string) => void;
 	onCancel: () => void;
 }) {
-	const savedNick = typeof window !== "undefined" ? (localStorage.getItem("irc-nick") ?? "") : "";
-	const [value, setValue] = useState(savedNick);
+	const [value, setValue] = useState("");
 	const [error, setError] = useState("");
 	const inputRef = useRef<HTMLInputElement>(null);
 
 	useEffect(() => {
+		const saved = localStorage.getItem("irc-nick") ?? "";
+		setValue(saved || generateGuestName());
 		setTimeout(() => inputRef.current?.focus(), 50);
 	}, []);
 
@@ -108,8 +112,8 @@ function NickSelectScreen({
 			setError("You need a nickname to connect.");
 			return;
 		}
-		if (!/^[a-zA-Z0-9_]{1,16}$/.test(trimmed)) {
-			setError("1-16 characters, letters/numbers/underscores only.");
+		if (!NICK_REGEX.test(trimmed)) {
+			setError("1-60 chars: letters, numbers, spaces, ' \" - . , ( )");
 			return;
 		}
 		localStorage.setItem("irc-nick", trimmed);
@@ -174,7 +178,7 @@ function NickSelectScreen({
 						onKeyDown={(e) => {
 							if (e.key === "Escape") onCancel();
 						}}
-						maxLength={16}
+						maxLength={60}
 						style={{
 							width: "100%",
 							background: "#060e06",
@@ -194,7 +198,7 @@ function NickSelectScreen({
 						spellCheck={false}
 						// biome-ignore lint/a11y/noAutofocus: nick input must auto-focus
 						autoFocus
-						placeholder="coolperson87"
+						placeholder="Boris The Knife"
 						aria-label="Nickname"
 					/>
 
